@@ -225,16 +225,6 @@ CELERY_RESULT_BACKEND = "django-db"
 # CELERY BEAT SETTINGS
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 
-# AWS Programmatic access
-
-# AWS_ACCESS_KEY_ID = "AKIAYUPUIJLHHLGUAMTT"
-# AWS_SECRET_ACCESS_KEY = "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"
-# AWS_STORAGE_BUCKET_NAME = "nws-dealer-portal"
-
-
-# AWS_S3_CUSTOM_DOMAIN = "%s.s3.amazonaws.com" % AWS_STORAGE_BUCKET_NAME
-
-
 AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
 AWS_STORAGE_BUCKET_NAME = os.environ.get("AWS_STORAGE_BUCKET_NAME")
