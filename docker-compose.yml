@@ -1,0 +1,92 @@
+services:
+  backend_app:
+    build:
+      context: ./backend
+    container_name: backend_app
+    volumes:
+      - ./backend:/app
+      - ./backend/nginx/gunicorn.conf.py:/etc/nginx/gunicorn.conf.py
+      - ./backend/local_backup:/app/backup
+    ports:
+      - "8001:8001"
+    environment:
+      - DJANGO_SETTINGS_MODULE=dealerportal.settings
+      - DJANGO_SUPERUSER_USERNAME=admin
+      - DJANGO_SUPERUSER_EMAIL=admin@example.com
+      - DJANGO_SUPERUSER_PASSWORD=admin
+      - LOGINUSER_USERNAME=test
+      - LOGINUSER_EMAIL=test@example.com
+      - LOGINUSER_PASSWORD=Hialeah2024*-
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    env_file:
+      - ./backend/.env
+    networks:
+      - dealerportal_network
+    # depends_on:
+    #   - redis_package
+
+  # frontend_app:
+  #   build:
+  #     context: ./frontend
+  #   container_name: frontend_app
+  #   volumes:
+  #     - ./frontend/build:/app/build 
+  #   env_file:
+  #     - ./frontend/.env
+  #   networks:
+  #     - dealerportal_network
+
+  postgres_db:
+    image: postgres:16.0
+    container_name: postgres_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/scripts_db:/docker-entrypoint-initdb.d
+    environment:
+      - POSTGRES_DB=dealerportal_qa_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5434:5432"
+    networks:
+      - dealerportal_network
+
+  # nginx_http_server:
+  #   build:
+  #     context: ./nginx
+  #   container_name: nginx_http_server
+  #   ports:
+  #     - "8080:8080"
+  #     - "443:443"
+  #   extra_hosts:
+  #     - "api-dealerportal.nws.com:10.1.10.216"
+  #   volumes:
+  #     - ./nginx/nginx_react_django.conf:/etc/nginx/nginx.conf:ro
+  #     - ./nginx/certificates:/etc/nginx/certificates:ro
+  #     - ./frontend/build:/usr/share/nginx/html 
+  #   depends_on:
+  #     - backend_app
+  #     - frontend_app
+  #   networks:
+  #     dealerportal_network:
+  #       ipv4_address: 10.1.10.216
+
+  # redis_package:
+  #   image: redis:latest
+  #   container_name: redis_package
+  #   volumes:
+  #     - redis_data:/data
+  #   networks:
+  #     - dealerportal_network
+
+volumes:
+  postgres_data:
+  # redis_data:
+
+networks:
+  dealerportal_network:
+    driver: bridge
+    # ipam:
+    #   config:
+    #     - subnet: "10.1.10.0/24"

@@ -1,6 +1,7 @@
 from pathlib import Path
 import os
 import django_heroku
+import environ
 
 # from dotenv import load_dotenv
 
@@ -30,6 +31,21 @@ DEBUG = False
 # ALLOWED_HOSTS = ["dealerportal.herokuapp.com", "127.0.0.1"]
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "").split(",")
 
+env = environ.Env(
+    DEBUG=(bool, False)
+)
+
+environ.Env.read_env()
+
+ENVIRONMENT = env('ENVIRONMENT')
+
+DB_NAME = env('DB_NAME_DEV') if ENVIRONMENT == 'DEV' else env('DB_NAME_QA') if ENVIRONMENT == 'QA' else env('DB_NAME_PROD')
+DB_USER = env('DB_USER_DEV') if ENVIRONMENT == 'DEV' else env('DB_USER_QA') if ENVIRONMENT == 'QA' else env('DB_USER_PROD')
+DB_PASSWORD = env('DB_PASSWORD_DEV') if ENVIRONMENT == 'DEV' else env('DB_PASSWORD_QA') if ENVIRONMENT == 'QA' else env('DB_PASSWORD_PROD')
+DB_HOST = env('DB_HOST_DEV') if ENVIRONMENT == 'DEV' else env('DB_HOST_QA') if ENVIRONMENT == 'QA' else env('DB_HOST_PROD')
+SECRET_KEY = env('SECRET_KEY_DEV') if ENVIRONMENT == 'DEV' else env('SECRET_KEY_QA') if ENVIRONMENT == 'QA' else env('SECRET_KEY_PROD')
+DB_PORT = env('DB_PORT')
+DB_ENGINE = env('DB_ENGINE')
 
 # Application definition
 
@@ -69,9 +85,7 @@ ROOT_URLCONF = "dealerportal.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [
-            BASE_DIR / "templates",
-        ],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -89,13 +103,13 @@ TEMPLATES = [
 WSGI_APPLICATION = "dealerportal.wsgi.application"
 
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": os.environ.get("DB_NAME"),
-        "USER": os.environ.get("DB_USER"),
-        "PASSWORD": os.environ.get("DB_PASSWORD"),
-        "HOST": os.environ.get("DB_HOST"),
-        "PORT": os.environ.get("DB_PORT"),
+    'default': {
+        'ENGINE': f'{DB_ENGINE}',
+        'NAME': f'{DB_NAME}',
+        'USER': f'{DB_USER}',
+        'PASSWORD': f'{DB_PASSWORD}',
+        'HOST': f'{DB_HOST}',
+        'PORT': f'{DB_PORT}',
     }
 }
 
@@ -216,6 +230,16 @@ CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 
 STATICFILES_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+
+
+# AWS S3 CONFIG
+AWS_ACCESS_KEY_ID = env("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = env("AWS_SECRET_ACCESS_KEY")
+AWS_STORAGE_BUCKET_NAME = env("AWS_STORAGE_BUCKET_NAME")
+AWS_S3_CUSTOM_DOMAIN = f'{env("AWS_S3_CUSTOM_DOMAIN")} % {AWS_STORAGE_BUCKET_NAME}'
+
+DEFAULT_FILE_STORAGE = env("DEFAULT_FILE_STORAGE")
+STATICFILES_STORAGE = env("STATICFILES_STORAGE")
 
 # Static files (CSS, JavaScript, Images)
 
