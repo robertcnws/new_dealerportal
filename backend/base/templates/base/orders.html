@@ -1,0 +1,149 @@
+{% extends "main.html" %}{% load static %} {% block title %}All Orders{% endblock %} {% block content %}
+
+<div class="container-fluid">
+  <div class="heading quoteHeading">
+    <h5>All Orders</h5>
+  </div>
+
+  {% include '_orders.html' %}
+</div>
+
+<!-- delete table row popup-->
+
+{%endblock %} {% block footer %}
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="{% static 'styles/js/dataTables.bootstrap5.min.js'%}"></script>
+
+<script src="{% static 'styles/js/ordersScript.js'%}"></script>
+
+<script>
+  function deleteOrderItem(deleteUrl) {
+    swal({
+      title: 'Are you sure?',
+      text: 'Once deleted, you will not be able to recover this order!',
+      icon: 'warning',
+      buttons: true,
+      dangerMode: true,
+    }).then((willDelete) => {
+      if (willDelete) {
+        window.location.href = deleteUrl;
+      }
+    });
+  }
+
+  $(document).ready(function () {
+    $('#orderTable').DataTable({
+      processing: true,
+      serverSide: true,
+      ajax: {
+        url: "{% url 'base-orders_ajax' %}",
+        type: 'GET',
+      },
+      columns: [
+        {
+          data: 'created_at',
+          render: function (data, type, row) {
+            var date = new Date(data);
+            return date.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+          },
+        },
+        {
+          data: 'status',
+          render: function (data, type, row, meta) {
+            var spanClass = '';
+            var statusText = '';
+            if (data === 'pending') {
+              spanClass = 'bg-info text-white';
+              meta.settings.aoColumns[meta.col].sClass = 'colorBG';
+              statusText = 'Pending';
+            } else if (data === 'accepted') {
+              spanClass = 'bg-success text-white';
+              meta.settings.aoColumns[meta.col].sClass = 'colorBG';
+              statusText = 'Accepted';
+            } else if (data === 'canceled') {
+              spanClass = 'bg-danger text-white';
+              meta.settings.aoColumns[meta.col].sClass = 'colorBG';
+              statusText = 'Canceled';
+            } else {
+              spanClass = 'other-bubble';
+              meta.settings.aoColumns[meta.col].sClass = 'colorBG';
+              statusText = data.charAt(0).toUpperCase() + data.slice(1);
+            }
+            return `<span class="${spanClass}">${statusText}</span>`;
+          },
+        },
+        {
+          data: 'id',
+          render: function (data, type, row) {
+            var url = '/orders/view/' + data + '/';
+            return `<a href="${url}">${data}</a>`;
+          },
+        },
+        { data: 'quote_name' },
+        {
+          data: 'quote_id',
+          render: function (data, type, row) {
+            var url = '/quotes/view/' + data + '/';
+            return `<a href="${url}">${data}</a>`;
+          },
+        },
+        {% if user.role == "AppAdmin" or user.role == "AppManager" %}
+        { data: 'dealer_account' },
+        {% endif %}
+        { data: 'owner' },
+        {
+          data: 'total_sell',
+          render: function (data, type, row) {
+            var formattedData = isNaN(Number(data))
+              ? data
+              : '$ ' +
+                parseFloat(data)
+                  .toFixed(2)
+                  .replace(/\d(?=(\d{3})+\.)/g, '$&,');
+            return formattedData;
+          },
+        },
+        {
+          data: 'total_cost',
+          render: function (data, type, row) {
+            var formattedData = isNaN(Number(data))
+              ? data
+              : '$ ' +
+                parseFloat(data)
+                  .toFixed(2)
+                  .replace(/\d(?=(\d{3})+\.)/g, '$&,');
+            return formattedData;
+          },
+        },
+        {
+          data: 'updated_at',
+          render: function (data, type, row) {
+            var date = new Date(data);
+            return date.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+          },
+        },
+        {
+          data: null,
+          render: function (data, type, row) {
+            var viewOrderUrl = '/orders/view/' + data.id + '/';
+            var deleteOrderUrl = '/orders/delete/' + data.id + '/';
+            return `<div class="dropdown-toggle" data-bs-toggle="dropdown">
+                      <i class="bi bi-three-dots-vertical"></i>
+                    </div>
+                    <ul class="actionDropMenu dropdown-menu dropdown-menu-end">
+                      <h6 class="dropdown-header">Action</h6>
+                      <li class="dropdown-item" onclick="location.href='${viewOrderUrl}'"><i class="bi bi-eye"></i>View</li>
+                      <li class="dropdown-item" onclick="deleteOrderItem('${deleteOrderUrl}')">
+                        <i class="bi bi-trash3"></i>Delete
+                      </li>
+                    </ul>`;
+          },
+        },
+      ],
+      order: [], // Disable initial order
+      ordering: false, // Disable user controlled ordering
+      searching: false, // Disable search box
+    });
+  });
+</script>
+{% endblock %}

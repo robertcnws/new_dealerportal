@@ -1,0 +1,63 @@
+{% extends 'main_login.html' %} {% load static %}{% block content %} 
+
+<h4>Welcome</h4>
+<p>Enter your credentials to access your account.</p>
+<div class="inputMain">
+    <form method="POST">
+        {% csrf_token %}
+        <div class="inputGroup">
+            <label for="{{ form.username.id_for_label }}">Username</label>
+            {{ form.username }}
+            {% if form.username.errors %}
+                <div class="alert alert-danger">
+                    {{ form.username.errors }}
+                </div>
+            {% endif %}
+        </div>
+        <div class="inputGroup">
+            <label for="{{ form.password.id_for_label }}">Password</label>
+            {{ form.password }}
+            {% if form.password.errors %}
+                <div class="alert alert-danger">
+                    {{ form.password.errors }}
+                </div>
+            {% endif %}
+            <div class="showHideBtn" onclick="showHidePass()"><i class="fa-regular fa-eye-slash" id="showHide"></i></div>
+        </div>
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+        <a href="#" class="forgetLink">Forget password ?</a>
+        <button class="submitBtn" type="submit">Login</button>
+    </form>
+</div>
+
+
+<style>
+    .alert.alert-danger {
+        color: red;
+    }
+</style>
+
+<script>
+  function showHidePass() {
+      //eye icon changer
+      var element = document.getElementById("showHide")
+      if (element.className == "fa-regular fa-eye-slash") {
+          element.className = "fa-regular fa-eye";
+      } else {
+          element.className = "fa-regular fa-eye-slash"
+      }
+      //password input type changer with the change of eye icon
+      var inputPass = document.getElementById("id_password");
+      if (inputPass.type === "password") {
+          inputPass.type = "text";
+      } else {
+          inputPass.type = "password";
+      }
+  }
+</script>
+</body>
+{% endblock %}

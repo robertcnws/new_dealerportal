@@ -1,0 +1,21 @@
+{% extends 'main.html' %} {% block content%}
+<div class="container-fluid">
+  <div class="heading">
+    <h5>Zoho API Connection</h5>
+    <hr />
+  </div>
+  {% if zoho_connection_configured %} {% if not connected %}
+  <p>Not connected. Click the button below to connect.</p>
+  <a href="{{ auth_url }}" class="btn btn-primary">Connect</a>
+  {% else %}
+  <p>
+    Status:
+    <span class="bg-success text-white rounded-pill px-2">Connected</span>
+  </p>
+  <br />
+
+  {% endif %} {% else %}
+  <p>Zoho connection is not configured. Please fill in all required fields in the settings page.</p>
+  {% endif %}
+</div>
+{% endblock%}

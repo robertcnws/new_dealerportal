@@ -1,0 +1,43 @@
+{% extends 'main.html' %} 
+{% load humanize %}
+{% block title %}
+ Search Results {% if active_page %} for:
+<span class="activePage">{{ active_page|title }}</span>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="heading quoteHeading">
+    <h5>
+      Search Results {% if active_page %} for:
+      <span class="activePage">{{ active_page|title }}</span>
+      {% endif %}
+    </h5>
+  </div>
+  {% if query %}
+  {% for model_name, result_set in results.items %}
+  <h4>{{ model_name }}</h4>
+  <div class="tableRow">
+      <table id="quoteTable" class="table" style="width: 100%">
+          <tbody>
+            {% if model_name == "Product" %}
+            {% with items=result_set  %}
+                {% include '_items.html' %}
+            {% endwith %}
+            {% elif model_name == "Quote" %}
+            {% with quotes=result_set request=request %}
+                {% include '_quotes.html' %}
+            {% endwith %}
+            {% elif model_name == "Order" %}
+            {% with orders=result_set request=request %}
+                {% include '_orders.html' %}
+            {% endwith %}
+           {% endif %}
+          </tbody>
+      </table>
+  </div>
+{% endfor %}
+{% endif %}
+</div>
+{% endblock %}

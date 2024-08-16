@@ -1,0 +1,297 @@
+{% extends "main.html" %} {% load static %} {% load humanize %}{% block css %}
+<link rel="stylesheet" href="{% static 'styles/css/main.css' %}" />
+{% endblock %} {% block title %} Dashboard {% endblock%} {% block content %}
+<div class="container-fluid">
+  <div class="heading">
+    <code>
+      <i class="bi bi-speedometer2"></i>
+      Welcome to New Window System Dealer Portal, you can manage your quotes and check out stock levels.
+    </code>
+    <br />
+    <code class="badge bg-success">Your Stats for {{ month_name }}</code>
+  </div>
+  <div class="row">
+    <!-- single card -->
+    <div class="col-md-3">
+      <div class="mainCard">
+        <div class="cardInfo">
+          <p>Total Quotes</p>
+          <h4>{{total_quotes }}</h4>
+        </div>
+        <div class="cardIcon">
+          <hr />
+          <i class="bi bi-journal-bookmark"></i>
+        </div>
+      </div>
+    </div>
+    <!-- single card -->
+    <div class="col-md-3">
+      <div class="mainCard">
+        <div class="cardInfo">
+          <p>Total Orders</p>
+          <h4>{{total_orders }}</h4>
+        </div>
+        <div class="cardIcon">
+          <i class="bi bi-cart"></i>
+        </div>
+      </div>
+    </div>
+    <!-- single card -->
+    <div class="col-md-3">
+      <div class="mainCard">
+        <div class="cardInfo">
+          <p>Confirmed Orders</p>
+          <h4>{{confirmed_orders }}</h4>
+        </div>
+        <div class="cardIcon">
+          <i class="bi bi-cart"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- single card -->
+    <div class="col-md-3">
+      <div class="mainCard">
+        <div class="cardInfo">
+          <p>Pending Orders</p>
+          <h4>{{pending_orders }}</h4>
+        </div>
+        <div class="cardIcon">
+          <i class="bi bi-clock"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- extensions or insights -->
+<div class="container-fluid">
+  <div class="row extensionMain">
+    <div class="col-md-6 extensionLeft">
+      {% if user.role != "AppManager" %}
+      <div class="heading">
+        <h5>Dealership Overview</h5>
+      </div>
+      <div class="mainCard">
+        <div class="cardInfo">
+          <p>
+            Status:{% if dealership.is_active %}
+            <span class="bg-success text-white rounded-pill px-2">Active</span>
+            {% else %}
+            <span class="bg-danger text-white rounded-pill px-2">Inactive</span>
+            {% endif %}
+          </p>
+          <p>
+            Name:
+            <span>{{dealership.name}}</span>
+          </p>
+          <p>
+            Dealership Admin:
+            <span>{{dealership.dealer_admin}}</span>
+          </p>
+          <p>
+            Created At:
+            <span>{{ dealership.created_at.date }}</span>
+          </p>
+          <p>
+            Last Modified:
+            <span>{{ dealership.updated_at.date }}</span>
+          </p>
+        </div>
+        <div class="cardIcon">
+          <i class="bi bi-journal-building"></i>
+        </div>
+      </div>
+      <br />
+      {% endif %} {% include '_user_sales_stats.html' %}
+
+      <div class="col-md-6 extensionRight">
+        <!-- graph overview -->
+        <div class="heading">
+          <h5>
+            Sales Performance
+            <small class="text-success">({{ month_name }})</small>
+          </h5>
+        </div>
+        <div class="chartsMain">
+          <div class="chartOverview">
+            <div class="overview blue">
+              <p>Total in Estimates</p>
+              <h3>${{ user_stats.total_estimates |floatformat:2|intcomma|intword }}</h3>
+            </div>
+            <div class="overview green">
+              <p>Total Orders</p>
+              <h3>${{ user_stats.total_orders |floatformat:2|intcomma|intword }}</h3>
+            </div>
+            <div class="overview red">
+              <p>Lost Sales</p>
+              <h3>${{user_stats.lost_sales |floatformat:2|intcomma|intword }}</h3>
+            </div>
+          </div>
+        </div>
+
+        <!-- FAQ section -->
+        {% include '_faq.html' %}
+      </div>
+    </div>
+  </div>
+
+  <!-- table -->
+  <div class="container-fluid">
+    <div class="heading">
+      <h5>10 Most Recent Quotes</h5>
+    </div>
+    <div class="tableRow">
+      <table id="quoteTable" class="table table-striped" style="width: 100%">{% include '_quotes.html' %}</table>
+    </div>
+  </div>
+
+  <div class="container-fluid">
+    <br />
+    <br />
+  </div>
+
+  {% endblock %} {% block pop_ups %} {% endblock %} {% block footer %}
+  <script src="{% static 'styles/js/main.js'%}"></script>
+  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+  <script src="{% static 'styles/js/dataTables.bootstrap5.min.js'%}"></script>
+
+  <script src="{% static 'styles/js/user_stats.js'%}"></script>
+
+  <script>
+    function deleteQuoteItem(deleteUrl) {
+      swal({
+        title: 'Are you sure?',
+        text: 'Once deleted, you will not be able to recover this quote!',
+        icon: 'warning',
+        buttons: true,
+        dangerMode: true,
+      }).then((willDelete) => {
+        if (willDelete) {
+          window.location.href = deleteUrl;
+        }
+      });
+    }
+
+    window.totalOrders = parseFloat('{{ user_stats.today_orders }}');
+    window.totalEstimates = parseFloat('{{ user_stats.today_estimates }}');
+  </script>
+
+  <script>
+    $(document).ready(function () {
+      $('#quoteTable').DataTable({
+        paging: false,
+        info: false,
+        ordering: false,
+        searching: false,
+      });
+    });
+
+    /*
+    $(document).ready(function () {
+      $('#quoteTable').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+          url: "{% url 'base-quotes-ajax' %}",
+          type: 'GET',
+        },
+        columns: [
+          {
+            data: 'created_at',
+            render: function (data, type, row) {
+              var date = new Date(data);
+              return date.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+            },
+          },
+          {
+            data: 'status',
+            className: 'colorBG', // This adds the class to the TD element
+            render: function (data, type, row, meta) {
+              var spanClass = '';
+              var statusText = '';
+              if (data === 'ordered') {
+                spanClass = 'processing';
+                statusText = 'Ordered';
+              } else if (data === 'active') {
+                spanClass = 'confirmed';
+                statusText = 'Active';
+              } else {
+                spanClass = 'cancel';
+                statusText = 'Inactive';
+              }
+              return `<span class="${spanClass}">${statusText}</span>`;
+            },
+          },
+          {
+            data: 'id',
+            render: function (data, type, row) {
+              var url = '/quotes/view/' + data + '/';
+              return `<a href="${url}">${data}</a>`;
+            },
+          },
+          { data: 'name' },
+          { data: 'dealer_account' },
+          { data: 'owner' },
+          {
+            data: 'total_sell',
+            render: function (data, type, row) {
+              var formattedData = isNaN(Number(data))
+                ? data
+                : '$ ' +
+                  parseFloat(data)
+                    .toFixed(2)
+                    .replace(/\d(?=(\d{3})+\.)/g, '$&,');
+              return formattedData;
+            },
+          },
+          {
+            data: 'total_cost',
+            render: function (data, type, row) {
+              var formattedData = isNaN(Number(data))
+                ? data
+                : '$ ' +
+                  parseFloat(data)
+                    .toFixed(2)
+                    .replace(/\d(?=(\d{3})+\.)/g, '$&,');
+              return formattedData;
+            },
+          },
+          {
+            data: 'updated_at',
+            render: function (data, type, row) {
+              var date = new Date(data);
+              return date.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+            },
+          },
+          {
+            data: null,
+            render: function (data, type, row) {
+              var viewQuoteUrl = '/quotes/view/' + data.id + '/';
+              var deleteQuoteUrl = '/quotes/delete/' + data.id + '/';
+              var cloneQuoteUrl = '/quotes/clone/' + data.id + '/';
+              var dropDownHtml = `<div class="dropdown-toggle" data-bs-toggle="dropdown">
+                      <i class="bi bi-three-dots-vertical"></i>
+                    </div>
+                    <ul class="actionDropMenu dropdown-menu dropdown-menu-end">
+                      <h6 class="dropdown-header">Action</h6>
+                      <li class="dropdown-item" onclick="location.href='${viewQuoteUrl}'"><i class="bi bi-eye"></i>View</li>`;
+              if (data.status !== 'ordered') {
+                dropDownHtml += `<li class="dropdown-item" onclick="location.href='${cloneQuoteUrl}'"><i class="bi bi-front"></i>Clone</li>
+                        <li class="dropdown-item" onclick="deleteQuoteItem('${deleteQuoteUrl}')">
+                          <i class="bi bi-trash"></i>Delete
+                        </li>`;
+              }
+              dropDownHtml += `</ul>`;
+              return dropDownHtml;
+            },
+          },
+        ],
+        order: [[0, 'asc']], // Initial sorting order
+      });
+    });
+*/
+  </script>
+
+  {% endblock %}
+</div>

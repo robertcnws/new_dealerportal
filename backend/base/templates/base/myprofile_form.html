@@ -1,0 +1,17 @@
+{% extends 'main.html' %} {% block content %}
+<div class="container-fluid">
+  <div class="heading">
+    <h5>User Profile</h5>
+    <hr />
+    <div class="profileMain">
+      <form method="POST" action="">
+        {% csrf_token %}
+        <table class="create-user-table">{{ form.as_table}}</table>
+        <br />
+        <input class="btn btn-success btn-gradient" type="submit" value="Update Account" />
+      </form>
+    </div>
+  </div>
+
+  {% endblock %}
+</div>

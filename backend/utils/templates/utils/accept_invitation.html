@@ -1,0 +1,90 @@
+{% extends 'main_login.html' %} {% load static %}{% block content %} 
+
+<style>
+  .errorlist li {
+    color: red !important;
+  }
+</style>
+
+<h4>Welcome to our Dealer Portal</h4>
+<p>Enter your details to create your account.</p>
+
+<div class="inputMain">
+  <hr/>
+  <form method="POST" action="">
+    {% csrf_token %} 
+    {% if form.errors %}
+    <div>
+      <p style="color:red">Please review your information. There were errors found in your form submission:</p>
+    </div>
+    {% endif %}
+        <div class="inputGroup">
+          <label for="{{ form.first_name.auto_id }}">First name:</label>
+          {{ form.first_name }}
+          {% if form.first_name.errors %}
+            <div style="color: red;">
+              {{ form.first_name.errors }}
+            </div>
+          {% endif %}
+          <label for="{{ form.last_name.auto_id }}">Last name:</label>
+          {{ form.last_name }}
+          {% if form.last_name.errors %}
+            <div style="color: red;">
+              {{ form.last_name.errors }}
+            </div>
+          {% endif %}
+        </div>
+        <div class="inputGroup">
+          <label for="{{ form.username.auto_id }}">Username:</label>
+            {{ form.username }}
+            {% if form.username.errors %}
+              <div style="color: red;">
+                {{ form.username.errors }}
+              </div>
+            {% endif %}
+          <p>{{ form.username.help_text }}</p>
+        </div>
+        <div class="inputGroup">
+          <label for="{{ form.password1.auto_id }}">Password:</label>
+          {{ form.password1 }}
+          {% if form.password1.errors %}
+            <div style="color: red;">
+              {{ form.password1.errors }}
+            </div>
+          {% endif %}
+          {{ form.password1.help_text }}
+        </div>
+        <div class="inputGroup">
+          <label for="{{ form.password2.auto_id }}">Password confirmation:</label>
+          {{ form.password2 }}
+          {% if form.password2.errors %}
+            <div style="color: red;">
+              {{ form.password2.errors }}
+            </div>
+          {% endif %}
+          <p>{{ form.password2.help_text }}</p>
+        </div>
+        <input class="submitBtn" type="submit" value="Create Account" />
+  </form>
+</div>
+
+<script>
+  function showHidePass() {
+      //eye icon changer
+      var element = document.getElementById("showHide")
+      if (element.className == "fa-regular fa-eye-slash") {
+          element.className = "fa-regular fa-eye";
+      } else {
+          element.className = "fa-regular fa-eye-slash"
+      }
+      //password input type changer with the change of eye icon
+      var inputPass = document.getElementById("inputPass");
+      if (inputPass.type === "password") {
+          inputPass.type = "text";
+      } else {
+          inputPass.type = "password";
+      }
+  }
+</script>
+</body>
+{% endblock %}

@@ -1,0 +1,283 @@
+{% extends 'main.html' %} {% load static %} {% load humanize %} {% block title %} App Authorized Users{% endblock %}
+{% block css %}
+<link rel="stylesheet" href="{% static 'styles/css/settings.css' %}" />
+{% endblock %}
+{% block content %}
+    <div class="container-fluid">
+      <div class="settingsMain">
+        <div class="heading">
+          <h5>Manage Aplication Access</h5>
+        </div>
+
+        <div class="row mt-3">
+          <div class="col-md-8 mt-3">
+          <div class="invitationMain">
+            <form action="{% url 'utils:utils-send-invitation' %}" method="post">
+              <div class="inputs">
+                {% csrf_token %}
+                <label for="invitation">Add a new User as an App Manager.
+                </label>
+                <input type="email" id="invitation" name="email" placeholder="example@gmail.com" required />
+                <input type="hidden" name="role" value="K54Rl" />
+              </div>
+              <input class="btn btn-success" type="submit" value="Send Invitation" />
+            </form>
+          </div>
+        </div>
+        <div class="col-md-4 mt-3">
+        
+          <div class="profileMain">
+            <div class="table-responsive">
+              <span> <h5>Pending Invites</h5></span>
+              <table class="table mt-2">
+                <thead>
+                  <tr>
+                    <th>Status</th>
+                    <th>Email</th>
+                    <th>Sent</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for invite in pending_invites %}
+                  <tr>
+                    <td class="colorBG">
+                      {% if invite.is_accepted %}
+                      <span class="confirmed">Accepted</span>
+                      {% else %}
+                      <span class="info">Pending</span>
+                      {% endif %}
+                    </td>
+                    <td>{{ invite.email }}</td>
+                    <td>{{ invite.created_at |naturaltime   }}</td>
+                    
+                    <td class="">
+                      <div class="dropdown-toggle" data-bs-toggle="dropdown">
+                        <i class="bi bi-three-dots-vertical"></i>
+                      </div>
+                      <ul class="actionDropMenu dropdown-menu dropdown-menu-end">
+                        <h6 class="dropdown-header">Action</h6>
+                        <li class="dropdown-item" 
+                              onclick="resendInvitation('{% url 'utils:utils-resend_invitation' invite.id %}')">
+                              <i class="bi bi-send"></i> Resend Invitation
+                        </li>
+                        <li class="dropdown-item delete-invite">
+                          <form method="post" class="delete-form" action="{% url 'utils:utils-delete-invitation' %}">
+                            {% csrf_token %}
+                            <input id="invitation_id" type="hidden" name="invitation_id" value="{{invite.id}}">
+                            <i class="bi bi-trash"></i>
+                            <button type="button" class="btn btn-link text-decoration-none btn-small delete-button" data-toggle="confirm" 
+                              data-message="Are you sure you want to delete this invitation?"
+                              data-title="Confirm Deletion"
+                              style="padding: 0 !important; color: inherit; margin: 0 !important">
+                                  Delete Invite
+                              </button>
+                          </form>
+                        </li>
+                      </ul>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        </div>
+        
+        <div class="row mb-3">
+          <div class="col-md-6 mt-3">
+            <div class="heading">
+              <h5>App Administrators</h5>
+            </div>
+            <div class="profileMain">
+              <div class="table-responsive">
+                <table class="table mt-2">
+                  <thead>
+                    <tr>
+                      <th>Status</th>
+                      <th>Username</th>
+                      <th>Name</th>
+                      <th>Email</th>
+                      <th>Role</th>
+                      <th>Last Login</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for app_admin in app_admins %}
+                    <tr>
+                      <td class="colorBG">
+                        {% if app_admin.is_active %}
+                        <span class="confirmed">Active</span>
+                        {% else %}
+                        <span class="cancel">Inactive</span>
+                        {% endif %}
+                      </td>
+                      <td>{{ app_admin.username }}</td>
+                      <td>{{ app_admin.first_name }} {{ dealership_admin.last_name }}</td>
+                      <td>{{ app_admin.email }}</td>
+                      <td>{{ app_admin.role }}</td>
+                      <td>{{ app_admin.last_login|naturaltime }}</td>
+                      <td class="">
+                        <div class="dropdown-toggle" data-bs-toggle="dropdown">
+                          <i class="bi bi-three-dots-vertical"></i>
+                        </div>
+                        <ul class="actionDropMenu dropdown-menu dropdown-menu-end">
+                          <h6 class="dropdown-header">Action</h6>
+                          <li class="dropdown-item" onclick="navigateTo('{% url 'base-manage-user'   app_admin.id %}')">
+                            <i class="bi bi-pencil-square"></i>
+                            Manage
+                          </li>
+                          <li
+                            class="dropdown-item"
+                            onclick="navigateTo('{% url 'app_settings:change-authuser-status' app_admin.id %}')"
+                            )
+                          >
+                            <i class="bi bi-power"></i>
+                            {% if app_admin.is_active %}Deactivate {% else %}Activate {% endif %}
+                          </li>
+                          {% if user.role == 'AppAdmin' %}
+                          <li class="dropdown-item">
+                            <form method="post" action="{% url 'app_settings:change-authuser-role' app_admin.id %}">
+                              {% csrf_token %}
+                              <i class="bi bi-shield-fill-check"></i>
+                              <input
+                                type="submit"
+                                value="Demote to AppManager"
+                                class="btn btn-link text-decoration-none btn-small"
+                                style="padding: 0 !important; color: inherit; margin: 0 !important"
+                              />
+                            </form>
+                          </li>
+                          {% endif %}
+                        </ul>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+          <!-- right part -->
+          <div class="col-md-6 mt-3">
+            <div class="heading">
+              <h5>App Managers</h5>
+            </div>
+            <!-- user info -->
+            <div class="profileMain">
+              <div class="table-responsive">
+                <table class="table mt-2">
+                  <thead>
+                    <tr>
+                      <th>Status</th>
+                      <th>Username</th>
+                      <th>Full Name</th>
+                      <th>Email</th>
+                      <th>Last Login</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for app_manager in app_managers %}
+                    <tr>
+                      <td class="colorBG">
+                        {% if app_manager.is_active %}
+                        <span class="confirmed">Active</span>
+                        {% else %}
+                        <span class="cancel">Inactive</span>
+                        {% endif %}
+                      </td>
+                      <td>{{ app_manager.username }}</td>
+                      <td>{{ app_manager.first_name }} {{ estimator.last_name }}</td>
+                      <td>{{ app_manager.email }}</td>
+                      <td>{{ app_manager.last_login |naturaltime }}</td>
+                      <td class="">
+                        <div class="dropdown-toggle" data-bs-toggle="dropdown">
+                          <i class="bi bi-three-dots-vertical"></i>
+                        </div>
+                        <ul class="actionDropMenu dropdown-menu dropdown-menu-end">
+                          <h6 class="dropdown-header">Action</h6>
+                          <li
+                            class="dropdown-item"
+                            onclick="navigateTo('{% url 'base-manage-user'   app_manager.id %}')"
+                          >
+                            <i class="bi bi-pencil-square"></i>
+                            Manage
+                          </li>
+                          <li
+                            class="dropdown-item"
+                            onclick="navigateTo('{% url 'app_settings:change-authuser-status' app_manager.id %}')"
+                          >
+                            <i class="bi bi-power"></i>
+                            {% if app_manager.is_active %}Deactivate{% else %}Activate{% endif %}
+                          </li>
+                          {% if user.role == 'AppAdmin' %}
+                          <li class="dropdown-item">
+                            <form method="post" action="{% url 'app_settings:change-authuser-role' app_manager.id %}">
+                              {% csrf_token %}
+                              <i class="bi bi-shield-fill-check"></i>
+                              <input
+                                type="submit"
+                                value="Promote to Admin"
+                                class="btn btn-link text-decoration-none btn-small"
+                                style="padding: 0 !important; color: inherit; margin: 0 !important"
+                              />
+                            </form>
+                          </li>
+                          {% endif %}
+                        </ul>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block pop_ups %}
+{% include '_confirmation_delete_form_popup.html'%}
+{% endblock %}
+
+{% block footer %}
+<script>
+  $(document).ready(function(){
+    let formToSubmit = null; // Variable to hold the form to submit
+  
+    $('.delete-button').click(function(event){
+      event.preventDefault();
+      formToSubmit = $(this).parents('.delete-form'); // Store the form to submit
+      $('#deleteConfirmModal').modal('show'); // Show the modal
+    });
+  
+    $('#deleteConfirmButton').click(function(){
+      if (formToSubmit) {
+        formToSubmit.submit(); // Submit the form
+      }
+    });
+  });
+
+  function resendInvitation(resendUrl) {
+    swal({
+      title: 'Are you sure?',
+      text: 'Resending the invitation will make the previous email useless. Do you want to continue?',
+      icon: 'warning',
+      buttons: true,
+      dangerMode: true,
+    }).then((willResend) => {
+      if (willResend) {
+        window.location.href = resendUrl;
+      }
+    });
+}
+  </script>
+  
+{% endblock %}

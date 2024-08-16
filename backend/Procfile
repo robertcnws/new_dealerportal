@@ -1,0 +1,4 @@
+release: python manage.py migrate
+web: gunicorn dealerportal.wsgi --log-file -
+celery: celery -A dealerportal worker --pool=solo -l info
+celerybeat: celery -A dealerportal beat -l INFO

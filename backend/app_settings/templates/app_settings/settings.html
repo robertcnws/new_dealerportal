@@ -1,0 +1,193 @@
+{% extends 'main.html' %} {% load static %}{% load humanize %}{% block title %}App Settings{% endblock %} 
+{% block css %}
+<link rel="stylesheet" href="{% static 'styles/css/settings.css' %}" />
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+  integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
+  crossorigin="anonymous"
+  referrerpolicy="no-referrer"
+/>
+{% endblock %} {% block content %}
+<div class="container-fluid">
+  <div class="settingsMain">
+    <div class="heading">
+      <h5>Quick Actions</h5>
+    </div>
+    <!-- upper buttons -->
+    <div class="wrapper">
+      <button class="options">
+        <i class="fa-solid fa-lock"></i>
+        <span>Security</span>
+      </button>
+      <button class="options" onclick="navigateToZohoAPI()">
+        <i class="bi bi-tools"></i>
+        <span>Integration</span>
+      </button>
+      <button class="options">
+        <i class="fa-solid fa-envelope"></i>
+        <span>Setup E-mail</span>
+      </button>
+      <button class="options" onclick="navigateTo('{% url 'app_settings:authorized-users' %}')">
+        <i class="fa-solid fa-user"></i>
+        <span>Authorized Users</span>
+      </button>
+      <button class="options" data-bs-toggle="modal" data-bs-target="#accessibility">
+        <i class="bi bi-universal-access"></i>
+        <span>Accessibility</span>
+      </button>
+    </div>
+    <div class="row mb-3">
+      <div class="col-md-6 mt-3">
+        <div class="heading">
+          <h5>Invite New App Manager</h5>
+        </div>
+        <!-- email invitation -->
+    
+        <div class="invitationMain">
+          <form action="{% url 'utils:utils-send-invitation' %}" method="post">
+          <div class="inputs">
+              {% csrf_token %}
+            <label for="invitation">Email Invitation</label>
+            <input type="email" id="invitation" name="email" placeholder="example@gmail.com" required />
+            <input type="hidden"  name="role" value="K54Rl" />
+          </div>
+          <input class="btn btn-success" type="submit" value="Send Invitation">
+        </div>
+      </form>
+      </div>
+      <!-- right part -->
+      <div class="col-md-6 mt-3">
+        <div class="heading">
+          <h5>App Managers</h5>
+        </div>
+        <!-- user info -->
+        <div class="profileMain">
+          <div class="table-responsive">
+            <table class="table mt-2">
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th>Username</th>
+                  <th>Full Name</th>
+                  <th>Email</th>
+                  <th>Last Login</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for manager in managers %}
+                <tr>
+                  <td class="colorBG">
+                    {% if manager.is_active %}
+                    <span class="confirmed">Active</span>
+                    {% else %}
+                    <span class="cancel">Inactive</span>
+                    {% endif %}
+                  </td>
+                  <td>{{ manager.username }}</td>
+                  manager
+                  <td>{{ manager.first_name }} {{ estimator.last_name }}</td>
+                  <td>{{ manager.email }}</td>
+                  <td>{{ manager.last_login |naturaltime }}</td>
+                  <td class="">
+                    <div class="dropdown-toggle" data-bs-toggle="dropdown">
+                      <i class="bi bi-three-dots-vertical"></i>
+                    </div>
+                    <ul class="actionDropMenu dropdown-menu dropdown-menu-end">
+                      <h6 class="dropdown-header">Action</h6>
+                      <li class="dropdown-item" onclick="navigateTo('{% url 'base-manage-user'   manager.id %}')">
+                        <i class="bi bi-pencil-square"></i>
+                        Manage
+                      </li>
+                      <li
+                        class="dropdown-item"
+                        onclick="navigateTo('{% url 'app_settings:change-authuser-status' manager.id %}')"
+                      >
+                        <i class="bi bi-power"></i>
+                        {% if manager.is_active %}Deactivate{% else %}Activate{% endif %}
+                      </li>
+                      {% if user.role == 'AppAdmin' %}
+                      <li class="dropdown-item">
+                        <form method="post" action="{% url 'app_settings:change-authuser-role' manager.id %}">
+                          {% csrf_token %}
+                          <i class="bi bi-shield-fill-check"></i>
+                          <input
+                            type="submit"
+                            value="Promote to Admin"
+                            class="btn btn-link text-decoration-none btn-small"
+                            style="padding: 0 !important; color: inherit; margin: 0 !important"
+                          />
+                        </form>
+                      </li>
+                      {% endif %}
+                    </ul>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- pop ups for setup Api -->
+
+<!-- pop ups for accessibility -->
+<div class="modal fade" id="accessibility" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5 mx-auto">Change Theme</h1>
+      </div>
+      <div class="modal-body mx-auto text-center">
+        {% if user.light_mode %}
+        <i class="fas fa-moon"></i>
+        <p class="fs-6">Switch to Dark Mode for a more comfortable reading experience in low-light environments.</p>
+        {% else %}
+        <i class="fas fa-sun"></i>
+        <p class="fs-6">Switch to Light Mode for better visibility in bright environments.</p>
+        {% endif %}
+      </div>
+      <div class="modal-footer mx-auto">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button
+          type="button"
+          class="btn btn-success btn-gradient"
+          onclick="window.location.href='{% url 'toggle_light_mode' %}'"
+          data-bs-dismiss="modal"
+        >
+          {% if user.light_mode %} Enable Dark Mode {% else %} Enable Light Mode {% endif %}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% block footer %}
+<script>
+  document.getElementById('files').onchange = function () {
+    var src = URL.createObjectURL(this.files[0]);
+    document.getElementById('image').src = src;
+  };
+</script>
+
+<script>
+  document.getElementById('files').onchange = function () {
+    var src = URL.createObjectURL(this.files[0]);
+    document.getElementById('image').src = src;
+  };
+
+  function navigateToZohoAPI() {
+    const url = "{% url 'zoho_api:zoho_api_settings' %}";
+    window.location.href = url;
+  }
+
+  function toggleTheme() {
+    window.location.href = '{% url 'toggle_light_mode' %}';
+  }
+</script>
+{% endblock %} {% endblock %}

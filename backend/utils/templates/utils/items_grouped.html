@@ -1,0 +1,30 @@
+{% extends 'main.html' %}
+
+{% block content %}
+    <h1>Items Grouped by Item Group</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Item Group Name</th>
+                <th>Items</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for group in groups %}
+                <tr>
+                    <td>{{ group.group_name }}</td>
+                    <td>
+                        <ul>
+                            {% for item in group.items %}
+                                <li>{{ item.name }}</li>
+                                <li> <small>actual_available_stock</small>{{item.actual_available_stock}}</li>
+                                <li> <small>stock_on_hand</small>{{item.stock_on_hand}}</li>
+                                <li> <small>available_stock (Stock on Hand Accounting)</small>{{item.available_stock}}</li>
+                            {% endfor %}
+                        </ul>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

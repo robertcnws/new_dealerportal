@@ -1,0 +1,131 @@
+<style>
+  .inputDiv .form-control::placeholder,
+  .inputDiv .form-select::placeholder {
+    color: #999;
+  }
+
+  .inputDiv .form-control,
+  .inputDiv .form-select {
+    border-color: #444;
+  }
+
+  #titleModal {
+    color: #ccc;
+  }
+
+  .btn-light {
+    margin-right: 10px;
+    background-color: #444;
+    color: #ddd;
+  }
+
+  .code-bg {
+    border-radius: 5px;
+  }
+</style>
+
+<div class="modal fade" id="addNewSmartQuote" tabindex="-1" aria-labelledby="tableRowPopUpsLabel" aria-hidden="true">
+  <div class="modal-dialog modal-md modal-dialog-centered">
+    <div class="modal-content bg-dark text-white addNewQuote">
+      <div class="modal-header">
+        <h5 class="modal-title" id="titleModal" style="color: #cccccc">
+          <i class="bi bi-robot me-2"></i>
+          Smart Quote
+        </h5>
+      </div>
+      <div class="modal-body">
+        <form method="POST" action="{% url 'base-create-smart-quote' %}">
+          {% csrf_token %}
+
+          <div class="inputDiv">
+            <label for="{{ form.name.auto_id }}" class="form-label text-white">Name:</label>
+            <input
+              type="text"
+              id="{{ form.name.auto_id }}"
+              name="{{ form.name.html_name }}"
+              value="{{ form.name.value|default:'' }}"
+              required
+              placeholder="Enter Job Name"
+              class="form-control bg-dark text-white"
+            />
+          </div>
+
+          <div class="inputDiv">
+            <label for="{{ form.markup.auto_id }}" class="form-label text-white">Markup:</label>
+            <input
+              type="number"
+              id="{{ form.markup.auto_id }}"
+              name="{{ form.markup.html_name }}"
+              value="{{ form.markup.value|default:'' }}"
+              required
+              placeholder="Enter MarkUp as %"
+              class="form-control bg-dark text-white"
+            />
+          </div>
+
+          <div class="inputDiv">
+            <code class="form-label text-white">Frame Color:</code>
+            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+              <label class="btn btn-light me-2">
+                <input type="radio" id="white" name="frame_color" value="W" />
+                White
+              </label>
+              <label class="btn btn-light">
+                <input type="radio" id="bronze" name="frame_color" value="B" />
+                Bronze
+              </label>
+            </div>
+          </div>
+
+          <div class="inputDiv">
+            <code class="text-white">Manufacturer:</code>
+            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+              <label class="btn btn-light me-2">
+                <input type="radio" id="mg" name="manufacturer" value="MG" />
+                MG
+              </label>
+              <label class="btn btn-light">
+                <input type="radio" id="eco" name="manufacturer" value="ECO" />
+                ECO
+              </label>
+            </div>
+          </div>
+          <div class="inputDiv">
+            <code class="text-white">Budget:</code>
+            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+              <label class="btn btn-light me-2">
+                <input type="radio" id="economy" name="budget" value="economy" />
+                Economy
+              </label>
+              <label class="btn btn-light">
+                <input type="radio" id="economy" name="budget" value="deluxe" />
+                Deluxe
+              </label>
+            </div>
+          </div>
+
+          <div class="inputDiv">
+            <code class="text-white">Enter your items:</code>
+            <textarea id="items" name="items" rows="4" class="form-control bg-dark text-white"></textarea>
+            <div class="p-3 mt-2 code-bg bg-light">
+              <code class="text-dark">Add sizes of your windows separated by comma like this:</code>
+              <code>37 X 38 (2)</code>
+              ,
+              <code>38 X 80 (Privacy) (1)</code>
+              ,
+              <code>27 X 25 Bath (1)</code>
+              ,
+              <code>72 X 80 FD</code>
+              ,
+            </div>
+          </div>
+
+          <div class="btnGroup">
+            <input class="btn btn-success" type="submit" value="Create Smart Quote" />
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

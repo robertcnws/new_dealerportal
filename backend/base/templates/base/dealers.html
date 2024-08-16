@@ -1,0 +1,112 @@
+{% extends "main.html" %} {% load static %}{% load humanize %}{% block css %}
+<link rel="stylesheet" href="{% static 'styles/css/dealers.css' %}" />
+{% endblock %} {% block title %}Manage Dealerships{% endblock %} {% block content %}
+
+<div class="container-fluid">
+  <div class="heading">
+  <div class="addNewBtn">
+      <button data-bs-toggle="modal" data-bs-target="#addNewDealership"><i class="bi bi-building"></i> Create New Dealership</button>
+    </div>
+    <h5>Dealerships Accounts</h5>
+    
+  </div>
+  <div class="table-responsive">
+    <table class="table mt-2">
+      <thead>
+        <tr>
+          <th>Status</th>
+          <th>Logo</th>
+          <th>ID</th>
+          <th>Account Name</th>
+          <th>Phone</th>
+          <th>Tier</th>
+          <th>Dealer Admin</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for dealership in dealerships %}
+        <tr>
+          <td class="colorBG">
+            {% if dealership.is_active %}
+            <span class="confirmed">Active</span>
+            {% else %}
+            <span class="cancel">Inactive</span>
+            {% endif %}
+          </td>
+          <td class="logoImgThumb">
+            {% if dealership.logo %}
+            <img class="thumbnail img-fluid" src="{{ dealership.logo.url }}" />
+            {% else %}
+            <img class="thumbnail img-fluid" src="{% static 'images/dealership.png' %}" />
+            {% endif %}
+          </td>
+          <td>{{ dealership.id }}</td>
+          <td>{{ dealership.name }}</td>
+          <td>{{ dealership.phone }}</td>
+          <td>{{ dealership.tier }}</td>
+          <td>{{ dealership.dealer_admin.first_name }} {{ dealership.dealer_admin.last_name }}</td>
+          <td>
+            <div class="actionButtons">
+              <a class="manage" href="{% url 'base-manage-dealership' dealership.id %}">Manage</a>
+              |{% if dealership.is_active %}
+              <a class="deactivate" href="{% url 'base-change_status-dealership' dealership.id %}">Deactivate</a>
+              {% else %}
+              <a class="activate" href="{% url 'base-change_status-dealership' dealership.id %}">Activate</a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block pop_ups %}
+<!-- pop ups for new estimator-->
+<div class="modal fade" id="addNewDealership" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5 mx-auto" id="exampleModalLabel">Create a new User</h1>
+      </div>
+      <div class="modal-body">
+        <form method="POST" action="{% url 'base-create-dealership'%}">
+          {% csrf_token %}
+          <div class="inputGroup">
+              <label for="{{ form.name.id_for_label }}">Name</label>
+              {{ form.name }}
+          </div>
+          <div class="inputGroup">
+              <label for="{{ form.logo.id_for_label }}">Logo</label>
+              {{ form.logo }}
+          </div>
+          <div class="inputGroup">
+              <label for="{{ form.company_address.id_for_label }}">Company Address</label>
+              {{ form.company_address }}
+          </div>
+          <div class="inputGroup">
+              <label for="{{ form.company_phone.id_for_label }}">Company Phone</label>
+              {{ form.company_phone }}
+          </div>
+          {% if user.role == "AppManager" or user.role == "AppAdmin" %}
+            <div class="inputGroup">
+              <label for="{{ form.company_phone.id_for_label }}">Dealership ID Email</label>
+            {{ form.zoho_email }}
+            <br/>
+            <small class="badge bg-dark pill p-2">This Email must be the same that the one for the User on the Zoho System.</small>
+              
+           </div>
+          {% endif %}
+      </div>
+      <div class="modal-footer mx-auto">
+        <input class="btn btn-success" type="submit" value="Create Dealership" />
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

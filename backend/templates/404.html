@@ -1,0 +1,111 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Erick's Dashboard</title>
+  </head>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700;800&display=swap');
+    .container {
+      font-family: 'Open Sans', sans-serif;
+      width: 99vw;
+      height: 90vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .container .center {
+      width: 450px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .container .center img {
+      width: 450px;
+    }
+    .container .center h1 {
+      text-transform: uppercase;
+      font-size: 40px;
+      color: #666666;
+    }
+    .container .center button {
+      background: #666666;
+      color: white;
+      font-size: 18px;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: 0.3s all ease;
+    }
+    .container .center button:hover {
+      background: #669a41;
+      transform: scale(1.1);
+    }
+    @media (max-width: 991px) {
+      .container {
+        width: 98vw;
+        height: 90vh;
+      }
+      .container .center {
+        width: 450px;
+      }
+      .container .center img {
+        width: 400px;
+      }
+      .container .center h1 {
+        font-size: 36px;
+      }
+    }
+    @media (max-width: 768px) {
+      .container {
+        width: 98vw;
+      }
+      .container .center {
+        width: 400px;
+      }
+      .container .center img {
+        width: 350px;
+      }
+      .container .center h1 {
+        font-size: 32px;
+      }
+    }
+    @media (max-width: 576px) {
+      .container {
+        width: 99vw;
+        height: 90vh;
+      }
+      .container .center {
+        width: 350px;
+      }
+      .container .center img {
+        width: 300px;
+      }
+      .container .center h1 {
+        font-size: 30px;
+      }
+    }
+  </style>
+  <body>
+    <div class="container">
+      <div class="center">
+        <img src="{% static 'images/error.png'%}" alt="error" />
+        <h1>Page not found</h1>
+        <button onclick="goBack()">Please Go Back</button>
+      </div>
+    </div>
+    <script>
+      function goBack() {
+        if (document.referrer === '') {
+          window.location.href = '/';
+        } else {
+          window.history.back();
+        }
+      }
+    </script>
+  </body>
+</html>

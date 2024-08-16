@@ -1,0 +1,23 @@
+{% load humanize %}
+<thead>
+  <tr>
+    <th>Name</th>
+    <th>Sku #</th>
+    <th>Selling Price</th>
+    <th>Stock</th>
+  </tr>
+</thead>
+<tbody>
+  {% for item in items %}
+  <tr>
+    <td>{{item.name}}</td>
+    <td>{{ item.sku}}</td>
+    <td>${{ item.price|floatformat:2|intcomma|intword }}</td>
+    <td>{{ item.stock}}</td>
+  </tr>
+  {% empty %}
+  <tr>
+    <td colspan="4">No results</td>
+  </tr>
+  {% endfor %}
+</tbody>

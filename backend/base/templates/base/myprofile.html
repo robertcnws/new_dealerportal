@@ -1,0 +1,176 @@
+{% extends 'main.html' %} {% load static %} {% block title %} My Profile {% endblock %} {% block css %}
+<link rel="stylesheet" href="{% static 'styles/css/profile.css' %}" />
+{% endblock %} {% block content %} {% load static %}
+
+<div class="container-fluid">
+  <div class="heading">
+    <br />
+    <div class="profileMain">
+      <div class="profile-pic-container">
+        <img id="profile-pic" src="{{ request.user.profile_pic.url }}" alt="Profile Picture" />
+        <label for="file-input" class="upload-label">
+          <i class="bi bi-camera-fill profile-camera-icon"></i>
+          <span>Upload Image</span>
+        </label>
+      </div>
+      <form id="profile-pic-form" method="POST" action="{% url 'update-profile-pic' %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input id="file-input" type="file" name="profile_pic" style="display: none" />
+        <br />
+        <button id="save-button" class="btn btn-success" type="submit" style="display: none">Upload Image</button>
+      </form>
+
+      <div class="profileInfo">
+        <div class="headings">
+          <h2>{{request.user.first_name}} {{request.user.last_name}}</h2>
+          <small>{{request.user.role}}</small>
+          <br />
+          <small>{{request.user.email}}</small>
+          <br />
+          <small>{{request.user.phone}}</small>
+          <br />
+          <small>{{ request.user.address }}</small>
+        </div>
+        <div class="buttons">
+          <button data-bs-toggle="modal" data-bs-target="#updateProfile">Edit Profile</button>
+          <button data-bs-toggle="modal" data-bs-target="#updatePassword">Update Password</button>
+          <button class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#accessibility">
+            <i class="bi bi-universal-access"></i>
+            <span>Accessibility</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% endblock %} {% block pop_ups %}
+  <!-- pop ups for update Profile -->
+  <div class="modal fade" id="updateProfile" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5 mx-auto">Update User Details</h1>
+        </div>
+        <div class="modal-body">
+          <form method="POST" action="{% url 'base-update-profile' %}">
+            {% csrf_token %} {% for field in form %}
+            <div class="inputGroup">
+              <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {{ field }}
+            </div>
+            {% endfor %}
+
+            <div class="modal-footer mx-auto">
+              <input type="submit" value="Save Changes" class="btn btn-success btn-gradient" />
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="updatePassword" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5 mx-auto">Update Password</h1>
+        </div>
+        <div class="modal-body">
+          <form>
+            <div class="inputGroup">
+              <label for="prevPass">Enter Your Current Password:</label>
+              <input type="password" name="prevPass" id="prevPass" />
+            </div>
+            <div class="inputGroup">
+              <label for="newPass">Enter New Password:</label>
+              <input type="password" name="newPass" id="newPass" />
+            </div>
+            <div class="inputGroup">
+              <label for="newCpass">Confirm New Password:</label>
+              <input type="password" name="newCpass" id="newCpass" />
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer mx-auto">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-success btn-gradient" onclick="updatePassword()" data-bs-dismiss="modal">
+            Update Password
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="accessibility" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5 mx-auto">Change Theme</h1>
+        </div>
+        <div class="modal-body mx-auto text-center">
+          {% if user.light_mode %}
+          <i class="fas fa-moon"></i>
+          <p class="fs-6">Switch to Dark Mode for a more comfortable reading experience in low-light environments.</p>
+          {% else %}
+          <i class="fas fa-sun"></i>
+          <p class="fs-6">Switch to Light Mode for better visibility in bright environments.</p>
+          {% endif %}
+        </div>
+        <div class="modal-footer mx-auto">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button
+            type="button"
+            class="btn btn-success btn-gradient"
+            onclick="window.location.href='{% url 'toggle_light_mode' %}'"
+            data-bs-dismiss="modal"
+          >
+            {% if user.light_mode %} Enable Dark Mode {% else %} Enable Light Mode {% endif %}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% endblock %} {% block footer %}
+  <script>
+    //for alert
+    function updatePassword() {
+      swal({
+        title: 'Successful',
+        text: "You've Changed your password.",
+        icon: 'success',
+        button: 'Okay',
+      });
+    }
+  </script>
+  <script>
+    window.onload = function () {
+      const image = document.querySelector('#profile-pic');
+      const fileInput = document.querySelector('#file-input');
+      const saveButton = document.querySelector('#save-button');
+
+      image.addEventListener('click', function () {
+        fileInput.click();
+      });
+
+      fileInput.addEventListener('change', function () {
+        if (this.value) {
+          saveButton.style.display = 'block'; // Show the save button
+        }
+      });
+      fileInput.addEventListener('change', function () {
+        const file = this.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function (event) {
+            image.setAttribute('src', event.target.result);
+          };
+          reader.readAsDataURL(file);
+          saveButton.style.display = 'block'; // Show the save button
+        }
+      });
+    };
+  </script>
+  {% endblock%}
+</div>

@@ -1,0 +1,47 @@
+<div class="modal fade" id="editQuote" tabindex="-1" aria-labelledby="tableRowPopUpsLabel" aria-hidden="true">
+  <div class="modal-dialog modal-sm modal-dialog-centered">
+    <div class="modal-content addNewQuote">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-pencil-square me-2"></i>
+          Edit: {{quote.name}}
+        </h5>
+      </div>
+      <div class="modal-body">
+        <form method="POST" action="{% url 'base-update-quote' quote.id %}">
+          {% csrf_token %}
+
+          <div class="inputDiv">
+            <label for="{{ quoteform.name.auto_id }}">Name:</label>
+            <input
+              type="text"
+              id="{{ quoteform.name.auto_id }}"
+              name="{{ quoteform.name.html_name }}"
+              value="{{ quoteform.name.value|default:'' }}"
+              required
+              placeholder="Enter Job Name"
+            />
+          </div>
+          <div class="inputDiv">
+            <label for="{{ quoteform.markup.auto_id }}">Mark Up:</label>
+            <input
+              type="number"
+              id="{{ quoteform.markup.auto_id }}"
+              name="{{ quoteform.markup.html_name }}"
+              value="{{ quoteform.markup.value|default:'' }}"
+              required
+              placeholder="Enter MarkUp as %"
+            />
+          </div>
+
+          <!-- Render any other form fields in a similar manner -->
+
+          <div class="btnGroup">
+            <input class="btn btn-success" type="submit" value="Update" />
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

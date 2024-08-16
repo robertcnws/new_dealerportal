@@ -1,0 +1,73 @@
+{% load humanize %}
+<thead>
+  <tr>
+    <th>Date</th>
+    <th>Status</th>
+    <th>Quote #</th>
+    <th>Job Name</th>
+    {% if user.role == "AppAdmin" or user.role == "AppManager" %}
+    <th>Dealer Account</th>
+    {% endif %}
+    <th>Created By</th>
+    <th>Total Sell</th>
+    <th>Total Cost</th>
+    <th>Last Modified</th>
+    {% if request.path != '/utils/search/' %}
+    <th id="action">Action</th>
+    {% endif %}
+  </tr>
+</thead>
+<tbody>
+  {% for quote in quotes %}
+  <tr>
+    <td>{{ quote.created_at|date:'Y-m-d' }}</td>
+    <td class="colorBG">
+      {% if quote.status == 'ordered' %}
+      <span class="processing">Ordered</span>
+      {% elif quote.status == 'active' %}
+      <span class="confirmed">Active</span>
+      {% else %}
+      <span class="cancel">Inactive</span>
+      {% endif %}
+    </td>
+    <td><a href="{% url 'base-view-quote' quote.id %}">{{quote.id}}</a></td>
+    <td>{{quote.name}}</td>
+    {% if user.role == "AppAdmin" or user.role == "AppManager" %}
+    <td>{{ quote.owner.dealer_account }}</td>
+    {% endif %}
+    <td>{{ quote.owner}}</td>
+    <td>${{ quote.total_sell|floatformat:2|intcomma|intword }}</td>
+    <td>${{ quote.total_cost|floatformat:2|intcomma|intword }}</td>
+    <td>{{ quote.updated_at | date:'Y-m-d'}}</td>
+    {% if request.path != '/utils/search/' %}
+    <td class="">
+      <div class="dropdown-toggle" data-bs-toggle="dropdown">
+        <i class="bi bi-three-dots-vertical"></i>
+      </div>
+      <ul class="actionDropMenu dropdown-menu dropdown-menu-end">
+        <h6 class="dropdown-header">Action</h6>
+        <li class="dropdown-item" onclick="navigateTo('{% url 'base-view-quote' quote.id %}')">
+          <i class="bi bi-eye"></i>
+          View
+        </li>
+        {% if quote.status != 'ordered' %}
+        <li class="dropdown-item" onclick="navigateTo('{% url 'base-clone-quote' quote.id %}')">
+          <i class="bi bi-front"></i>
+          Clone
+        </li>
+        <li
+          class="dropdown-item"
+          data-bs-toggle="modal"
+          data-bs-target="#deleteTableRow"
+          onclick="deleteQuoteItem('{% url 'base-delete-quote' quote.id %}')"
+        >
+          <i class="bi bi-trash"></i>
+          Delete
+        </li>
+        {%endif %}
+      </ul>
+    </td>
+    {% endif %}
+  </tr>
+  {% endfor %}
+</tbody>

@@ -1,0 +1,571 @@
+{% extends 'main.html' %} {% load static humanize %}{% load custom_filters %} {% block css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css" />
+
+<link rel="stylesheet" href="{% static 'styles/css/detailsPages.css' %}" />
+<link rel="stylesheet" href="{% static 'styles/css/addProductSearcher.css' %}" />
+
+{% endblock %} 
+{% block title %} Quote: {{quote.name}}{% endblock %}
+{% block content %}
+
+<div class="container-fluid">
+  <div class="quoteDetailsContMain">
+    <div class="leftMain">
+      <div class="">
+        <div class="heading">
+          <h5>Quote Details</h5>
+        </div>
+        <div class="quoteMenuMain">
+          <!-- top section quote details and buttons -->
+          <div class="topSection">
+            <div class="left">
+              Status: {% if quote.status == 'ordered' %}
+              <span class="bg-info text-white">{{quote.status}}</span>
+              {% elif quote.status == 'active' %}
+              <span class="bg-success text-white">{{quote.status}}</span>
+              {% else %}
+              <span class="btn-danger text-white">{{quote.status}}</span>
+              {% endif %}
+
+              <div class="semiTopSection">
+                <p>
+                  JOB Name:
+                  <span>{{quote.name}}</span>
+                </p>
+                <p>
+                  Created By:
+                  <span>{{quote.owner}}</span>
+                </p>
+                <p>
+                  Created At:
+                  <span>{{ quote.created_at.date }}</span>
+                </p>
+                <p>
+                  Last Modified:
+                  <span>{{ quote.updated_at.date }}</span>
+                </p>
+                <p>
+                  Mark Up:
+                  <span>{{quote.markup}}</span>
+                </p>
+              </div>
+            </div>
+            <div class="right">
+              <button onclick="viewPdf()">
+                <i class="bi bi-printer"></i>
+                <span>Print Sell</span>
+              </button> 
+              <button onclick="viewCostPdf()">
+                <i class="bi bi-printer-fill"></i>
+                <span>Print Cost</span>
+              </button>  
+              {% if quote.status != 'ordered' %}
+              <button data-bs-toggle="modal" data-bs-target="#deleteQuoteItem">
+                <i class="bi bi-trash3"></i>
+                <span>Delete</span>
+              </button>
+              <button data-bs-toggle="modal" data-bs-target="#editQuote">
+                <i class="bi bi-pencil-square"></i>
+                <span>Edit</span>
+              </button>
+              {% if user.role != 'Estimator' %}
+              <button data-bs-toggle="modal" data-bs-target="#placeOrder">
+                <i class="bi bi-bag-plus bg-success"></i>
+                <span>Place Order</span>
+              </button>
+              {% endif %}         
+              {% endif %}          
+              {% if quote.status == 'ordered' %}
+              <button onclick="navigateTo('{% url 'base-view-order' quote.order.id %}')">
+                <i class="bi bi-bag-plus"></i>
+                <span>View Order</span>
+              </button>
+              {% endif %}
+              
+              {% if quote.status != 'ordered' %}
+              <button id="equalize-quote-button">
+                <i class="bi bi-robot bg-warning"></i>
+                <span>Smart Quote</span>
+              </button>
+              <button id="analyze-quote-button">
+                <i class="bi  bi-lightning-charge-fill bg-info"></i>
+                <span>Suggest Alternatives</span>
+              </button>
+              {% endif %}
+            </div>
+          </div>
+          <!-- table -->
+          <div class="middleSection">
+            <h5 class="middleHeading">PRODUCTS</h5>
+            <table id=quote-products-table>
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Price</th>
+                  <th>Quantity</th>
+                  <th>Total Price</th>
+                  {% if quote.status != 'ordered' %}
+                  <th>Actions</th>
+                  {% endif %}
+                </tr>
+              </thead>
+              <tbody>
+                {% for quote_product in quote_products %}
+                
+                {% with is_product_in_stock|get_item:quote_product.product.name as status %}
+              
+                <tr id="{{ quote_product.id }}" {% if status == 'Out of stock' %} class="alert-color" title="This item is currently out of stock"
+                    {% elif status == 'Insufficient stock for quote' %} class="info-color" title="We might not have enough stock to fulfill this item"
+                    {% else %} title="This item is in stock"{% endif %}>
+                  <td class="doubleRowTd">
+                      <p>{{ quote_product.product.name }}</p>
+                      <small>
+                        {{ quote_product.product.sku }} &nbsp;
+                       
+                      <br/>
+                      <code>
+                        {{status}}
+                      </code>
+                      <a href="#" class="details-tooltip" data-toggle="tooltip" data-trigger="click" data-placement="right" data-html="true" title="{{ quote_product.product.description }}" style="color: inherit; text-decoration: inherit;">
+                        CLICK FOR MORE DETAILS
+                    </a>
+                      </small>
+                  </td>
+                  <td>${{ quote_product.product.price |intcomma}}</td>
+                  <td class="doubleRowTd">
+                    <p>{{ quote_product.quantity }}</p>
+                    <small>
+                      Available Stock:
+                      <span>{{quote_product.product.stock}}</span>
+                    </small>
+                    <br/>
+                  </td>
+                  <td>{{ quote_product.total_price |intcomma}}</td>
+                  {% if quote.status != 'ordered' %}
+                  <td class="actionTd">
+                    <a href="#" data-bs-toggle="modal" data-bs-target="#editQtyModal{{ quote_product.id }}">
+                      <i class="bi bi-pencil-square text-success"></i>
+                    </a>
+                    &nbsp;
+                    <a href="#" onclick="deleteLineItem('{% url 'base-delete-quoteproduct' quote_product.id %}')" data-toggle="tooltip" data-trigger="hover" data-placement="top" title="Delete item">
+                      <i class="bi bi-trash-fill text-danger"></i>
+                    </a>
+                  </td>
+                  <div class="modal fade" id="editQtyModal{{ quote_product.id }}" tabindex="-1" role="dialog" aria-labelledby="editQtyModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-sm modal-dialog-centered">
+                      <div class="modal-content">
+                        <div class="modal-header bg-light border-bottom">
+                          <h4 class="modal-title h6 mb-0">Edit Product Quantity</h4>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form method="POST" action="{% url 'base-edit-quoteproduct' quote_product.id %}">
+                          {% csrf_token %}
+                          <div class="modal-body">
+                            <div class="bg-light rounded">
+                              <div class="input-group">
+                                <code class="text-dark">{{ quote_product.product.name }}</code>
+                                <code>
+                                  {{ quote_product.product.sku }}
+                                </code>
+                                <br/>
+                              </div>
+                            </div>
+                            <div class="input-group">
+                              <div class="input-group-prepend">
+                                <div class="input-group-text">QTY</div>
+                              </div>
+                              <input type="number" class="form-control" id="newQty" name="qty" min="1" value="{{ quote_product.quantity }}">
+                            </div>
+                            <code>
+                              (Available for sale)
+                              {{ quote_product.product.stock }}
+                            </code>
+
+                          </div>
+                          <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+                  
+                {% endif %}
+                </tr>
+                {% endwith %}
+
+                {% endfor %} 
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="rightSection">
+      <div class="heading">
+        <br/>
+        {% if quote.status != 'ordered' %}
+        <h5> <i class="bi bi-plus-lg"></i> Add Products to Quote</h5>
+        {% endif %}
+      </div>
+      <div class="rightMain">
+        <div class="cards">
+        {% if quote.status != 'ordered' %}
+          <div class="card" >
+            <form method="POST" action="{% url 'base-save_products_to_quote' %}" class="quote-form" id="quoteForm">
+              {% csrf_token %}
+              <input type="hidden" id="id_product_list" name="product_list" value="" required />
+              <input type="hidden" id="quote" name="quote" value="{{quote.id}}"  required />
+                <input
+                  id="product_autocomplete"
+                  type="text"
+                  name="product_autocomplete"
+                  placeholder="Type to add a product"
+                  class="form-control"
+                />
+                <div id="myDiv"></div>
+                <br>
+                <button type="submit" class="btn btn-success ms-auto">
+                  <i class="bi bi-save"></i> Save Products
+                </button> 
+            </form>
+          </div>
+          <div class="card" ></div>
+        {% endif %}
+          <div class="card">
+            <h6>QUOTE TOTALS</h6>
+            <p>
+              Total Cost:
+              <span>${{ quote.total_cost|floatformat:2|intcomma|intword }}</span>
+            </p>
+            <p>
+              Mark up Total:
+              <span>${{ quote.markup_total |floatformat:2|intcomma|intword }}</span>
+            </p>
+            <p>
+              Total Sell:
+              <span>${{ quote.total_sell|floatformat:2|intcomma|intword }}</span>
+            </p>
+          </div>
+          <div class="card">
+            <h6>QUOTE NOTES</h6>
+            {% if quote.status != 'ordered' %}
+            <form id="notesForm" method="POST" action="{% url 'update_quote_notes' quote.id %}">
+                {% csrf_token %}
+                <textarea id="notes" name="notes" readonly>{{ notesform.notes.value }}</textarea>
+                <hr/>
+                <button type="submit" class="btn btn-primary">Save Notes</button>
+            </form>
+            {% else %}
+            {{quote.notes}}
+            {% endif %}
+
+        </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <br />
+  <br />
+</div>
+{% endblock %} {% block pop_ups %}
+
+
+<!-- remove quote line modal -->
+{% if quote.status != 'ordered' %}
+<!-- delete total quote item modal -->
+<div class="modal fade" id="deleteQuoteItem" tabindex="-1" aria-labelledby="tableRowPopUpsLabel" aria-hidden="true">
+  <div class="modal-dialog modal-sm modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-body">
+        <div class="modalContent">
+          <span><i class="bi bi-exclamation-triangle"></i></span>
+          <h4>Are you Sure ?</h4>
+          <h6>You want to delete this Quote ?</h6>
+        </div>
+        <div class="btnGroup">
+          <button
+            type="button"
+            onclick="deleteQuoteItem('{% url 'base-delete-quote' quote.id %}')"
+            class="btn mx-auto btn-danger"
+            data-bs-dismiss="modal"
+          >
+            Delete
+          </button>
+          <button type="button" class="btn mx-auto btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- place order modal/popups -->
+<div class="modal fade" id="placeOrder" tabindex="-1" aria-labelledby="tableRowPopUpsLabel" aria-hidden="true">
+  <div class="modal-dialog modal-sm modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-light border-bottom">
+        <h4 class="modal-title h6 mb-0"></h4>
+        <div class="text-end">
+          <button type="button" class="btn-close me-2 mt-2" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+      </div>
+      <div class="modal-content">
+        <div class="modal-body">
+          <div class="modalContent">
+            <span><i class="bi bi-question-circle text-warning"></i></span>
+            <h4>Are you Sure ?</h4>
+            <h6>You want to place the Order ?</h6>
+
+            <form method="POST" action="{% url 'base-create-order' quote.id %}">
+              {% csrf_token %}
+
+              <div class="btnGroup">
+                <input class="btn me-5 btn-success" type="submit" value="Place Order" />
+                <button type="button" class="btn mx-auto btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <!-- add new quote popup/modal -->
+  {% include '_edit_quote_popup.html' %} 
+
+
+  
+  <div class="modal fade" id="equalizeModal" tabindex="-1" aria-labelledby="equalizeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-md modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header bg-light border-bottom">
+          <h4 class="modal-title h6 mb-0"> Analysis Results</h4>
+          <div class="text-end">
+            <button type="button" class="btn-close me-2 mt-2" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+        </div>
+        <div class="modal-content">
+          <div class="modal-body">
+            <div class="modalContent">
+             
+            
+              <div id="equalizeModalBody" class="text-center">
+             
+              </div> <!-- This is where the analysis results will be inserted -->
+  
+              <div class="btnGroup">
+                <button type="button" class="btn mx-auto btn-secondary" data-bs-dismiss="modal">Close</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+<div class="modal fade" id="analyzeModal" tabindex="-1" aria-labelledby="analyzeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-md modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header bg-light border-bottom">
+          <h4 class="modal-title h6 mb-0"> Analysis Results</h4>
+          <div class="text-end">
+            <button type="button" class="btn-close me-2 mt-2" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+        </div>
+        <div class="modal-content">
+          <div class="modal-body">
+            <div class="modalContent">
+              <div id="analyzeModalBody" class="text-center">
+              <!-- This is where the analysis results will be inserted -->
+              </div> 
+              <div class="btnGroup">
+                <button type="button" class="btn mx-auto btn-secondary" data-bs-dismiss="modal">Close</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% endif %}
+
+  {% endblock %} {% block footer %}
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+  <script type="text/javascript">
+    // Initialize your JavaScript variable with Django data
+    
+    $(function () {
+      $('.details-tooltip').tooltip({ trigger: 'click', placement: 'right' });
+    });
+    
+    $(function () {
+      $('[data-toggle="tooltip"]').tooltip();
+    });
+    function viewPdf() {
+      var url = "{% url 'utils:utils-quote-view-pdf' quote.id %}";
+      window.open(url, '_blank');
+  }
+
+  function viewCostPdf() {
+    var url = "{% url 'utils:utils-quote-view-cost-pdf' quote.id %}";
+    window.open(url, '_blank');
+}
+  </script>
+  
+  {% if quote.status != 'ordered' %}
+  <script type="text/javascript">
+    // Initialize your JavaScript variable with Django data
+    var availableProducts = {{ product_list|safe }};
+  </script>
+  <script src="{% static 'styles/js/addproductQuote.js' %}" type="text/javascript"></script>
+
+
+  <script>
+    $("#notes").click(function() {
+      $(this).removeAttr('readonly').addClass('editable');
+  });
+
+    function deleteLineItem(deleteUrl) {
+      swal({
+        title: 'Are you sure?',
+        text: 'Please confirm you want to remove this product from the quote.',
+        icon: 'warning',
+        buttons: true,
+        dangerMode: true,
+      }).then((willDelete) => {
+        if (willDelete) {
+          window.location.href = deleteUrl;
+        }
+      });
+    }
+
+    function deleteQuoteItem(deleteUrl) {
+      swal({
+        title: 'Are you sure?',
+        text: 'Once deleted, you will not be able to recover this quote!',
+        icon: 'warning',
+        buttons: true,
+        dangerMode: true,
+      }).then((willDelete) => {
+        if (willDelete) {
+          window.location.href = deleteUrl;
+        }
+      });
+    }
+  </script>
+  <script>
+    $(document).ready(function() {
+
+      // CSRF token setup for AJAX
+      var csrftoken = $("[name=csrfmiddlewaretoken]").val();
+      function csrfSafeMethod(method) {
+      // these HTTP methods do not require CSRF protection
+      return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+      }
+      $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+          if (!csrfSafeMethod(settings.type) && !this.crossDomain) { xhr.setRequestHeader("X-CSRFToken", csrftoken);}}});
+  
+
+      $("#equalize-quote-button").click(function() {
+          var url = "{% url 'utils:utils-equalize_quote' quote.id %}";
+          $.ajax({
+              type: "GET",
+              url: url,
+              success: function(data) {
+                  // Initialize an empty message string
+                  var message = "";
+  
+                  // If data is empty, no differences were found, display the success message
+                  if (data.length === 0) {
+                      message = "<div class='alert alert-success text-center' role='alert'>";
+                      message += "<i class='bi bi-check-circle-fill' width='24px' height='24px'></i>";
+                      message += "<p>Your quote seems good. Please make sure the inventory levels are available. Keep in mind if stock is low the order might not be fulfilled if you take too long to place the order.</p></div>";
+                  } else {
+                      // Differences were found, display the inconsistency message
+                      message = "<div class='alert alert-warning text-center' role='alert'>";
+                      message += "<i class='bi bi-exclamation-triangle-fill' width='24px' height='24px'></i>";
+                      message += "<p>Some inconsistencies were found in your quote, please double check the following items:</p>";
+  
+                      data.forEach(function(product) {
+                          $('#' + product.quote_product_id).css('border-left', '5px solid red');
+                          message += "<p><code>" + product.sku + "</code></p>";
+                          message += "<p><code class='text-dark'>" + product.errors + "</code></p>";
+                      });
+  
+                      message += "</div>";
+                  }
+  
+                  // Insert the message into the modal body
+                  $('#equalizeModalBody').html(message);
+  
+                  // Show the modal
+                  $('#equalizeModal').modal('show');
+              },
+              error: function(error) {
+                  console.log(error);
+              }
+          });
+      });
+
+$("#analyze-quote-button").click(function() {
+    var quoteId = "{{ quote.id }}";
+    var url = "{% url 'utils:utils-analyze_quote_and_suggest_replacements' quote.id %}";
+    $.ajax({
+      type: "GET",
+      url: url,
+      success: function(data) {
+        var message = "";
+        var replacementsNeeded = false;
+
+        Object.keys(data).forEach(function(sku) {
+          if (data[sku].replacements.length > 0) {
+            replacementsNeeded = true;
+            message += "<h6>Original Item:</h6>"
+            message += "<code>SKU: " + sku + "</code>";
+            message += "<h6>Replacement Suggestions:</h6>"
+            message += "<table class='table table-striped table-sm table-hover'><thead class='thead-light'><tr><th><code class='text-dark'>Item</code></th><th><code class='text-dark'>Available</code></th><th><code class='text-dark'>Price</code></th><th><code class='text-dark'>Action</code></th></tr></thead><tbody>";
+            data[sku].replacements.forEach(function(replacement) {
+              var item = replacement[0];
+              var quantity = replacement[1];
+              var price = parseFloat(replacement[2]).toFixed(2);
+              message += "<tr><td><code>" + item + "</code></td><td><code>" + quantity + "</code></td><td><code>$" + price + "</code></td><td><form method='POST' action='{% url 'base-replace_item_in_quote' %}'><input type='hidden' name='csrfmiddlewaretoken' value='" + csrftoken + "'/><input type='hidden' name='quote_product_id' value='" + data[sku]['quote_product_id'] + "'/><input type='hidden' name='replacement_sku' value='" + item + "'/><input type='hidden' name='quote_id' value='" + quoteId + "'/><button type='submit' class='btn btn-link p-0'>Apply</button></form></td></tr>";
+            });
+            message += "</tbody></table>";
+          }
+        });
+
+        if (replacementsNeeded) {
+          message = "<div class='alert alert-warning text-center' role='alert'>" +
+            "<i class='bi bi-exclamation-triangle-fill' width='24px' height='24px'></i><h6>The following Items are out of stock or don't have enough stock. Here are some suggestions for replacements:</h6>" +
+            message +
+            "</div>";
+        } else {
+          message = "<div class='alert alert-success text-center' role='alert'>" +
+            "<i class='bi bi-check-circle-fill' width='24px' height='24px'></i>" +
+            "<p>All products in your quote are in stock and have enough quantity to fulfill the order.</p>" +
+            "</div>";
+        }
+
+        $('#analyzeModalBody').html(message);
+        $('#analyzeModal').modal('show');
+      },
+      error: function(error) {
+        console.log(error);
+      }
+    });
+  });
+    
+  });
+
+
+</script>
+{% endif %}
+
+  {% endblock %}
+</div>

@@ -1,0 +1,28 @@
+{% extends 'main.html' %}
+
+{% block content %}
+
+<section class="quote-section">
+    <header class="quote-header">
+    <h1>Quote Details: </h1>
+      <small>Quote #{{ quote.pk }}</small>
+      <hr />
+     
+    </header>
+    <div class="quote-details">
+      <p><b>Created by:</b> {{ quote.owner }}</p>
+      <p><b>Created at:</b> {{ quote.created_at.date }}</p>
+      <p><b>Last Modified:</b> {{ quote.updated_at.date}}</p>
+      <p><b>Mark Up:</b> {{ quote.markup }} %</p>
+    </div>
+<div>
+   
+    <form method="POST" action="">
+        {% csrf_token %}
+
+        {{form.as_p}}
+        <input type="submit" value="Submit">
+    </form>
+</div>
+</section>
+{% endblock content %}

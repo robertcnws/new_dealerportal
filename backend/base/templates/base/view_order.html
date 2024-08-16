@@ -1,0 +1,264 @@
+{% extends 'main.html' %} {% load static humanize %} {% block css %}
+<link rel="stylesheet" href="{% static 'styles/css/detailsPages.css' %}" />
+{% endblock %}{% block title %} Order: {{order.quote.name}} {% endblock %} {% block content %}
+
+<div class="container-fluid">
+  <div class="quoteDetailsContMain">
+    <div class="leftMain">
+      <div class="heading">
+        <h5>Order Details</h5>
+      </div>
+      <div class="quoteMenuMain orderMenuMain">
+        <!-- status and buttons section -->
+        <div class="topSection">
+          <div class="left">
+            Status: {% if order.status == 'pending' %}
+            <span class="bg-info text-white">Pending</span>
+            {% elif order.status == 'accepted' %}
+            <span class="bg-success text-white">Accepted</span>
+            {% elif order.status == 'canceled' %}
+            <span class="bg-danger text-white">Canceled</span>
+            {% else %}
+            <span class="other-bubble">{{order.status|capfirst }}</span>
+            {% endif %}
+
+            <div class="semiTopSection">
+              <p>
+                Job Name:
+                <span>{{ order.quote.name }}</span>
+              </p>
+              <p>
+                Order Number:
+                <span>{{ order.order_number }}</span>
+              </p>
+              <p>
+                Order By:
+                <span>{{ order.owner }}</span>
+              </p>
+              <p>
+                Created At:
+                <span>{{ order.created_at.date }}</span>
+              </p>
+              <p>
+                Last Modified:
+                <span>{{ order.updated_at.date}}</span>
+              </p>
+              <p>
+                Mark Up:
+                <span>% {{ order.quote.markup }}</span>
+              </p>
+            </div>
+          </div>
+          <div class="right">
+            {% if user.role == 'AppManager' or user.role == 'AppAdmin' %} 
+            {% if not order.status == "accepted" and not order.status == "canceled" %}
+            <button class="text-success" data-bs-toggle="modal" data-bs-target="#acceptOrderModal">
+              <i class="bi bi-clipboard2-plus-fill"></i>
+              Accept Order
+            </button>
+            <button class="text-danger" data-bs-toggle="modal" data-bs-target="#declineOrderModal">
+              <i class="bi bi-clipboard2-x"></i>
+              Decline Order
+            </button>
+            {% endif %} {% endif %}
+            <button onclick="viewPdf()">
+              <i class="bi bi-printer"></i>
+              <span>Print Sell</span>
+            </button>
+            <button onclick="viewCostPdf()">
+              <i class="bi bi-printer-fill"></i>
+              <span>Print Cost</span>
+            </button>
+          </div>
+        </div>
+        <!-- table or mid section -->
+        <div class="middleSection">
+          <h5 class="middleHeading">PRODUCTS</h5>
+          <table>
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>Total Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for quote_product in quote_products %}
+              <tr>
+                <td class="doubleRowTd">
+                  <p>{{ quote_product.product.name }}</p>
+                  <small>{{ quote_product.product.sku }}</small>
+                  <br />
+                  <small>{{ quote_product.product.description }}</small>
+                </td>
+                <td>$ {{ quote_product.product.price |intcomma}}</td>
+                <td>{{ quote_product.quantity }}</td>
+                <td>$ {{ quote_product.total_price |intcomma}}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <!-- bottom section or order total section -->
+        <div class="bottomSection orderedBottomSection">
+          <div class="right">
+            <h6>ORDER TOTALS</h6>
+            <p>
+              Total Cost:
+              <span>$ {{ order.total_cost|floatformat:2|intcomma|intword }}</span>
+            </p>
+            <p>
+              Mark up Total:
+              <span>$ {{order.quote.markup_total|floatformat:2|intcomma|intword}}</span>
+            </p>
+            <p>
+              Total Sell:
+              <span>$ {{ order.quote.total_sell|floatformat:2|intcomma|intword}}</span>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="rightSection">
+      <div class="heading">
+        <h5>Action History</h5>
+      </div>
+      <div class="rightMain">
+        <div class="actionCards">
+          <div class="singleHistoryCard">
+            <small>{{order.created_at}}</small>
+            <p>Ordered By {{order.owner}}</p>
+          </div>
+        </div>
+
+        <div class="cards">
+          <div class="card">
+            <h6>QUOTE TOTALS</h6>
+            <p>
+              Total Cost:
+              <span>${{ order.total_cost|floatformat:2|intcomma|intword }}</span>
+            </p>
+            <p>
+              Mark up Total:
+              <span>${{ order.quote.markup_total |floatformat:2|intcomma|intword }}</span>
+            </p>
+            <p>
+              Total Sell:
+              <span>${{ order.quote.total_sell|floatformat:2|intcomma|intword }}</span>
+            </p>
+          </div>
+          <div class="card">
+            <h6>ORDER NOTES</h6>
+            {{order.quote.notes}}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <br />
+  <br />
+</div>
+
+{% endblock %} {% block pop_ups %} {% if user.role == 'AppManager' or user.role == 'AppAdmin' %}
+{% if not order.status == "accepted" and not order.status == "canceled" %}
+<div
+  class="modal fade"
+  id="acceptOrderModal"
+  tabindex="-1"
+  role="dialog"
+  aria-labelledby="acceptOrderModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="acceptOrderModalLabel">Confirm Accept Order</h5>
+        <button type="button" class="btn-close me-2 mt-2" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form class="button-form" method="post" action="{% url 'order_status_update' %}">
+        <div class="modal-body">
+          {% csrf_token %}
+          <input type="hidden" name="id" value="{{ order.id }}" />
+          <input type="hidden" name="status" value="accepted" />
+          Are you sure you want to accept this order?
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Confirm</button>
+          <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<div
+  class="modal fade"
+  id="declineOrderModal"
+  tabindex="-1"
+  role="dialog"
+  aria-labelledby="declineOrderModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="declineOrderModalLabel">Confirm Decline Order</h5>
+        <button type="button" class="btn-close me-2 mt-2" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form class="button-form" method="post" action="{% url 'order_status_update' %}">
+        <div class="modal-body">
+          {% csrf_token %}
+          <input type="hidden" name="id" value="{{ order.id }}" />
+          <input type="hidden" name="status" value="canceled" />
+          Are you sure you want to decline this order?
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-danger">Confirm</button>
+          <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %} {% endif %} {% endblock %} {% block footer %}
+<!-- delete total quote item modal -->
+<div class="modal fade" id="deleteOrderItem" tabindex="-1" aria-labelledby="tableRowPopUpsLabel" aria-hidden="true">
+  <div class="modal-dialog modal-sm modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-body">
+        <div class="modalContent">
+          <span><i class="bi bi-exclamation-triangle"></i></span>
+          <h4>Are you Sure ?</h4>
+          <h6>You want to delete this Order ?</h6>
+        </div>
+        <div class="btnGroup">
+          <button type="button" onclick="deleteOrderItem()" class="btn mx-auto btn-danger" data-bs-dismiss="modal">
+            Delete
+          </button>
+          <button type="button" class="btn mx-auto btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function deleteOrderItem() {
+    swal({
+      title: 'Successfully',
+      text: 'Deleted this order',
+      icon: 'success',
+      button: 'Okay',
+    });
+  }
+  function viewPdf() {
+    var url = "{% url 'utils:utils-quote-view-pdf' order.quote.id %}";
+    window.open(url, '_blank');
+  }
+
+  function viewCostPdf() {
+    var url = "{% url 'utils:utils-quote-view-cost-pdf' order.quote.id %}";
+    window.open(url, '_blank');
+  }
+</script>
+{% endblock %}

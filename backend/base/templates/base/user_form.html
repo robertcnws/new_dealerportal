@@ -1,0 +1,9 @@
+<div class="create-user-container">
+  <form class="create-user-form" method="POST" action="">
+    {% csrf_token %}
+    <table class="create-user-table">
+      {{ form.as_table|safe }}
+    </table>
+    <input class="create-user-submit" type="submit" value="Create User" />
+  </form>
+</div>

@@ -1,0 +1,157 @@
+{% extends "main.html" %}{% load static%} {% block css %} {% endblock %} {% block title %} Quotes {% endblock %} 
+{%block content %}
+
+<div class="container-fluid">
+  <div class="heading quoteHeading">
+    <h5>All Quotes</h5>
+    <div class="buttons-container">
+      <button data-bs-toggle="modal" data-bs-target="#addNewQuote">
+        <i class="bi bi-plus-lg"></i>
+        New Quote
+      </button>
+      <button class="bg-dark" data-bs-toggle="modal" data-bs-target="#addNewSmartQuote">
+        <i class="bi bi-robot"></i>
+         Smart Quote
+      </button>
+    </div>
+  </div>
+
+  <div class="tableRow">
+    <table id="quoteTable" class="table" style="width: 100%">{% include '_quotes.html' %}</table>
+  </div>
+</div>
+
+<!-- add new quote popup/modal -->
+{% include '_new_quote_popup.html' %}
+{% include '_smart_quote_popup.html' %}
+
+<!-- delete table row popup-->
+
+{% endblock %} {% block footer %}
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="{% static 'styles/js/dataTables.bootstrap5.min.js'%}"></script>
+
+<script src="{% static 'styles/js/quotesScript.js'%}"></script>
+
+<script>
+  function deleteQuoteItem(deleteUrl) {
+    swal({
+      title: 'Are you sure?',
+      text: 'Once deleted, you will not be able to recover this quote!',
+      icon: 'warning',
+      buttons: true,
+      dangerMode: true,
+    }).then((willDelete) => {
+      if (willDelete) {
+        window.location.href = deleteUrl;
+      }
+    });
+  }
+  $(document).ready(function () {
+    $('#quoteTable').DataTable({
+      processing: true,
+      serverSide: true,
+      ajax: {
+        url: "{% url 'base-quotes-ajax' %}",
+        type: 'GET',
+      },
+      columns: [
+        {
+          data: 'created_at',
+          render: function (data, type, row) {
+            var date = new Date(data);
+            return date.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+          },
+        },
+        {
+          data: 'status',
+          className: 'colorBG', // This adds the class to the TD element
+          render: function (data, type, row, meta) {
+            var spanClass = '';
+            var statusText = '';
+            if (data === 'ordered') {
+              spanClass = 'processing';
+              statusText = 'Ordered';
+            } else if (data === 'active') {
+              spanClass = 'confirmed';
+              statusText = 'Active';
+            } else {
+              spanClass = 'cancel';
+              statusText = 'Inactive';
+            }
+            return `<span class="${spanClass}">${statusText}</span>`;
+          },
+        },
+        {
+          data: 'id',
+          render: function (data, type, row) {
+            var url = '/quotes/view/' + data + '/';
+            return `<a href="${url}">${data}</a>`;
+          },
+        },
+        { data: 'name' },
+        {% if user.role == "AppAdmin" or user.role == "AppManager" %}
+        { data: 'dealer_account' },
+        {% endif %}
+        { data: 'owner' },
+        {
+          data: 'total_sell',
+          render: function (data, type, row) {
+            var formattedData = isNaN(Number(data))
+              ? data
+              : '$ ' +
+                parseFloat(data)
+                  .toFixed(2)
+                  .replace(/\d(?=(\d{3})+\.)/g, '$&,');
+            return formattedData;
+          },
+        },
+        {
+          data: 'total_cost',
+          render: function (data, type, row) {
+            var formattedData = isNaN(Number(data))
+              ? data
+              : '$ ' +
+                parseFloat(data)
+                  .toFixed(2)
+                  .replace(/\d(?=(\d{3})+\.)/g, '$&,');
+            return formattedData;
+          },
+        },
+        {
+          data: 'updated_at',
+          render: function (data, type, row) {
+            var date = new Date(data);
+            return date.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+          },
+        },
+        {
+          data: null,
+          render: function (data, type, row) {
+            var viewQuoteUrl = '/quotes/view/' + data.id + '/';
+            var deleteQuoteUrl = '/quotes/delete/' + data.id + '/';
+            var cloneQuoteUrl = '/quotes/clone/' + data.id + '/';
+            var dropDownHtml = `<div class="dropdown-toggle" data-bs-toggle="dropdown">
+                      <i class="bi bi-three-dots-vertical"></i>
+                    </div>
+                    <ul class="actionDropMenu dropdown-menu dropdown-menu-end">
+                      <h6 class="dropdown-header">Action</h6>
+                      <li class="dropdown-item" onclick="location.href='${viewQuoteUrl}'"><i class="bi bi-eye"></i>View</li>`;
+            if (data.status !== 'ordered') {
+              dropDownHtml += `<li class="dropdown-item" onclick="location.href='${cloneQuoteUrl}'"><i class="bi bi-front"></i>Clone</li>
+                        <li class="dropdown-item" onclick="deleteQuoteItem('${deleteQuoteUrl}')">
+                          <i class="bi bi-trash"></i>Delete
+                        </li>`;
+            }
+            dropDownHtml += `</ul>`;
+            return dropDownHtml;
+          },
+        },
+      ],
+      order: [], // Disable initial order
+      ordering: false, // Disable user controlled ordering
+      searching: false, // Disable search box
+    });
+  });
+</script>
+{% endblock %}

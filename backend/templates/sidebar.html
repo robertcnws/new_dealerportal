@@ -1,0 +1,78 @@
+{% load my_filters %}
+{% load static %}
+<div class="offcanvas offcanvas-start sidebar-nav" tabindex="-1" id="sidebar">
+    <div class="offcanvas-body p-3 pt-0">
+      <div class="offcanvasTop p-3 pb-0">
+        <a href="{% url 'base-home' %}"><img src="{% static 'styles/img/logo13.png'%}" alt=""></a>
+      </div>
+      <nav class="navbar-dark">
+        <ul class="navbar-nav">
+          <li  {% if active_page == 'dashboard' %} class="active"{% endif %}>
+            <a href="{% url 'base-home' %}" class="nav-link px-3 active">
+              <span class="me-2"><i class="bi bi-grid"></i></span>
+              <span>Dashboard</span>
+            </a>
+          </li>
+          <li  {% if active_page == 'quotes' %} class="active"{% endif %}>
+            <div class="quotes">
+              <a class="nav-link px-3 sidebar-link" href="{% url 'base-view-quotes' %}">
+                <span class="me-2"><i class="bi bi-journal-bookmark"></i></span>
+                <span class="quotesText">Quotes</span>
+                </span>
+              </a>
+          </li>
+          <li  {% if active_page == 'orders' %} class="active"{% endif %}>
+            <a href="{% url 'base-view-orders' %}" class="nav-link px-3">
+              <div class="orderMain">
+                <div class="orderIconText">
+                  <span class="me-2"><i class="bi bi-cart"></i></span>
+                  <span>Orders</span>
+                </div>
+              </div>
+            </a>
+          </li>
+          <li  {% if active_page == 'stock' %} class="active"{% endif %}>
+            <a href="{% url 'base-check-stock' %}" class="nav-link px-3">
+              <span class="me-2"><i class="bi bi-graph-up"></i></span>
+              <span>Stock</span>
+            </a>
+          </li>
+         
+          {% if request.user|has_role:'AppManager' %}
+
+          <li  {% if active_page == 'dealerships' %} class="active"{% endif %}>
+            <a class="nav-link px-3" href="{% url 'base-manage-dealers'%}">
+              <span class="me-2"><i class="bi bi-building"></i></span>
+              <span>Manage Dealerships</span>
+            </a>
+          </li>
+          {% endif %}
+          {% if request.user|has_role:'AppAdmin' %}
+
+          <li {% if active_page == 'dealerships' %} class="active"{% endif %}>
+            <a class="nav-link px-3" href="{% url 'base-manage-dealers'%}">
+              <span class="me-2"><i class="bi bi-building"></i></span>
+              <span>Manage Dealerships</span>
+            </a>
+          </li>
+          {% endif %}
+          {% if request.user|has_role:'AppAdmin' %}
+          <li  {% if active_page == 'settings' %} class="active"{% endif %}>
+            <a href="{% url 'app_settings:general-settings' %}" class="nav-link px-3">
+              <span class="me-2"><i class="bi bi-gear"></i></span>
+              <span>Settings</span>
+            </a>
+          </li>
+          {% endif %}
+          {% if request.user|has_role:'DealerAdmin' %}
+          <li  {% if active_page == 'dealerships' %} class="active"{% endif %}>
+            <a class="nav-link px-3" href="{% url 'base-manage-dealership' request.user.dealer_account.id %}">
+              <span class="me-2"><i class="bi bi-gear"></i></span>
+              <span>Manage Dealership</span>
+            </a>
+          </li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
+  </div>

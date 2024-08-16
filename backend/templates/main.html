@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="{% static 'styles/css/bootstrap.min.css'%}" />
+    <link rel="stylesheet" href="{% static 'styles/css/dataTables.bootstrap5.min.css'%}"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.9.1/font/bootstrap-icons.css"/>
+    <link rel="stylesheet" href="{% static 'styles/css/style.css'%}" />
+    <link rel="stylesheet" href="{% static 'styles/css/dash.css' %}" />
+    <link rel="icon" type="image/x-icon" href="https://nws-dealer-portal.s3.amazonaws.com/images/favicon.ico"/>
+
+
+    {% block css %}{% endblock %}
+
+    <title>Dealer Portal |{% block title %}{% endblock %}</title>
+  </head>
+  {% if user.light_mode %}
+  <body class="dark_theme_variables">
+  {% else %}
+  <body>
+  {% endif %}
+    {% if messages %}
+    {% for message in messages %}
+    <div id="messageShower" class="{% if 'error' in message.tags %}bg-danger{% elif 'success' in message.tags %}bg-success{% elif 'info' in message.tags %}bg-info{% endif %}">
+    <span> {{ message }}</span>
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% include 'navbar.html' %}
+
+    
+
+      {% include 'sidebar.html' %}
+      <main class="mt-5 pt-4">
+        <div id="search-results"></div>
+
+      {% block content %} {% endblock %}
+      </main>
+{% block pop_ups %}{% endblock %}
+
+    <script src="{% static 'styles/js/bootstrap.bundle.min.js' %}""></script>
+    <script src="{% static 'styles/js/jquery-3.6.0.min.js' %}"></script>
+  
+   
+    <script src="{% static 'styles/js/progressbar.min.js' %}"></script>
+   
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    <script src="{% static 'styles/js/script.js'%}"></script>
+   
+    <!-- <script src="{% static 'styles/js/search.js' %}"></script>-->
+
+    {% block footer %}{% endblock %}
+
+    <script>
+      function navigateTo(url) {
+        window.location.href = url;
+      }
+
+      function deleteTableRow() {
+        swal({
+          title: "Successfully",
+          text: "Deleted this Row",
+          icon: "success",
+          button: "Okay",
+        });
+      }
+    </script>
+    <script type="text/javascript" id="zsiqchat">var $zoho=$zoho || {};$zoho.salesiq = $zoho.salesiq || {widgetcode: "siqa82f685ce7d0b934d9223bd2fdfda6469e6563643b687eb5595ffb473d248017", values:{},ready:function(){}};var d=document;s=d.createElement("script");s.type="text/javascript";s.id="zsiqscript";s.defer=true;s.src="https://salesiq.zohopublic.com/widget";t=d.getElementsByTagName("script")[0];t.parentNode.insertBefore(s,t);</script>
+  </body>
+</html>

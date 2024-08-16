@@ -1,0 +1,13 @@
+{% extends 'main.html' %}
+
+{% block content %}
+<h1>Item Details</h1>
+<p>Name: {{ item.name }}</p>
+<p>Actual Available Stock (Physical for sale): {{ item.actual_available_for_sale_stock }}</p>
+<p>Available Stock: {{ item.available_stock }}</p>
+<p>Stock on Hand: {{ item.stock_on_hand }}</p>
+<p>SKU: {{ item.sku }}</p>
+<p>Unit: {{ item.unit }}</p>
+<p>Reorder Level: {{ item.reorder_level }}</p>
+<p>Description: {{ item.description }}</p>
+{% endblock %}

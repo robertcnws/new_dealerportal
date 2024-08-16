@@ -1,0 +1,145 @@
+{% extends 'main.html' %} {% block title %}Check Stock{% endblock %} {% block content %} {% load custom_filters %}
+<div class="container-fluid">
+  <div class="stockMain row">
+    <!-- left part -->
+    <div class="col-md-3">
+      <div class="stockLeft">
+        <div class="d-flex align-items-start">
+          <div class="nav flex-column nav-pills me-3" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+            {% for group in item_groups %}
+            <button
+              class="nav-link{% if forloop.first %} active{% endif %}"
+              id="group-{{ group.group_id }}-tab"
+              data-bs-toggle="pill"
+              data-bs-target="#group-{{ group.group_id }}"
+              type="button"
+              role="tab"
+              aria-controls="group-{{ group.group_id }}"
+              aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"
+            >
+              {{ group.group_name }}
+            </button>
+            {% endfor %}
+          </div>
+          <!-- tab content was here -->
+        </div>
+      </div>
+    </div>
+    <!-- right part -->
+    <div class="col-md-9">
+      <div class="stockRight">
+        <div class="tab-content" id="v-pills-tabContent">
+          <select class="form-select" id="glassSelect" onclick="optionPicker()">
+            <option value="all" selected>Select Frame/Glass Config. . .</option>
+            <option value="BG">
+              Bronze/ Gray
+              <i class="bi bi-dot"></i>
+            </option>
+            <option value="WG">
+              White/ Gray
+              <i class="bi bi-dot"></i>
+            </option>
+            <option value="BGI">
+              Bronze/ Gray (Privacy)
+              <i class="bi bi-dot"></i>
+            </option>
+            <option value="WGI">
+              White/ Gray (Privacy)
+              <i class="bi bi-dot"></i>
+            </option>
+          </select>
+          {% for group in item_groups %}
+          <div
+            class="tab-pane fade{% if forloop.first %} show active{% endif %}"
+            id="group-{{ group.group_id }}"
+            role="tabpanel"
+            aria-labelledby="{{ group.group_id }}-tab"
+          >
+            <div class="tab-content" id="nav-tabContent">
+              <div class="tab-pane fade show active" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab">
+                <table id="subStockTable">
+                  <thead>
+                    <tr>
+                      <th>Item</th>
+
+                      <th>Selling Price</th>
+                      <th>Stock</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for product in group.products.all %}
+                    <tr
+                      data-bs-toggle="modal"
+                      class="{{product.sku | extract_between_spaces }}"
+                      data-bs-target="#item-{{product.id}}"
+                    >
+                      <td>{{product.name}}</td>
+
+                      <td>$ {{ product.price }}</td>
+                      <td>{{ product.stock|floatformat:0 }}</td>
+                    </tr>
+                    {% include '_item_popup.html' %} {% empty %}
+                    <tr>
+                      <td colspan="4">No products found.</td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %} {% block footer %}
+<script>
+  function optionPicker() {
+    var optionValue = document.getElementById('glassSelect').value;
+    console.log(optionValue);
+
+    var BG = document.getElementsByClassName('BG');
+    var WG = document.getElementsByClassName('WG');
+    var BGI = document.getElementsByClassName('BGI');
+    var WGI = document.getElementsByClassName('WGI');
+
+    function changeVisibility(elements, visible) {
+      for (var i = 0; i < elements.length; i++) {
+        if (visible) {
+          elements[i].classList.remove('inactive');
+        } else {
+          elements[i].classList.add('inactive');
+        }
+      }
+    }
+
+    if (optionValue == 'BG') {
+      changeVisibility(BG, true);
+      changeVisibility(WG, false);
+      changeVisibility(BGI, false);
+      changeVisibility(WGI, false);
+    } else if (optionValue == 'WG') {
+      changeVisibility(BG, false);
+      changeVisibility(WG, true);
+      changeVisibility(BGI, false);
+      changeVisibility(WGI, false);
+    } else if (optionValue == 'BGI') {
+      changeVisibility(BG, false);
+      changeVisibility(WG, false);
+      changeVisibility(BGI, true);
+      changeVisibility(WGI, false);
+    } else if (optionValue == 'WGI') {
+      changeVisibility(BG, false);
+      changeVisibility(WG, false);
+      changeVisibility(BGI, false);
+      changeVisibility(WGI, true);
+    } else {
+      changeVisibility(BG, true);
+      changeVisibility(WG, true);
+    }
+  }
+</script>
+{% endblock %}

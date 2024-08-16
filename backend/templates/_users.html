@@ -1,0 +1,39 @@
+{% load humanize %}
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>USERNAME</th>
+      <th>FIRST NAME</th>
+      <th>LAST NAME</th>
+      <th>STATUS</th>
+      <th>ROLE</th>
+      <th>Updated At</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for user in users %}
+    <tr>
+      <td>{{ user.id }}</td>
+      <td>{{ user.username }}</td>
+      <td>{{ user.first_name }}</td>
+      <td>{{ user.last_name }}</td>
+      <td>
+        {% if user.is_active %}Active{% else %}Inactive{% endif %}
+      </td>
+      <td>{{ user.role }}</td>
+      <td>{{ user.updated_at }}</td>
+      <td>
+        <a href="{% url 'base-manage-dealership' user.id %}">Manage</a> |
+        {% if user.is_active %}
+        <a href="{% url 'base-deactivate-user' user.id %}">Deactivate</a>
+        {% else %}
+        <a href="{% url 'base-activate-user' user.id %}">Activate</a>
+        {% endif %}
+    
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>

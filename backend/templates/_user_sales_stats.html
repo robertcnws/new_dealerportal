@@ -1,0 +1,101 @@
+{% load humanize %}
+
+    <!-- insights or circles -->
+    <div class="insights">
+      <div class="income">
+        <span class=""><i class="bi bi-graph-up-arrow"></i></span>
+        <div class="middle">
+          <div class="left">
+            <h3>Total Estimates</h3>
+            <h2>${{ user_stats.today_estimates |floatformat:2|intcomma|intword }}</h2>
+          </div>
+          <div class="progress">
+            <div id="income"></div>
+          </div>
+        </div>
+        <small class="textMuted">Last 24 Hours</small>
+      </div>
+      <div class="expenses">
+        <span class=""><i class="bi bi-bar-chart-fill"></i></span>
+        <div class="middle">
+          <div class="left">
+            <h3>Total Sales</h3>
+            <h2>${{ user_stats.today_orders |floatformat:2|intcomma|intword }}</h2>
+          </div>
+          <div class="progress">
+            <div id="expenses"></div>
+          </div>
+        </div>
+        <small class="textMuted">Last 24 Hours</small>
+      </div>
+    </div>
+
+    <!-- line progressbar cards -->
+    <div class="wrapper">
+        <div class="cardExt">
+            <div class="upperCardExt">
+                <div class="left">
+                    <h4 class="blue" id="todayQuotesCount">{{user_stats.today_quotes_count}}</h4>
+                    <p>Estimates Today</p>
+                </div>
+                <div class="right">
+                    <h4 id="yesterdayQuotesCount">{{user_stats.yesterday_quotes_count}}</h4>
+                    <p>Estimates Yesterday</p>
+                </div>
+            </div>
+            <div class="progress" style="height: 7px">
+                <div class="progress-bar bg-primary" role="progressbar" id="progressBarQuotes" style="width: 0%" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+            <div class="lowerCardExt">
+                <div class="left">
+                    <p>
+                        <span class="green">
+                            <i class="bi bi-arrow-up" id="arrowIconQuotes"></i>
+
+                            <span id="percentageChangeQuotes">0</span>
+                            %
+                        </span>
+                    </p>
+                    <p>Since yesterday</p>
+                </div>
+                <div class="right">
+                    <p id="percentageOfTotalQuotes">0%</p>
+                </div>
+            </div>
+        </div>
+
+      <div class="cardExt">
+        <div class="upperCardExt">
+          <div class="left">
+            <h4 class="red" id="todayOrdersCount">{{user_stats.today_orders_count}}</h4>
+            <p>Sales Today</p>
+          </div>
+          <div class="right">
+            <h4 id="yesterdayOrdersCount">{{user_stats.yesterday_orders_count}}</h4>
+            <p>Sales Yesterday</p>
+          </div>
+        </div>
+        <div class="progress" style="height: 7px">
+            <div class="progress-bar bg-danger" role="progressbar" id="progressBarOrders" style="width: 0%" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+        <div class="lowerCardExt">
+          <div class="left">
+            <p>
+              <span class="red">
+                <i class="bi bi-arrow-down" id="arrowIconOrders"></i>
+                <span id="percentageChangeOrders">0</span>
+                %
+              </span>
+             
+            </p>
+            <p>Since yesterday</p>
+          </div>
+          <div class="right">
+            <p id="percentageOfTotalOrders">0%</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- right side -->
+

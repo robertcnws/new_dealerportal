@@ -1,0 +1,31 @@
+{% extends 'main.html' %}
+
+{% block content %}
+<h1>Products List</h1>
+<table border="1">
+    <thead>
+        <tr>
+           
+            <th>Name</th>
+            <th>Stock on Hand</th>
+            <th>Available Stock</th>
+            <th>Actual Available Stock</th>
+            <th>available_for_sale_stock</th>
+            <th>actual_available_for_sale_stock</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for product in items %}
+            <tr>
+                <td><a href="{% url 'utils:get_product' product.item_id %}">{{ product.name }}</a></td>
+
+                <td>{{ product.stock_on_hand }}</td>
+                <td>{{ product.available_stock }}</td>
+                <td>{{ product.actual_available_stock }}</td>
+                <td>{{ product.available_for_sale_stock }}</td>
+                <td>{{ product.actual_available_for_sale_stock }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

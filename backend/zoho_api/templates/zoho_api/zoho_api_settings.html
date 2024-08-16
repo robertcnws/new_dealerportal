@@ -1,0 +1,259 @@
+{% extends 'main.html' %} {% load static %}
+{% block title%} Integration API {% endblock %}
+{% block css %}
+<link rel="stylesheet" href="{% static 'styles/css/settings.css' %}" />
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+  integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
+  crossorigin="anonymous"
+  referrerpolicy="no-referrer"
+/>
+{% endblock %} {% block content %}
+<div class="container-fluid">
+
+
+  <div class="settingsMain">
+    <div class="heading">
+      <div class="d-flex justify-content-between align-items-center">
+        <h5>Integration Settings</h5>
+      
+        {% if not connected %}
+        <div class="alert alert-warning d-flex justify-content-center align-items-center mb-0" role="alert">
+          <i class="fas fa-exclamation-triangle fa-md text-warning align-self-center"></i>
+          <p class="mb-0"> &nbsp; You are currently not connected to Zoho Inventory.</p>
+        </div>
+        {% else %}
+        <div class="alert alert-success d-flex justify-content-center align-items-center mb-0" role="alert">
+          <i class="fas fa-check-circle fa-md text-success align-self-center"></i>
+          <p class="mb-0">&nbsp;Zoho Inventory Connection: <span class="bg-success text-white rounded-pill px-2">Connected</span></p>
+        </div>
+        {% endif %}
+      </div>
+      
+      <hr/>
+    </div>
+    <div class="row mb-3">
+      <div class="col-md-8 mt-3">
+        
+        <div class="heading">
+          <h5> <i class="fa-solid fa-dolly"></i> Zoho Inventory Integration Details</h5>
+        </div>
+        <!-- dealer details (left part) -->
+        <div class="dealerMain">
+          <form method="post">
+            {% csrf_token %}
+            <div class="inputs">
+              <label for="{{ form.zoho_client_id.auto_id }}">Client ID</label>
+              <input type="text" id="{{ form.zoho_client_id.auto_id }}" name="{{ form.zoho_client_id.html_name }}"  placeholder="Enter Your Client ID" autocomplete="off" value="{{ form.zoho_client_id.value|default:'' }}" required>
+            </div>
+            <div class="inputs">
+              <label for="{{ form.zoho_client_secret.auto_id }}">Client Secret</label>
+              <input type="text" id="{{ form.zoho_client_secret.auto_id }}" name="{{ form.zoho_client_secret.html_name }}"  placeholder="Enter Your Client Secret" autocomplete="off" value="{{ form.zoho_client_secret.value|default:'' }}" required>
+            </div>
+            <div class="inputs">
+              <label for="{{ form.zoho_redirect_uri.auto_id }}">Redirect URI</label>
+              <input type="text" id="{{ form.zoho_redirect_uri.auto_id }}" name="{{ form.zoho_redirect_uri.html_name }}"  placeholder="Enter Your Redirect URI" autocomplete="off" value="{{ form.zoho_redirect_uri.value|default:'' }}" required>
+            </div>
+            <div class="inputs">
+              <label for="{{ form.zoho_org_id.auto_id }}">Organization ID</label>
+              {{ form.zoho_org_id }}
+            </div>
+            <div class="btnGroup">
+              <button type="submit">Save</button>
+            </div>
+          </form>
+        </div>
+      </div>
+      <!-- right part -->
+      <div class="col-md-4 mt-3">
+        <div class="heading">
+          <h5>Quick Actions</h5>
+        </div>
+        <div class="wrapper">
+          <button class="options" data-bs-toggle="modal" data-bs-target="#connectZohoInventory">
+            <i class="fa-solid fa-dolly"></i>
+            <span>Connect to Zoho Inventory</span>
+          </button>
+            <button class="options" data-bs-toggle="modal" data-bs-target="#setupApi">
+              <i class="fa-solid fa-sync"></i>
+              <span>Manual Sync Products</span>
+            </button>
+
+            <button class="options" data-bs-toggle="modal" data-bs-target="#zohoCustomers">
+              <i class="fa-solid fa-user"></i>
+              <span>Manual Sync Customers</span>
+            </button>
+          
+            <button class="options" onclick="sync_pricebook()" >
+              <i class="fa-solid fa-dollar-sign"></i>
+              <span>Manual Sync Prices</span>
+            </button>
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+{% endblock %}
+
+{% block pop_ups %}
+<div class="modal fade" id="setupApi" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-light border-bottom">
+        <h4 class="modal-title h6 mb-0">Initiate Zoho Sync Manually</h4>
+        <div class="text-end">
+          <button type="button" class="btn-close me-2 mt-2" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      </div>
+      <div class="modal-body">
+        {% if connected %}
+        <div class="d-flex justify-content-center mb-3">
+          <i class="fas fa-info-circle fa-2x text-muted align-self-start"></i>
+      </div>
+      <div class="alert alert-secondary d-flex align-items-center" role="alert">
+          <p class="mb-0">Please confirm if you want to sync items. This action cannot be undone.</p>
+      </div>
+      <p class="mt-2 text-muted small">
+        <i class="fas fa-clock me-1"></i>
+        Last sync time: {{ last_sync_time }}
+    </p>
+      <form action="{% url 'zoho_api:zoho_api_sync_zoho_items' %}" method="get" class="text-center">
+          <button type="submit" class="btn btn-success me-2">Sync Zoho Items</button>
+          <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Close</button>
+      </form>
+    {% else %}
+    <div class="d-flex justify-content-center mb-3">
+      <i class="fas fa-exclamation-triangle fa-2x text-warning align-self-start"></i>
+  </div>
+  <div class="alert alert-warning d-flex align-items-center" role="alert">
+      <p class="mb-0">You are currently not connected to the Zoho API. Please check your API settings and ensure a valid connection before attempting to sync Zoho items.</p>
+  </div>
+    {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="zohoCustomers" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-light border-bottom">
+        <h4 class="modal-title h6 mb-0">Initiate Zoho Customers Manual Sync</h4>
+        <div class="text-end">
+          <button type="button" class="btn-close me-2 mt-2" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      </div>
+      <div class="modal-body">
+        {% if connected %}
+        <div class="d-flex justify-content-center mb-3">
+          <i class="fas fa-info-circle fa-2x text-muted align-self-start"></i>
+      </div>
+      <div class="alert alert-secondary d-flex align-items-center" role="alert">
+          <p class="mb-0">Please confirm if you want to sync customers. This action cannot be undone.</p>
+      </div>
+      <p class="mt-2 text-muted small">
+        <i class="fas fa-clock me-1"></i>
+        Last sync time: {{ last_sync_time }}
+    </p>
+      <form action="{% url 'zoho_api:sync_zoho_customers' %}" method="get" class="text-center">
+          <button type="submit" class="btn btn-success me-2">Sync Zoho Customers</button>
+          <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Close</button>
+      </form>
+    {% else %}
+    <div class="d-flex justify-content-center mb-3">
+      <i class="fas fa-exclamation-triangle fa-2x text-warning align-self-start"></i>
+  </div>
+  <div class="alert alert-warning d-flex align-items-center" role="alert">
+      <p class="mb-0">You are currently not connected to the Zoho API. Please check your API settings and ensure a valid connection before attempting to sync Zoho items.</p>
+  </div>
+    {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="connectZohoInventory" tabindex="-1" aria-labelledby="connectZohoInventoryLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">  
+      <div class="modal-header bg-light border-bottom">
+      <h4 class="modal-title h6 mb-0">Connect to Zoho Inventory</h4>
+      <div class="text-end">
+        <button type="button" class="btn-close me-2 mt-2" data-bs-dismiss="modal" aria-label="Close"></button>
+    </div>
+    </div>
+      <div class="modal-body text-center">
+        {% if zoho_connection_configured %}
+          {% if not connected %}
+            <div class="mb-3">
+              <i class="fas fa-exclamation-triangle fa-2x text-warning align-self-center"></i>
+            </div>
+            <div class="alert alert-warning d-flex justify-content-center align-items-center" role="alert">
+              <p class="mb-0">You are currently not connected to Zoho Inventory. Click the button below to establish a connection.</p>
+            </div>
+            <div>
+              <a href="{{ auth_url }}" class="btn btn-primary">Connect</a>
+            </div>
+          {% else %}
+            <div class="mb-3">
+              <i class="fas fa-check-circle fa-2x text-success align-self-center"></i>
+            </div>
+            <div class="alert alert-success d-flex justify-content-center align-items-center" role="alert">
+              <p class="mb-0">Zoho Inventory Connection: <span class="bg-success text-white rounded-pill px-2">Connected</span></p>
+            </div>
+          {% endif %}
+        {% else %}
+          <div class="mb-3">
+            <i class="fas fa-info-circle fa-2x text-warning align-self-center"></i>
+          </div>
+          <div class="alert alert-warning d-flex justify-content-center align-items-center" role="alert">
+            <p class="mb-0">Zoho connection is not configured. Please fill in all required fields in the settings page to enable the connection.</p>
+          </div>
+        {% endif %}
+        
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block footer %}
+<script>
+  {% comment %} function maskPartialInput(input) {
+    const visibleLength = 4;
+    const inputLength = input.value.length;
+    const maskedLength = inputLength - visibleLength;
+    const visibleText = input.value.slice(-visibleLength);
+    const maskedText = input.value.slice(0, maskedLength).replace(/./g, '●');
+    input.value = maskedText + visibleText;
+  }
+
+  function maskInitialValues() {
+    const clientIdInput = document.getElementById('{{ form.zoho_client_id.auto_id }}');
+    const clientSecretInput = document.getElementById('{{ form.zoho_client_secret.auto_id }}');
+    const redirectUriInput = document.getElementById('{{ form.zoho_redirect_uri.auto_id }}');
+    maskPartialInput(clientIdInput);
+    maskPartialInput(clientSecretInput);
+    maskPartialInput(redirectUriInput);
+  }
+
+
+  document.addEventListener('DOMContentLoaded', () => {
+    maskInitialValues();
+  }); {% endcomment %}
+
+
+  function sync_pricebook(){
+    const url= "{% url 'zoho_api:sync_zoho_pricebook' %}"
+    window.location.href = url;
+  }
+
+
+</script>
+{% endblock %}

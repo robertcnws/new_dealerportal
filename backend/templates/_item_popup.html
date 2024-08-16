@@ -1,0 +1,43 @@
+{% load static %}{% load custom_filters %}
+<div class="modal fade" id="item-{{product.id}}" tabindex="-1" aria-labelledby="tableRowPopUpsLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content stockModals">
+      <div class="modal-header">
+        <h5 class="modal-title" id="tableRowPopUpsLabel">{{ group.group_name }}</h5>
+      </div>
+      <div class="modal-body">
+        <div class="modalInfo">
+          <p>
+            <span>{{product.name}}</span>
+          </p>
+          <p>
+            Selling Price:
+            <span>$ {{product.price}}</span>
+          </p>
+          <p>
+            Available Stock:
+            <span>{{ product.stock}}</span>
+          </p>
+          <p style="background-color: #f2f2f2; padding: 10px">
+            <code class="text-dark">{{ product.description|linebreaksbr }}</code>
+          </p>
+          <p>
+            <b>sku :</b>
+
+            <code>{{product.sku}}</code>
+          </p>
+        </div>
+        <div class="modalImg">
+          <img
+            class="img-fluid"
+            src="{% static 'styles/img/products/'|add:product.image_name %}"
+            alt="{{ product.name }}"
+          />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn mx-auto btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>

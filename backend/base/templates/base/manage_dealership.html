@@ -1,0 +1,428 @@
+{% extends "main.html" %} {% load static %}{% block css %}
+<link rel="stylesheet" href="{% static 'styles/css/dealers.css' %}" />
+{% endblock %}
+{% block title%} Manage Dealership{% endblock %}
+{% block content %} {% load humanize %}
+<div class="container-fluid">
+<div class="quoteDetailsContMain">
+    <div class="leftMain">
+      <div class="">
+        <div class="heading">
+          <h5>Dealership Account : <span class="text-muted">{{dealership.name}}</span></h5>
+        </div>
+        <div class="quoteMenuMain">
+          <!-- top section quote details and buttons -->
+        <div class="topSection">
+          <div class="left">   
+            <div class="semiTopSection d-flex justify-content-between flex-column flex-md-row">
+              <div>
+                  <p>
+                      Name:
+                      <span>{{dealership.name}}</span>
+                  </p>
+          
+                  <b>Status:</b>   
+                  {% if dealership.is_active %}
+                      <span class="bg-success text-white">Active</span>
+                  {% else %}
+                      <span class="bg-danger text-white">Inactive</span>
+                  {% endif %}
+                  
+                  <p>
+                      Dealership Admin:
+                      <span>{{dealership.dealer_admin}}</span>
+                  </p>
+                  <p>
+                      Phone:
+                      <span>{{ dealership.company_phone }}</span>
+                  </p>
+                  <p>
+                      Address:
+                      <span>{{ dealership.company_address }}</span>
+                  </p>
+              </div>
+              <p class="logoImgThumb">
+                  {% if dealership.logo %}
+                      <img  src="{{ dealership.logo.url }}" />
+                  {% else %}
+                      <img  src="{% static 'images/dealership.png' %}" />
+                  {% endif %}
+              </p>
+          </div>
+            </div>
+            <div class="right">
+              <button class="button" data-bs-toggle="modal" data-bs-target="#createEstimator">
+                <i class="bi bi-plus"></i>
+                <span>Add New User</span>
+              </button>
+              <button class="button" data-bs-toggle="modal" data-bs-target="#manageDetails">
+                <i class="bi bi-pencil-square"></i>  
+                  <span>Manage Details</span>
+              </button>
+              {% if user.role == 'AppAdmin' or user.role == 'AppManager' %} 
+              <button onclick="navigateTo('{% url 'base-change_status-dealership' dealership.id %}')">
+                <i class="bi bi-power"></i>
+                {% if dealership.is_active %}
+                 Deactivate Dealership
+                {% else %}
+                 Activate Dealership
+                {% endif %} 
+              </button>
+              <button onclick="navigateTo('{%url 'base-manage-dealers' %}')">
+                <i class="bi bi-list"></i>
+                <span>
+                  Go to Dealers Page
+                </span>
+              </button>
+              {% endif %}
+            </div>
+          </div>
+          <!-- table -->
+          <div class="middleSection">
+            <h5 class="middleHeading">Users</h5>
+              <div class="heading">
+              <h5>Dealer Admin</h5>
+          </div>
+    <div class="table-responsive">
+    <table class="table mt-2">
+      <thead>
+        <tr>
+          <th>Status</th>
+          <th>Username</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Last Login</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if dealership_admin %}
+        <tr> 
+          <td class="colorBG">
+            {% if dealership_admin.is_active %}
+            <span class="confirmed">Active</span>
+            {% else %}
+            <span class="cancel">Inactive</span>
+            {% endif %}
+          </td>
+          <td>{{ dealership_admin.username }}</td>
+          <td>{{ dealership_admin.first_name }} {{ dealership_admin.last_name }}</td>
+          <td>{{ dealership_admin.email }}</td>
+          <td>{{ dealership_admin.role }}</td>
+          <td>{{ dealership_admin.last_login|naturaltime }}</td>
+          <td class="">
+          <div class="dropdown-toggle" data-bs-toggle="dropdown">
+            <i class="bi bi-three-dots-vertical"></i>
+          </div>
+          <ul class="actionDropMenu dropdown-menu dropdown-menu-end">
+            <h6 class="dropdown-header">Action</h6>
+            <li class="dropdown-item" onclick="navigateTo('{% url 'base-manage-user'   dealership_admin.id %}')">
+              <i class="bi bi-pencil-square"></i>Manage
+            </li>
+            {% if dealership_admin.is_active %}
+              <li class="dropdown-item" onclick="navigateTo('{% url 'base-change_status-user' dealership_admin.id %}')")>
+                <i class="bi bi-power"></i>Deactivate
+              </li>
+            {% else %}
+              <li class="dropdown-item" onclick="navigateTo('{% url 'base-change_status-user' dealership_admin.id %}')")>
+                <i class="bi bi-power"></i>Activate
+              </li>
+            {% endif %}
+            {% if user.role == 'AppAdmin' %}
+             <li class="dropdown-item">
+              <form method="post" action="{% url 'base-change_dealer_admin' dealership_admin.id %}">
+                {% csrf_token %}
+                <i class="bi bi-shield-fill-check"></i>
+                <input type="submit" value="{% if dealership_admin.role == 'DealerAdmin' %}Demote to Estimator{% else %}Promote to Admin{% endif %}" 
+                class="btn btn-link text-decoration-none btn-small" 
+                style="padding:0 !important; color: inherit;margin:0 !important;">
+
+              </form>
+              </li>
+              {% endif %}
+          </ul>
+          </td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+  <hr />
+  <div class="heading">
+    <h5>Estimators Accounts</h5>
+  </div>
+  <div class="table-responsive">
+    <table class="table mt-2">
+      <thead>
+        <tr>
+          <th>Status</th>
+          <th>Username</th>
+          <th>Full Name</th>
+          <th>Email</th>
+          <th>Last Login</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for estimator in estimators %}
+        <tr>
+          <td class="colorBG">
+            {% if estimator.is_active %}
+            <span class="confirmed">Active</span>
+            {% else %}
+            <span class="cancel">Inactive</span>
+            {% endif %}
+          </td>
+          <td>{{ estimator.username }}</td>
+          <td>{{ estimator.first_name }} {{ estimator.last_name }}</td>
+          <td>{{ estimator.email }}</td>
+          <td>{{ estimator.last_login |naturaltime  }}</td>
+          <td class="">
+          <div class="dropdown-toggle" data-bs-toggle="dropdown">
+            <i class="bi bi-three-dots-vertical"></i>
+          </div>
+          <ul class="actionDropMenu dropdown-menu dropdown-menu-end">
+            <h6 class="dropdown-header">Action</h6>
+            <li class="dropdown-item" onclick="navigateTo('{% url 'base-manage-user'   estimator.id %}')">
+              <i class="bi bi-pencil-square"></i>Manage
+            </li>
+            <li class="dropdown-item" onclick="navigateTo('{% url 'base-change_status-user' estimator.id %}')">
+            <i class="bi bi-power"></i>
+            {% if estimator.is_active %}Deactivate{% else %}Activate{% endif %}
+            </li>
+            {% if user.role == 'AppAdmin' %}
+            <li  class="dropdown-item">
+              <form method="post" action="{% url 'base-change_dealer_admin' estimator.id %}">
+                {% csrf_token %}
+                 <i class="bi bi-shield-fill-check"></i>
+                <input type="submit" value="{% if estimator.role == 'DealerAdmin' %}Demote to Estimator{% else %}Promote to Admin{% endif %}"
+                class="btn btn-link text-decoration-none btn-small" 
+                style="padding:0 !important; color: inherit;margin:0 !important;">
+              </form>
+            </li>
+            {% endif %}
+          </ul>
+        </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <hr/>
+  <div class="heading">
+    <h5>Pending Invitations</h5>
+  </div>
+  <div class="table-responsive">
+    <table class="table mt-2">
+      <thead>
+        <tr>
+          <th>Status</th>
+          <th>Email</th>
+          <th>Created</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for invitation in pending_invitations %}
+        <tr>
+          <td class="colorBG">
+            <span class="cancel">Pending</span>
+          </td>
+          <td>{{ invitation.email }}</td>
+          <td>{{ invitation.created_at|naturaltime }}</td>
+          <td class="">
+          <div class="dropdown-toggle" data-bs-toggle="dropdown">
+            <i class="bi bi-three-dots-vertical"></i>
+          </div>
+          <ul class="actionDropMenu dropdown-menu dropdown-menu-end">
+            <h6 class="dropdown-header">Action</h6>
+        
+            <li class="dropdown-item" 
+                onclick="resendInvitation('{% url 'utils:utils-resend_invitation' invitation.id %}')">
+                <i class="bi bi-send"></i> Resend Invitation
+            </li>
+            <li class="dropdown-item">
+              <form method="post" class="delete-form" action="{% url 'utils:utils-delete-invitation' %}">
+                {% csrf_token %}
+                <input id="invitation_id" type="hidden" name="invitation_id" value="{{invitation.id}}">
+                <i class="bi bi-trash"></i>
+                <button type="button" class="btn btn-link text-decoration-none btn-small delete-button" data-toggle="confirm" 
+                  data-message="Are you sure you want to delete this invitation?"
+                  data-title="Confirm Deletion"
+                  style="padding: 0 !important; color: inherit; margin: 0 !important">
+                      Delete Invite
+                  </button>
+              </form>
+            </li>
+          </ul>
+        </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    
+  </div>
+  </div>
+</div>
+</div>
+</div>
+    <div class="rightSection">
+      <div class="heading">
+        <h5>Information</h5>
+      </div>
+      <div class="rightMain">
+        <div class="actionCards">
+          <div class="singleHistoryCard">
+            <p>Here you can manage your Dealership, set your account details, preferences and add new users etc..</p>
+          </div>
+        </div>
+      </div>
+        <div class="mainCard">
+         <div class="cardInfo">
+          <p>Total Quotes</p>
+          <h4>{{dealership.quotes | length }}</h4>
+         </div>
+          <div class="cardIcon">
+          <i class="bi bi-journal-bookmark"></i>
+         </div>
+        </div>
+        <div class="mainCard">
+        <div class="cardInfo">
+          <p>Confirmed Orders</p>
+          <h4>{{dealership.confirmed_orders | length  }}</h4>
+        </div>
+        <div class="cardIcon">
+          <i class="bi bi-cart"></i>
+        </div>
+        </div>
+        <div class="mainCard">
+        <div class="cardInfo">
+          <p>Pending Orders</p>
+          <h4>{{dealership.pending_orders | length }}</h4>
+        </div>
+        <div class="cardIcon">
+          <i class="bi bi-clock"></i>
+        </div>
+      </div>
+  </div>
+</div>
+{% endblock %} {% block pop_ups %}
+<!-- pop ups for new estimator-->
+<div class="modal fade" id="createEstimator" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5 mx-auto" id="exampleModalLabel">Create a new User</h1>
+      </div>
+      <div class="modal-body">
+        <form action="{% url 'utils:utils-send-invitation' %}" method="post">
+        <div class="invitationMain">
+          <div class="inputGroup">
+              {% csrf_token %}
+            <label for="invitation">Enter New User Email: </label>
+            <input type="email" id="invitation" name="email" placeholder="example@gmail.com" required />
+            <input type="hidden"  name="dealership_id" value="{{dealership.id}}" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer mx-auto">
+        <input class="btn btn-success" type="submit" value="Send Invitation" />
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </form>
+    </div>
+  </div>
+</div>
+<!-- pop ups for update dealer details -->
+<div class="modal fade" id="manageDetails" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5 mx-auto">
+          Manage
+          <span style="color: var(--darkVariant); font-weight: 600">{{dealership.name}}</span>
+          Details
+        </h1>
+      </div>
+      <form method="POST" enctype="multipart/form-data" action="{% url 'base-update-dealership-details' dealership.id %}">
+      <div class="modal-body">
+        <div class="inputMain">
+       
+              {% csrf_token %}
+              <div class="inputGroup">
+                  <label for="{{ form.name.id_for_label }}">Name</label>
+                  {{ dealership_form.name }}
+              </div>
+              <div class="inputGroup">
+                  <label for="{{ form.logo.id_for_label }}">Logo</label>
+                  {{ dealership_form.logo }}
+              </div>
+              <div class="inputGroup">
+                  <label for="{{ form.company_address.id_for_label }}">Company Address</label>
+                  {{ dealership_form.company_address }}
+              </div>
+              <div class="inputGroup">
+                  <label for="{{ form.company_phone.id_for_label }}">Company Phone</label>
+                  {{ dealership_form.company_phone }}
+              </div>
+              {% if user.role == "AppManager" or user.role == "AppAdmin" %}
+                <div class="inputGroup">
+                    <label for="{{ form.company_phone.id_for_label }}">Dealership ID Email</label>
+                  {{ dealership_form.zoho_email }}
+                  <br/>
+                  <small class="badge bg-dark pill p-2">Alert! This affects how this Dealership Orders are mapped into ZOHO.</small>
+                 
+                 </div>
+                {% endif %}
+          </div>
+      </div>
+      <div class="modal-footer mx-auto">
+        <button class="btn btn-success" type="submit">Save Changes</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+         
+      </div>
+    </form>
+    </div>
+  </div>
+</div>
+
+{% include '_confirmation_delete_form_popup.html'%}
+
+{% endblock%} {% block footer %}
+<script>
+  //for alert
+  function estimatorCreated() {
+    swal({
+      title: 'Successful',
+      text: 'Created a new estimator.',
+      icon: 'success',
+      button: 'Okay',
+    });
+  }
+
+  function updateDealer() {
+    swal({
+      title: 'Successful',
+      text: 'Updated dealer details.',
+      icon: 'success',
+      button: 'Okay',
+    });
+  }
+
+
+  function resendInvitation(resendUrl) {
+    swal({
+      title: 'Are you sure?',
+      text: 'Resending the invitation will make the previous email useless. Do you want to continue?',
+      icon: 'warning',
+      buttons: true,
+      dangerMode: true,
+    }).then((willResend) => {
+      if (willResend) {
+        window.location.href = resendUrl;
+      }
+    });
+}
+</script>
+{% endblock %}
