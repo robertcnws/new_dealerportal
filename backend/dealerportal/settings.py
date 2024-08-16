@@ -88,18 +88,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "dealerportal.wsgi.application"
 
-
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.postgresql_psycopg2",
-#         "NAME": "d820hc9fvmpucu",
-#         "USER": "imgrkcjrehowkv",
-#         "PASSWORD": "dfc9e640770a8d3b3fe045b27647af11dbac686edcd0f7763faec4525d76a4da",
-#         "HOST": "ec2-54-156-185-205.compute-1.amazonaws.com",
-#         "PORT": "5432",
-#     }
-# }
-
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
@@ -234,7 +222,6 @@ STATICFILES_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 
 # Static files config
 
-# STATIC_URL = "https://%s/%s/" % (AWS_S3_CUSTOM_DOMAIN, "static")
 STATIC_URL = os.environ.get("STATIC_URL")
 
 STATICFILES_DIRS = [BASE_DIR / "static"]
