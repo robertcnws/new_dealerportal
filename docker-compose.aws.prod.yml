@@ -1,19 +1,17 @@
 services:
-  backend_app:
+  aws_backend_app:
     build:
       context: ./backend
-    container_name: backend_app
+    container_name: aws_backend_app
     volumes:
       - ./backend:/app
       - ./backend/nginx/gunicorn.conf.py:/etc/nginx/gunicorn.conf.py
       - ./backend/local_backup:/app/backup
     ports:
-      - "8001:8001"
-    env_file:
-      - ./backend/.env
+      - "8005:8005"
     networks:
-      - dealerportal_network
+      - aws_dealerportal_network
 
 networks:
-  dealerportal_network:
+  aws_dealerportal_network:
     driver: bridge
