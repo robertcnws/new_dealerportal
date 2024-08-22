@@ -8,7 +8,7 @@ services:
       - ./backend/nginx/gunicorn.conf.py:/etc/nginx/gunicorn.conf.py
       - ./backend/local_backup:/app/backup
     ports:
-      - "8005:8005"
+      - "80:8005"
     networks:
       - aws_dealerportal_network
 

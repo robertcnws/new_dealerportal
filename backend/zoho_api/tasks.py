@@ -5,7 +5,7 @@ from .models import AppConfig, User
 from notifications.views import create_notification
 from notifications.models import Notification
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from django.db.models import Q
 
 logger = logging.getLogger(__name__)
@@ -93,3 +93,13 @@ def sync_zoho_pricebook_task(self):
         )
         notification.users.add(*app_admins_and_managers)
         print(failure_message)
+        
+
+@shared_task(bind=True)
+def delete_old_notifications():
+    try:
+        Notification.objects.filter(created_at__lt=timezone.now() - timedelta(days=30)).delete()
+        print("Old notifications deleted")
+    except Exception as e:
+        print(f"Error deleting old notifications: {str(e)}")
+        logger.error(f"Error deleting old notifications: {str(e)}")

@@ -33,3 +33,4 @@ from django.shortcuts import redirect
 def remove_all_notifications(request):
     request.user.notifications.all().delete()
     return redirect(request.META.get("HTTP_REFERER", "/"))
+
