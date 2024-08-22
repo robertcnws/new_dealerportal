@@ -9,16 +9,6 @@ services:
       - ./backend/local_backup:/app/backup
     ports:
       - "8001:8001"
-    environment:
-      - DJANGO_SETTINGS_MODULE=dealerportal.settings
-      - DJANGO_SUPERUSER_USERNAME=admin
-      - DJANGO_SUPERUSER_EMAIL=admin@example.com
-      - DJANGO_SUPERUSER_PASSWORD=admin
-      - LOGINUSER_USERNAME=test
-      - LOGINUSER_EMAIL=test@example.com
-      - LOGINUSER_PASSWORD=Hialeah2024*-
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
     env_file:
       - ./backend/.env
     networks:
@@ -51,6 +41,15 @@ services:
       - "5434:5432"
     networks:
       - dealerportal_network
+
+  # maildev:
+  #   image: maildev/maildev
+  #   container_name: maildev
+  #   ports:
+  #     - "1080:1080"  # Interfaz web para Maildev
+  #     - "1025:1025"  # Puerto SMTP
+  #   networks:
+  #     - dealerportal_network
 
   # nginx_http_server:
   #   build:

@@ -9,9 +9,17 @@ import environ
 # Import to schedule celery beat to schedule
 from datetime import timedelta
 
+import logging
+
+logger = logging.getLogger('django')
+logger.setLevel(logging.DEBUG)
+logger.addHandler(logging.StreamHandler())
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
+
+LOGIN_URL = 'base-login'
 
 
 # dotenv_path = os.path.join(BASE_DIR, ".env")
@@ -199,15 +207,15 @@ LOGGING = {
 }
 
 
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "smtp.office365.com"
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = "dealers@newwindowsystem.com"  # your Office 365 account
-# EMAIL_HOST_PASSWORD = "dealersapp2515$%^20"  # your Office 365 password
+EMAIL_BACKEND = env("EMAIL_BACKEND")
+EMAIL_HOST_USER = env("EMAIL_HOST_USER_DEV") if ENVIRONMENT == 'DEV' else env("EMAIL_HOST_USER_QA") if ENVIRONMENT == 'QA' else env("EMAIL_HOST_USER_PROD")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD_DEV") if ENVIRONMENT == 'DEV' else env("EMAIL_HOST_PASSWORD_QA") if ENVIRONMENT == 'QA' else env("EMAIL_HOST_PASSWORD_PROD")
+EMAIL_HOST = env('EMAIL_HOST_DEV') if ENVIRONMENT == 'DEV' else env('EMAIL_HOST_QA') if ENVIRONMENT == 'QA' else env('EMAIL_HOST_PROD')
+EMAIL_PORT = env('EMAIL_PORT_DEV') if ENVIRONMENT == 'DEV' else env('EMAIL_PORT_QA') if ENVIRONMENT == 'QA' else env('EMAIL_PORT_PROD')
+EMAIL_USE_TLS = env('EMAIL_USE_TLS_DEV') if ENVIRONMENT == 'DEV' else env('EMAIL_USE_TLS_QA') if ENVIRONMENT == 'QA' else env('EMAIL_USE_TLS_PROD') 
+EMAIL_USE_SSL = False
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL_DEV') if ENVIRONMENT == 'DEV' else env('DEFAULT_FROM_EMAIL_QA') if ENVIRONMENT == 'QA' else env('DEFAULT_FROM_EMAIL_PROD')
 
-EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
-EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
 
 
 # ADDING CELERY CONFIG TO SCHEDUE SYNC AND TASKS
@@ -215,28 +223,23 @@ EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
 # CELERY_BROKER_URL = os.environ["REDIS_URL"]
 
 
-CELERY_BROKER_URL = "redis://127.0.0.1:6379"
-CELERY_ACCEPT_CONTENT = ["application/json"]
-CELERY_RESULT_SERIALIZER = "json"
-CELERY_TASK_SERIALIZER = "json"
-CELERY_TIMEZONE = "America/Havana"
-
-CELERY_RESULT_BACKEND = "django-db"
+CELERY_BROKER_URL = env("CELERY_BROKER_URL")
+CELERY_ACCEPT_CONTENT = env("CELERY_ACCEPT_CONTENT")
+CELERY_RESULT_SERIALIZER = env("CELERY_RESULT_SERIALIZER")
+CELERY_TASK_SERIALIZER = env("CELERY_TASK_SERIALIZER")
+CELERY_TIMEZONE = env("CELERY_TIMEZONE")
+CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND")
 
 
 # CELERY BEAT SETTINGS
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
-
-DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
-
-STATICFILES_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 
 
 # AWS S3 CONFIG
 AWS_ACCESS_KEY_ID = env("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = env("AWS_SECRET_ACCESS_KEY")
 AWS_STORAGE_BUCKET_NAME = env("AWS_STORAGE_BUCKET_NAME")
-AWS_S3_CUSTOM_DOMAIN = f'{env("AWS_S3_CUSTOM_DOMAIN")} % {AWS_STORAGE_BUCKET_NAME}'
+AWS_S3_CUSTOM_DOMAIN = env("AWS_S3_CUSTOM_DOMAIN")
 
 DEFAULT_FILE_STORAGE = env("DEFAULT_FILE_STORAGE")
 STATICFILES_STORAGE = env("STATICFILES_STORAGE")
@@ -246,7 +249,9 @@ STATICFILES_STORAGE = env("STATICFILES_STORAGE")
 
 # Static files config
 
-STATIC_URL = os.environ.get("STATIC_URL")
+# STATIC_URL = os.environ.get("STATIC_URL")
+
+STATIC_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/static/"
 
 STATICFILES_DIRS = [BASE_DIR / "static"]
 

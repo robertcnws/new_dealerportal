@@ -22,14 +22,8 @@ RUN apt-get update && apt-get install -y postgresql-client-16
 # Copia el contenido del directorio al contenedor
 COPY . /app/
 
-# Expose port 8001 for the Django application
-EXPOSE 8001
+# Expose port 8005 for the Django application
+EXPOSE 8005
 
 # Ejecuta el script de inicialización y luego arranca Gunicorn y cron
-CMD ["sh", "-c", "python manage.py makemigrations && python manage.py migrate && gunicorn --bind 0.0.0.0:8001 dealerportal.wsgi:application"]
-
-# CMD python manage.py makemigrations && \
-#     python manage.py migrate && \
-#     gunicorn --bind 0.0.0.0:8001 dealerportal.wsgi:application
-
-# CMD ["python", "manage.py", "migrate"]
+CMD ["sh", "-c", "python manage.py makemigrations && python manage.py migrate && python init_script.py && gunicorn --bind 0.0.0.0:8001 dealerportal.wsgi:application"]

@@ -12,6 +12,7 @@ from django.core.mail import send_mail
 from django.utils.crypto import get_random_string
 from django.db import transaction
 from django.core.mail import EmailMessage
+
 from django.template.loader import render_to_string
 from base.decorators import role_required
 

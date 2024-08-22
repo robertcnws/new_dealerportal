@@ -1,10 +1,16 @@
 from django.urls import path
-from . import views
+from django.contrib.auth import views as auth_views
+from . import views, auth
 
 urlpatterns = [
     path("login", views.loginPage, name="base-login"),
     path("logout", views.logoutUser, name="base-logout"),
     path("register", views.registerPage, name="base-register"),
+    path('password_reset/', views.password_reset_request, name='password_reset'),
+    path('password_reset/done/', views.CustomPasswordResetDoneView.as_view(), name='password_reset_done'),
+    path('reset/<uidb64>/<token>/', views.password_reset_confirm, name='password_reset_confirm'),
+    path('reset/done/', views.CustomPasswordResetCompleteView.as_view(), name='password_reset_complete'),
+    path('reset/invalid/', views.password_reset_invalid, name='password_reset_invalid'),
     path("", views.home, name="base-home"),
     path("check-stock", views.check_stock, name="base-check-stock"),
     # QUOTES URLS AND VIEWS

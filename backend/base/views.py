@@ -23,10 +23,21 @@ from notifications.views import create_notification
 from zoho_api.views import sync_order_to_zoho
 
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.conf import settings
 from datetime import datetime
 from utils.views import encode_sku, suggest_similar_products
 from utils.models import Invitation
 
+from django.contrib.auth.views import PasswordResetDoneView, PasswordResetConfirmView, PasswordResetCompleteView
+from django.contrib.auth.forms import PasswordResetForm
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
+from django.contrib.auth.tokens import default_token_generator
+from django.template.loader import render_to_string
+from django.core.mail import send_mail, EmailMessage
+from django.contrib.auth.forms import SetPasswordForm
+from django.contrib.auth import get_user_model
+from django.urls import reverse
 
 # USER MANAGMENT VIEWS AND FUNCTIONS
 
@@ -909,45 +920,30 @@ def manageDealershipStatus(request, pk):
         messages.error(request, "Dealer account does not exist.")
         return redirect(request.META.get("HTTP_REFERER", "/"))
 
-    # Toggle the activation status of the DealerAccount and its associated users
+    user = User.objects.get(id=pk)
+
+    if not request.user.allowed_to_manage(user):
+        messages.error(request, "You do not have permission to deactivate this user.")
+        return redirect(request.META.get("HTTP_REFERER", "/"))
+
     dealer_account.is_active = not dealer_account.is_active
     dealer_account.save()
 
-    if (
-        not dealer_account.is_active
-    ):  # Deactivate associated users when dealership is deactivated
-        associated_users = User.objects.filter(
-            dealer_account=dealer_account, is_active=True
-        )
+    if not dealer_account.is_active:
+        associated_users = User.objects.filter(dealer_account=dealer_account, is_active=True)
         for user in associated_users:
             user.is_active = False
             user.save()
 
-    action = "activated" if dealer_account.is_active else "deactivated"
-    messages.success(
-        request, f"Dealer account and associated users have been {action}."
-    )
-    return redirect(request.META.get("HTTP_REFERER", "/"))
-
-    if User.objects.get(id=pk).is_active == False:
+    if not user.is_active:
         messages.error(request, "You do not have permission to deactivate this user.")
         return redirect(request.META.get("HTTP_REFERER", "/"))
 
-    # Check if the user has permission to deactivate users
-    if not request.user.allowed_to_manage(User.objects.get(id=pk)):
-        messages.error(request, "You do not have permission to deactivate this user.")
-        return redirect(request.META.get("HTTP_REFERER", "/"))
-
-    # Deactivate the user
-    user = User.objects.get(id=pk)
-    user.is_active = False
-    user.save()
-
-    # Deactivate all estimators if the user is a DealerAdmin
     if user.role == "DealerAdmin":
         User.objects.filter(dealer_admin=user).update(is_active=False)
 
-    messages.success(request, "User has been deactivated.")
+    action = "activated" if dealer_account.is_active else "deactivated"
+    messages.success(request, f"Dealer account and associated users have been {action}.")
     return redirect(request.META.get("HTTP_REFERER", "/"))
 
 
@@ -1058,3 +1054,71 @@ def createEstimator(request, pk):
 
     messages.error(request, "Error creating Estimator.")
     return redirect("base-manage-dealership", pk=dealer_account.id)
+
+
+# PASSWORD RESET VIEWS AND FUNCTIONS
+
+def password_reset_request(request):
+    if request.method == "POST":
+        form = PasswordResetForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data.get("email")
+            associated_users = User.objects.filter(email=email)
+            if associated_users.exists():
+                for user in associated_users:
+                    subject = "Password Reset Requested"
+                    email_template_name = "base/password_reset/password_reset_email.html"
+                    c = {
+                        "email": user.email,
+                        "domain": request.META['HTTP_HOST'],
+                        "site_name": "Your Site",
+                        "uid": urlsafe_base64_encode(force_bytes(user.pk)),
+                        "user": user,
+                        "token": default_token_generator.make_token(user),
+                        "protocol": "https" if request.is_secure() else "http",
+                    }
+                    email_body = render_to_string(email_template_name, c)
+                    
+                    send_mail(
+                        subject=subject, 
+                        message=None, 
+                        from_email=settings.DEFAULT_FROM_EMAIL, 
+                        recipient_list=[user.email], 
+                        fail_silently=False, 
+                        html_message=email_body
+                    )
+            return redirect(reverse('password_reset_done'))
+    else:
+        form = PasswordResetForm()
+    return render(request, "base/password_reset/password_reset_form.html", {"form": form})
+
+
+def password_reset_confirm(request, uidb64, token):
+    User = get_user_model()
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
+
+    if user is not None and default_token_generator.check_token(user, token):
+        if request.method == "POST":
+            form = SetPasswordForm(user, request.POST)
+            if form.is_valid():
+                form.save()
+                return redirect(reverse('password_reset_complete'))
+        else:
+            form = SetPasswordForm(user)
+        return render(request, "base/password_reset/password_reset_confirm.html", {"form": form})
+    else:
+        return render(request, "base/password_reset/password_reset_invalid.html")
+    
+
+def password_reset_invalid(request):
+    return render(request, "base/password_reset/password_reset_invalid.html")
+
+class CustomPasswordResetDoneView(PasswordResetDoneView):
+    template_name = 'base/password_reset/password_reset_done.html'
+
+class CustomPasswordResetCompleteView(PasswordResetCompleteView):
+    template_name = 'base/password_reset/password_reset_complete.html'

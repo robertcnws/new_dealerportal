@@ -1,0 +1,52 @@
+services:
+  aws_backend_app:
+    build:
+      context: ./backend
+    container_name: aws_backend_app
+    volumes:
+      - ./backend:/app
+      - ./backend/nginx/gunicorn.conf.py:/etc/nginx/gunicorn.conf.py
+      - ./backend/local_backup:/app/backup
+    ports:
+      - "8005:8005"
+    environment:
+      - DJANGO_SETTINGS_MODULE=dealerportal.settings
+      - DJANGO_SUPERUSER_USERNAME=admin
+      - DJANGO_SUPERUSER_EMAIL=admin@example.com
+      - DJANGO_SUPERUSER_PASSWORD=admin
+      - LOGINUSER_USERNAME=test
+      - LOGINUSER_EMAIL=test@example.com
+      - LOGINUSER_PASSWORD=Hialeah2024*-
+      - CELERY_BROKER_URL=redis://127.0.0.1:6379
+      - CELERY_ACCEPT_CONTENT=["application/json"]
+      - CELERY_RESULT_SERIALIZER=json
+      - CELERY_TASK_SERIALIZER=json
+      - CELERY_TIMEZONE=America/Havana
+      - CELERY_RESULT_BACKEND=django-db
+      - DB_ENGINE=django.db.backends.postgresql
+      - DB_NAME_QA=dealerportal-db
+      - DB_USER_QA=postgres
+      - DB_PASSWORD_QA=poiuqwer09871234*-
+      - DB_HOST_QA=dealerportal-db.cb4gqugm6ftg.us-east-2.rds.amazonaws.com
+      - DB_PORT=5432
+      - SECRET_KEY="django-insecure-0%2tx+jpy^w+gu7xmny1sn@4@1e)#2@g2nfh6chi=ri7rx*&^9"
+      - AWS_ACCESS_KEY_ID=AKIAYUPUIJLHHLGUAMTT
+      - AWS_SECRET_ACCESS_KEY=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
+      - AWS_STORAGE_BUCKET_NAME=nws-dealer-portal
+      - AWS_S3_CUSTOM_DOMAIN=nws-dealer-portal.s3.amazonaws.com
+      - DEFAULT_FILE_STORAGE=storages.backends.s3boto3.S3Boto3Storage
+      - STATICFILES_STORAGE=storages.backends.s3boto3.S3Boto3Storage
+      - EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+      - EMAIL_HOST_QA=smtp.gmail.com
+      - EMAIL_PORT_QA=587
+      - EMAIL_USE_TLS_QA=True
+      - DEFAULT_FROM_EMAIL_QA=nnws15815@gmail.com
+      - EMAIL_HOST_USER_QA=nnws15815@gmail.com
+      - EMAIL_HOST_PASSWORD_QA=xrxi dble orgs trah
+      - ENVIRONMENT=QA
+    networks:
+      - aws_dealerportal_network
+
+networks:
+  aws_dealerportal_network:
+    driver: bridge
