@@ -4,6 +4,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db.models import Q
 from django.utils import timezone
 from django.db.models import Max
+from django.forms.models import model_to_dict
 import os
 from django.conf import settings
 
@@ -69,8 +70,40 @@ class User(AbstractUser):
             queryset = queryset.order_by("-updated_at", "-created_at")[:quote_limit]
         else:
             queryset = queryset.order_by("-updated_at", "-created_at")
-
         return queryset
+    
+    def get_api_dealerportal_quotes_for_user(self, quote_limit=None):
+        if self.role == "AppAdmin" or self.is_superuser or self.role == "AppManager":
+            queryset = Quote.objects.all().select_related('owner', 'owner__dealer_account')
+        elif self.role == "Estimator":
+            queryset = Quote.objects.filter(owner=self).select_related('owner', 'owner__dealer_account')
+        elif self.role == "DealerAdmin":
+            estimator_ids = self.get_estimators().values_list("id", flat=True)
+            queryset = Quote.objects.filter(Q(owner=self) | Q(owner__in=estimator_ids)).select_related('owner', 'owner__dealer_account')
+        else:
+            queryset = Quote.objects.none()
+
+        if quote_limit is not None:
+            queryset = queryset.order_by("-updated_at", "-created_at")[:quote_limit]
+        else:
+            queryset = queryset.order_by("-updated_at", "-created_at")
+        serialized_quotes = []
+        for quote in queryset:
+            quote_dict = model_to_dict(quote)
+            quote_dict['created_at'] = quote.created_at.strftime("%Y-%m-%d %H:%M:%S")
+            quote_dict['updated_at'] = quote.updated_at.strftime("%Y-%m-%d %H:%M:%S")
+            if quote.owner:
+                owner_dict = model_to_dict(quote.owner, exclude=['password', 'profile_pic'])
+                if quote.owner.profile_pic:
+                    owner_dict['profile_pic_url'] = quote.owner.profile_pic.url  
+                quote_dict['owner'] = owner_dict
+                if quote.owner.dealer_account:
+                    dealer_account_dict = model_to_dict(quote.owner.dealer_account, exclude=['logo'])
+                    if quote.owner.dealer_account.logo:
+                        dealer_account_dict['logo_url'] = quote.owner.dealer_account.logo.url
+                    quote_dict['owner']['dealer_account'] = dealer_account_dict
+            serialized_quotes.append(quote_dict)
+        return serialized_quotes    
 
     def get_orders_for_user(self, order_limit=None):
         if self.role == "AppAdmin" or self.is_superuser or self.role == "AppManager":
@@ -244,7 +277,7 @@ class Product(models.Model):
 
         filename += ".png"
 
-        return filename
+        return filename        
 
     def save(self, *args, **kwargs):
         if not self.image_name:

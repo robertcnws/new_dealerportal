@@ -1,10 +1,18 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from . import views, auth
 
 urlpatterns = [
-    path("login", views.loginPage, name="base-login"),
-    path("logout", views.logoutUser, name="base-logout"),
+    # API URLS TO REACT FRONTEND
+    path("api-dealerportal-login/", views.apiDealerportalLoginPage, name="api-dealerportal-base-login"),
+    path("api-dealerportal-home/", views.apiDealerportalHome, name="api-dealerportal-base-home"),
+    path("api-dealerportal-quotes/", views.apiDealerportalListQuotes, name="api-dealerportal-base-quotes"),
+    path("api-dealerportal-check-stock/", views.api_dealerportal_check_stock, name="api-dealerportal-check-stock"),
+    path("api-dealerportal-get-products/", views.api_dealerportal_get_products, name="api-dealerportal-get-products"),
+    # BACKEND URLS
+    path("login/", views.loginPage, name="base-login"),
+    path("logout/", views.logoutUser, name="base-logout"),
     path("register", views.registerPage, name="base-register"),
     path('password_reset/', views.password_reset_request, name='password_reset'),
     path('password_reset/done/', views.CustomPasswordResetDoneView.as_view(), name='password_reset_done'),
@@ -102,4 +110,8 @@ urlpatterns = [
     # AJAX URLS
     path("orders/async/", views.orders_ajax, name="base-orders_ajax"),
     path("quotes/async/", views.quotes_ajax, name="base-quotes-ajax"),
+    # JWT TOKEN URLS
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    
 ]

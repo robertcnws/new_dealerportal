@@ -8,7 +8,7 @@ services:
       - ./backend/nginx/gunicorn.conf.py:/etc/nginx/gunicorn.conf.py
       - ./backend/local_backup:/app/backup
     ports:
-      - "8001:8001"
+      - "8005:8005"
     env_file:
       - ./backend/.env
     networks:

@@ -11,3 +11,24 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+.small-popup {
+  padding: 10px; /* Ajusta el padding interno */
+  /* height: 200px; */
+}
+
+.small-title {
+  font-size: 20px; /* Ajusta el tamaño del título */
+}
+
+.small-content {
+  font-size: 16px; /* Ajusta el tamaño del texto */
+}
+
+.small-confirm-button {
+  font-size: 16px; /* Ajusta el tamaño del botón */
+}
+
+.custom-icon {
+  margin-top: 10px; /* Ajusta el valor según lo necesites */
+}

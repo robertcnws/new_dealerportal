@@ -1,9 +1,21 @@
 import copy
-from .models import Quote, User, QuoteProduct, Order, DealerAccount, ItemGroup, Product
+import logging
+import json
+from .models import (
+    Quote, 
+    User, 
+    QuoteProduct, 
+    Order, 
+    DealerAccount, 
+    ItemGroup, 
+    Product
+)
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
+from django.forms.models import model_to_dict
+from django.db import models
 from django.contrib import messages
 from .forms import (
     QuoteForm,
@@ -38,10 +50,17 @@ from django.core.mail import send_mail, EmailMessage
 from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth import get_user_model
 from django.urls import reverse
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.forms import AuthenticationForm
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 
 # USER MANAGMENT VIEWS AND FUNCTIONS
 
-from django.contrib.auth.forms import AuthenticationForm
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 
 def loginPage(request):
@@ -70,6 +89,33 @@ def loginPage(request):
 
     context = {"page": page, "form": form}
     return render(request, "base/login_register.html", context)
+
+
+@csrf_exempt
+def apiDealerportalLoginPage(request):
+
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)  
+            username = data.get('username')  
+            password = data.get('password') 
+            if not username or not password:
+                return JsonResponse({'error': 'Username and password required', 'description': 'Username and password required'}, status=400)
+            user = authenticate(request, username=username, password=password)
+            if user is not None:
+                login(request, user)
+                logger.info(f'User {username} logged in')
+                return JsonResponse({
+                    'data': custom_model_to_dict(user)
+                }, status=200)
+            login_user = User.objects.filter(username=username).first()
+            if login_user:
+                return JsonResponse({'error': 'Invalid credentials', 'description' : 'Incorrect Password'}, status=400)
+            else:
+                return JsonResponse({'error': 'Invalid credentials', 'description' : 'Username does not exist'}, status=400)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON', 'description': 'Request is not in a valid format'}, status=400)
+    return JsonResponse({'error': 'Method not allowed', 'description': 'Method not allowed'}, status=405)
 
 
 @login_required(login_url="base-login")
@@ -148,55 +194,130 @@ def toggle_light_mode(request):
 
 @login_required(login_url="base-login")
 def home(request):
-    user = get_object_or_404(User, id=request.user.id)
-    dealership = None
-    quotes, quote_count = get_paginated_quotes(user, 0, 10)
-    month = datetime.now().month  # get current month number
-    month_name = datetime.now().strftime("%B")  # this will give you current month name
-    user_stats = calculate_user_stats(user)
+        user = get_object_or_404(User, id=request.user.id)
+        dealership = None
+        quotes, quote_count = get_paginated_quotes(user, 0, 10)
+        month = datetime.now().month  # get current month number
+        month_name = datetime.now().strftime("%B")  # this will give you current month name
+        user_stats = calculate_user_stats(user)
 
-    if request.user.role != "AppAdmin" or "AppManager":
-        dealership = request.user.dealer_account
+        if request.user.role != "AppAdmin" or "AppManager":
+            dealership = request.user.dealer_account
 
-    # We will get stats for both orders and quotes in single database calls
-    # For Orders
-    orders = user.get_orders_for_user().filter(created_at__month=month)
-    order_status_counts = orders.values("status").annotate(count=Count("status"))
-    orders_stats = orders.aggregate(
-        total_orders=Count("id"),
-        confirmed_orders=Count(
-            Case(When(status="accepted", then=1), output_field=IntegerField())
-        ),
-        pending_orders=Count(
-            Case(When(status="pending", then=1), output_field=IntegerField())
-        ),
-        total_sell_in_orders=Sum("total_cost") or 0,
-    )
-
-    # For Quotes
-    quotes_stats = (
-        user.get_quotes_for_user()
-        .filter(created_at__month=month)
-        .aggregate(
-            total_quotes=Count("id"), total_sell_in_quotes=Sum("total_sell") or 0
+        # We will get stats for both orders and quotes in single database calls
+        # For Orders
+        orders = user.get_orders_for_user().filter(created_at__month=month)
+        order_status_counts = orders.values("status").annotate(count=Count("status"))
+        orders_stats = orders.aggregate(
+            total_orders=Count("id"),
+            confirmed_orders=Count(
+                Case(When(status="accepted", then=1), output_field=IntegerField())
+            ),
+            pending_orders=Count(
+                Case(When(status="pending", then=1), output_field=IntegerField())
+            ),
+            total_sell_in_orders=Sum("total_cost") or 0,
         )
-    )
 
-    context = {
-        "dealership": dealership,
-        "quotes": quotes,
-        "user_stats": user_stats,
-        "active_page": "dashboard",
-        "month_name": month_name,
-        "total_quotes": quotes_stats["total_quotes"],
-        "total_orders": orders_stats["total_orders"],
-        "confirmed_orders": orders_stats["confirmed_orders"],
-        "pending_orders": orders_stats["pending_orders"],
-        "total_sell_in_quotes": quotes_stats["total_sell_in_quotes"],
-        "total_sell_in_orders": orders_stats["total_sell_in_orders"],
-    }
+        # For Quotes
+        quotes_stats = (
+            user.get_quotes_for_user()
+            .filter(created_at__month=month)
+            .aggregate(
+                total_quotes=Count("id"), total_sell_in_quotes=Sum("total_sell") or 0
+            )
+        )
 
-    return render(request, "base/home.html", context)
+        context = {
+            "dealership": dealership,
+            "quotes": quotes,
+            "user_stats": user_stats,
+            "active_page": "dashboard",
+            "month_name": month_name,
+            "total_quotes": quotes_stats["total_quotes"],
+            "total_orders": orders_stats["total_orders"],
+            "confirmed_orders": orders_stats["confirmed_orders"],
+            "pending_orders": orders_stats["pending_orders"],
+            "total_sell_in_quotes": quotes_stats["total_sell_in_quotes"],
+            "total_sell_in_orders": orders_stats["total_sell_in_orders"],
+        }
+
+        return render(request, "base/home.html", context)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def apiDealerportalHome(request):
+    valid_token = validateJWTTokenRequest(request)  
+    if valid_token:
+        user_id = request.GET.get('user_id')
+        user = get_object_or_404(User, id=user_id)
+        dealership = None
+        quotes = user.get_api_dealerportal_quotes_for_user()[:10]
+        month = datetime.now().month  # get current month number
+        month_name = datetime.now().strftime("%B")  # this will give you current month name
+        user_stats = calculate_user_stats(user)
+
+        if request.user.role != "AppAdmin" or "AppManager":
+            dealership = request.user.dealer_account
+
+        # We will get stats for both orders and quotes in single database calls
+        # For Orders
+        orders = user.get_orders_for_user().filter(created_at__month=month)
+        order_status_counts = orders.values("status").annotate(count=Count("status"))
+        orders_stats = orders.aggregate(
+            total_orders=Count("id"),
+            confirmed_orders=Count(
+                Case(When(status="accepted", then=1), output_field=IntegerField())
+            ),
+            pending_orders=Count(
+                Case(When(status="pending", then=1), output_field=IntegerField())
+            ),
+            total_sell_in_orders=Sum("total_cost") or 0,
+        )
+
+        # For Quotes
+        quotes_stats = (
+            user.get_quotes_for_user()
+            .filter(created_at__month=month)
+            .aggregate(
+                total_quotes=Count("id"), total_sell_in_quotes=Sum("total_sell") or 0
+            )
+        )
+
+        # # Serialize quotes to make them JSON serializable
+        # serialized_quotes = [model_to_dict(quote) for quote in quotes]
+        
+        # print(serialized_quotes)
+
+        context = {
+            "dealership": dealership,
+            "quotes": quotes,
+            "user_stats": user_stats,
+            "active_page": "dashboard",
+            "month_name": month_name,
+            "total_quotes": quotes_stats["total_quotes"],
+            "total_orders": orders_stats["total_orders"],
+            "confirmed_orders": orders_stats["confirmed_orders"],
+            "pending_orders": orders_stats["pending_orders"],
+            "total_sell_in_quotes": quotes_stats["total_sell_in_quotes"],
+            "total_sell_in_orders": orders_stats["total_sell_in_orders"],
+        }
+
+        return JsonResponse({ 'data': context }, status=200)
+    return JsonResponse({'error': 'Invalid token', 'description': 'Invalid Token for this request'}, status=401)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def apiDealerportalListQuotes(request):
+    valid_token = validateJWTTokenRequest(request)  
+    if valid_token:
+        user_id = request.GET.get('user_id')
+        user = get_object_or_404(User, id=user_id)
+        quotes = user.get_api_dealerportal_quotes_for_user()
+        return JsonResponse({ 'data': quotes }, status=200)
+    return JsonResponse({'error': 'Invalid token', 'description': 'Invalid Token for this request'}, status=401)
 
 
 # QUOTES VIEWS AND FUNCTIONS
@@ -214,6 +335,20 @@ def get_paginated_quotes(user, start, length):
         paginated_quotes = []
 
     return paginated_quotes, quote_count
+
+
+# def get_api_dealerportal_paginated_quotes(user, start, length):
+#     quotes = user.get_api_dealerportal_quotes_for_user()
+#     quote_count = len(quotes)
+#     paginator = Paginator(quotes, length)
+#     page = (start // length) + 1
+
+#     try:
+#         paginated_quotes = paginator.page(page)
+#     except EmptyPage:
+#         paginated_quotes = []
+
+#     return paginated_quotes, quote_count
 
 
 @login_required(login_url="base-login")
@@ -787,11 +922,44 @@ def delete_order(request, pk):
 
 # PRODUCTS VIEWS AND FUNCTIONS
 @login_required(login_url="base-login")
-@login_required(login_url="base-login")
 def check_stock(request):
     item_groups = ItemGroup.objects.all()
     context = {"item_groups": item_groups, "active_page": "stock"}
     return render(request, "base/check_stock.html", context)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def api_dealerportal_check_stock(request):
+    valid_token = validateJWTTokenRequest(request)  
+    if valid_token:     
+        item_groups = ItemGroup.objects.all()
+        list_of_item_groups = []
+        for item_group in item_groups:
+            list_of_item_groups.append(custom_model_to_dict(item_group))
+        for item_group in list_of_item_groups:
+            items = Product.objects.filter(zoho_group=item_group['id'])
+            list_of_items = []
+            for item in items:
+                list_of_items.append(custom_model_to_dict(item))
+            item_group['items'] = list_of_items
+        return JsonResponse({'data': list_of_item_groups}, status=200)
+    return JsonResponse({'error': 'Invalid token', 'description': 'Invalid Token for this request'}, status=401)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def api_dealerportal_get_products(request):
+    valid_token = validateJWTTokenRequest(request)  
+    if valid_token: 
+        status = request.GET.get('status', 'inactive')
+        list_products = []
+        if status == 'active':
+            products = Product.objects.all().select_related('zoho_group').order_by('name')     
+            for product in products:
+                list_products.append(custom_model_to_dict(product))
+        return JsonResponse({'data': list_products}, status=200)
+    return JsonResponse({'error': 'Invalid token', 'description': 'Invalid Token for this request'}, status=401)
 
 
 # MANAGE DEALERS AND ESTIMATORS
@@ -1056,6 +1224,33 @@ def createEstimator(request, pk):
     return redirect("base-manage-dealership", pk=dealer_account.id)
 
 
+# VALIDATE JWT TOKEN
+
+def validateJWTTokenRequest(request):
+    auth_header = request.headers.get('Authorization')
+    if auth_header:
+        token = auth_header.split(' ')[1]
+        jwt_auth = JWTAuthentication()
+        try:
+            validated_token = jwt_auth.get_validated_token(token)
+            user = jwt_auth.get_user(validated_token)
+            return True if user else False
+        except (InvalidToken, TokenError) as e:
+            logger.error(f"Error validating token: {e}")
+            return False
+    else:
+        return False
+    
+def custom_model_to_dict(instance):
+    data = model_to_dict(instance)
+    # Reemplaza los campos ImageFieldFile con el nombre del archivo
+    for field in instance._meta.fields:
+        if isinstance(field, models.ImageField):
+            image_field = getattr(instance, field.name)
+            data[field.name] = image_field.name if image_field else None
+    return data
+
+
 # PASSWORD RESET VIEWS AND FUNCTIONS
 
 def password_reset_request(request):
@@ -1122,3 +1317,4 @@ class CustomPasswordResetDoneView(PasswordResetDoneView):
 
 class CustomPasswordResetCompleteView(PasswordResetCompleteView):
     template_name = 'base/password_reset/password_reset_complete.html'
+    

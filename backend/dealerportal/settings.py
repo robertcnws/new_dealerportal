@@ -37,7 +37,7 @@ DEBUG = False
 # DEBUG = bool(os.environ.get("DEBUG", False))
 
 # ALLOWED_HOSTS = ["dealerportal.herokuapp.com", "127.0.0.1"]
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "").split(",")
+
 
 env = environ.Env(
     DEBUG=(bool, False)
@@ -54,6 +54,16 @@ DB_HOST = env('DB_HOST_DEV') if ENVIRONMENT == 'DEV' else env('DB_HOST_QA') if E
 SECRET_KEY = env('SECRET_KEY_DEV') if ENVIRONMENT == 'DEV' else env('SECRET_KEY_QA') if ENVIRONMENT == 'QA' else env('SECRET_KEY_PROD')
 DB_PORT = env('DB_PORT')
 DB_ENGINE = env('DB_ENGINE')
+
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
+
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=[])
+
+CORS_ALLOW_METHODS = env.list('CORS_ALLOW_METHODS', default=[])
+
+CORS_ALLOW_HEADERS = env.list('CORS_ALLOW_HEADERS', default=[])
 
 # Application definition
 
@@ -73,7 +83,19 @@ INSTALLED_APPS = [
     "django_celery_results",
     "django_celery_beat",
     "storages",
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'corsheaders',
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+}
 
 AUTH_USER_MODEL = "base.User"
 
@@ -83,6 +105,8 @@ MIDDLEWARE = [
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
