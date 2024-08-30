@@ -79,7 +79,7 @@ const App = () => {
               <Route path="" element={<HomeComponent />} />
               <Route path="check-stock" element={<ListStocksComponent />} />
               <Route path="quotes" element={<ListQuotesComponent />} />
-              <Route path="quote_details" element={<ListStocksQuoteDetailsComponent />} />
+              <Route path="quote-details" element={<ListStocksQuoteDetailsComponent />} />
             </Route>
           </Routes>
         </ThemeProvider>

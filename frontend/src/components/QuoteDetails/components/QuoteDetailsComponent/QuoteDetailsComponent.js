@@ -1,42 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import { Form, useNavigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
-  Button,
   Paper,
-  IconButton,
   Grid,
   Alert,
-  Tooltip,
-  Divider,
-  TextareaAutosize,
-  FormControl
-} from '@mui/material';
-import { Badge, Tab } from 'react-bootstrap';
-import { Close as CloseIcon, Print, PrintTwoTone } from '@mui/icons-material';
-import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart'
-import FlashOnIcon from '@mui/icons-material/FlashOn';
-import { staticUrl, apiFrontendRoot, apiUrl } from '../../../../config';
-import NavigationButtonComponent from '../../../Utils/components/NavigationButtonComponent/NavigationButtonComponent';
-import SelectListProductsComponent from '../SelectListProductsComponent/SelectListProductsComponent';
+  Divider} from '@mui/material';
+import { Badge } from 'react-bootstrap';
 import TableQuoteProductsComponent from '../TableQuoteProductsComponent/TableQuoteProductsComponent';
 
-const QuoteDetailsComponent = ({ quote, getSelectedProducts }) => {
-
-  console.log(getSelectedProducts());
+const QuoteDetailsComponent = ({ quote, quoteProducts, onSyncCompleted, isSyncing, setIsSyncing }) => {
 
   const navigate = useNavigate();
 
-  // const childrenNavigationButton = [
-  //   { label: 'Print Sell', icon: <Print sx={{ marginRight: 1 }} />, visibility: true, noBorder: true },
-  //   { label: 'Print Cost', icon: <PrintTwoTone sx={{ marginRight: 1 }} />, visibility: true, noBorder: true },
-  //   { label: 'Place Order', icon: <AddShoppingCartIcon sx={{ marginRight: 1 }} />, visibility: true, noBorder: true },
-  //   { label: 'Smart Quote', icon: <i className="bi bi-robot me-2" style={{ marginRight: 1 }}></i>, visibility: true, noBorder: true },
-  //   { label: 'Suggest Alternatives', icon: <FlashOnIcon sx={{ marginRight: 1 }} />, visibility: true, noBorder: true },
-  //   { label: 'Edit', icon: <i className="bi bi-pencil-square me-2" style={{ marginRight: 1 }}></i>, visibility: true, noBorder: true },
-  //   { label: 'Delete', icon: <i className="bi bi-trash me-2" style={{ marginRight: 1 }}></i>, visibility: true, noBorder: true },
-  // ];
+  useEffect(() => {
+    // if (isSyncing) {
+    const intervalId = setInterval(onSyncCompleted, 5000);
+    return () => clearInterval(intervalId);
+    // }
+  }, [onSyncCompleted]);
 
   return (
     <Box sx={{ padding: 1, overflowY: 'auto', ml: -1, minWidth: '100%' }}>
@@ -45,7 +28,7 @@ const QuoteDetailsComponent = ({ quote, getSelectedProducts }) => {
           <Grid container spacing={1} sx={{ p: 1, display: 'flex', justifyContent: 'space-between' }}>
             <Grid item xs={4} sx={{ border: '1px solid whitesmoke', borderRadius: '10px', p: 1 }}>
               <Grid item xs={12}>
-                <Box sx={{ mb: 2, p: 1 }}>
+                <Box sx={{ mb: 1, p: 1 }}>
                   <Typography variant="body1">
                     Status: <Badge bg={quote.status === 'Pending' ? 'warning' : 'success'}>{quote.status}</Badge>
                   </Typography>
@@ -84,22 +67,22 @@ const QuoteDetailsComponent = ({ quote, getSelectedProducts }) => {
                   QUOTE TOTALS
                 </Typography>
                 <Divider />
-                <Box sx={{ mt: 2 }}>
+                <Box sx={{ mt: 1 }}>
                   <Typography variant="body1">
-                    <b>Total Cost</b>: {quote.subtotal}
+                    <b>Total Cost</b>: $ {parseFloat(quote.total_cost).toFixed(2)}
                   </Typography>
                   <Typography variant="body1">
-                    <b>Mark up Total</b>: {quote.discount}
+                    <b>Mark up Total</b>: $ {parseFloat(quote.markup_total).toFixed(2)}
                   </Typography>
                   <Typography variant="body1">
-                    <b>Total Sell</b>: {quote.total}
+                    <b>Total Sell</b>: $ {parseFloat(quote.total_sell).toFixed(2)}
                   </Typography>
                 </Box>
               </Box>
             </Grid>
           </Grid>
         </Box>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'left', width: '100%' }}>
+        {/* <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'left', width: '100%' }}>
           <Grid container spacing={1} sx={{ display: 'flex', justifyContent: 'center' }}>
             <Grid item xs={12} sx={{ borderRadius: '10px', p: 1, justifyContent: 'center' }}>
               <Box sx={{
@@ -112,7 +95,7 @@ const QuoteDetailsComponent = ({ quote, getSelectedProducts }) => {
                 borderRadius: '10px',
                 textAlign: 'right'
               }}>
-                <Typography variant="h6" sx={{ mb: 2 }}>
+                <Typography variant="h6" sx={{ mb: 1 }}>
                   QUOTE NOTES
                 </Typography>
                 <Divider />
@@ -135,14 +118,23 @@ const QuoteDetailsComponent = ({ quote, getSelectedProducts }) => {
               </Box>
             </Grid>
           </Grid>
-        </Box>
-        <Box sx={{ textAlign: 'center', width: '100%' }}>
-          <Typography variant="h6" sx={{ mt: 2 }}>
-            PRODUCTS
-          </Typography>
-          <Grid container spacing={1} sx={{ display: 'flex', justifyContent: 'center' }}>
-            <TableQuoteProductsComponent quote={quote} getSelectedProducts={getSelectedProducts}/>
-          </Grid>
+        </Box> */}
+        <Box sx={{ textAlign: 'center', width: '100%', mt: 1 }}>
+          {quoteProducts.length > 0 ? (
+            <Grid container spacing={1} sx={{ display: 'flex', justifyContent: 'center' }}>
+              <TableQuoteProductsComponent
+                quote={quote}
+                quoteProducts={quoteProducts}
+                onSyncCompleted={onSyncCompleted}
+                isSyncing={isSyncing}
+                setIsSyncing={setIsSyncing}
+              />
+            </Grid>
+          ) : (
+            <Alert severity="warning" sx={{ mt: 2 }}>
+              No products added to this quote yet.
+            </Alert>
+          )}
         </Box>
 
       </Paper>

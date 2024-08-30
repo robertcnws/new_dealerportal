@@ -77,7 +77,12 @@ const ListQuotesComponent = () => {
     const user = JSON.parse(localStorage.getItem('userLogged') || '{}');
     if (user.data?.id) {
       const payload = { user_id: user.data.id };
-      fetchQuotes(payload);
+      const fetchQuotesWithPayload = () => fetchQuotes(payload);
+      fetchQuotesWithPayload();
+      const intervalId = setInterval(fetchQuotesWithPayload, 5000);
+
+      // Limpieza del intervalo al desmontar el componente
+      return () => clearInterval(intervalId);
     }
   }, []);
 
@@ -86,7 +91,7 @@ const ListQuotesComponent = () => {
     setFilteredQuotes(filteredList);
   }, [filter, searchTermGlobal, quotes]);
 
-  
+
 
   useEffect(() => {
     const rows = filteredQuotes.map(quote => ({
@@ -100,6 +105,7 @@ const ListQuotesComponent = () => {
       total_cost: quote.total_cost,
       updated_at: quote.updated_at,
       mark_up: quote.markup,
+      markup_total: quote.markup_total,
     }));
     setTableData(rows);
   }, [filteredQuotes]);
@@ -173,10 +179,9 @@ const ListQuotesComponent = () => {
   };
 
   const handleOpenQuoteDetails = (quote) => {
-    console.log('quote', quote);
     setIsQuoteSelected(true);
     setQuoteSelected(quote);
-    navigate(`${apiFrontendRoot}/quote_details`, { state: { quote: quote } });
+    navigate(`${apiFrontendRoot}/quote-details`, { state: { quote: quote } });
   };
 
   const configCustomFilter = {
@@ -186,7 +191,7 @@ const ListQuotesComponent = () => {
     hasSearch: false,
     marginBottomInDetails: '10px'
   };
-  
+
 
   const childrenNavigationRightButton = [
     { label: 'View', icon: <Visibility sx={{ marginRight: 1 }} />, visibility: true, noBorder: true },
@@ -207,62 +212,62 @@ const ListQuotesComponent = () => {
       <Box sx={{ mt: 3, minWidth: '100%', bgcolor: '#f1f1f1' }}>
         {tableData.length > 0 && (
           <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <Box>
-                  <Grid container spacing={2}>
-                    <Grid item xs={8}>
-                      <CustomFilterComponent configCustomFilter={configCustomFilter} />
-                    </Grid>
-                    <Grid item xs={4}>
-                      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-                        <NavigationButtonComponent children={childrenNavigationUpButton} bgcolor='white' />
-                      </Box>
-                    </Grid>
+            <Grid item xs={12}>
+              <Box>
+                <Grid container spacing={2}>
+                  <Grid item xs={8}>
+                    <CustomFilterComponent configCustomFilter={configCustomFilter} />
                   </Grid>
-                </Box>
-                <TableContainer sx={{ minWidth: '100%', bgcolor: 'white', borderRadius: '10px', mb: 2, maxHeight: 'calc(100vh - 180px)', overflowY: 'auto' }}>
-                  <Table>
-                    <TableHead sx={{ maxHeight: '20px', p: 0 }}>
-                      <TableRow>
-                        {columns.map((column) => (
-                          <TableCell key={column.field}><b>{column.headerName}</b></TableCell>
-                        ))}
-                        <TableCell><b>Actions</b></TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {tableData.map((row) => (
-                        <TableRow key={row.id} className={classes.row}
-                          sx={{ cursor: 'pointer' }}
-                          onClick={() => handleOpenQuoteDetails(row)}>
-                          {columns.map((column) => (
-                            <TableCell key={column.field}>
-                              {column.field.includes('status') ? (
-                                <Badge bg={row[column.field] === 'active' ? 'success' : 'error'} style={{ marginTop: 0, marginBottom: 10, fontSize: '0.75rem' }}>
-                                  {row[column.field]}
-                                </Badge>
-                              ) : (
-                                row[column.field]
-                              )}
-                            </TableCell>
-                          ))}
-                          <TableCell>
-                            <NavigationButtonComponent children={childrenNavigationRightButton} bgcolor='white' />
-                          </TableCell>
-                        </TableRow>
+                  <Grid item xs={4}>
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+                      <NavigationButtonComponent children={childrenNavigationUpButton} bgcolor='white' />
+                    </Box>
+                  </Grid>
+                </Grid>
+              </Box>
+              <TableContainer sx={{ minWidth: '100%', bgcolor: 'white', borderRadius: '10px', mb: 2, maxHeight: 'calc(100vh - 180px)', overflowY: 'auto' }}>
+                <Table stickyHeader>
+                  <TableHead sx={{ maxHeight: '20px', p: 0, border: '1px solid #ddd' }}>
+                    <TableRow sx={{ border: '1px solid #ddd', p: 0}}>
+                      {columns.map((column) => (
+                        <TableCell key={column.field} sx={{ bgcolor: '#f1f1f9'}}><b>{column.headerName}</b></TableCell>
                       ))}
-                      <CustomTablePaginationComponent
-                        columnsLength={columns.length + 1}
-                        data={filteredQuotes}
-                        page={page}
-                        rowsPerPage={rowsPerPage}
-                        handleChangePage={handleChangePage}
-                        handleChangeRowsPerPage={handleChangeRowsPerPage}
-                      />
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </Grid>
+                      <TableCell sx={{ bgcolor: '#f1f1f9'}}><b>Actions</b></TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {tableData.map((row) => (
+                      <TableRow key={row.id} className={classes.row}
+                        sx={{ cursor: 'pointer' }}
+                        onClick={() => handleOpenQuoteDetails(row)}>
+                        {columns.map((column) => (
+                          <TableCell key={column.field}>
+                            {column.field.includes('status') ? (
+                              <Badge bg={row[column.field] === 'active' ? 'success' : 'error'} style={{ marginTop: 0, marginBottom: 10, fontSize: '0.75rem' }}>
+                                {row[column.field]}
+                              </Badge>
+                            ) : (
+                              row[column.field]
+                            )}
+                          </TableCell>
+                        ))}
+                        <TableCell>
+                          <NavigationButtonComponent children={childrenNavigationRightButton} bgcolor='white' />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    <CustomTablePaginationComponent
+                      columnsLength={columns.length + 1}
+                      data={filteredQuotes}
+                      page={page}
+                      rowsPerPage={rowsPerPage}
+                      handleChangePage={handleChangePage}
+                      handleChangeRowsPerPage={handleChangeRowsPerPage}
+                    />
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Grid>
           </Grid>
         )}
       </Box>

@@ -10,6 +10,8 @@ urlpatterns = [
     path("api-dealerportal-quotes/", views.apiDealerportalListQuotes, name="api-dealerportal-base-quotes"),
     path("api-dealerportal-check-stock/", views.api_dealerportal_check_stock, name="api-dealerportal-check-stock"),
     path("api-dealerportal-get-products/", views.api_dealerportal_get_products, name="api-dealerportal-get-products"),
+    path("api-dealerportal-quote-products/<int:pk>/", views.api_dealerportal_view_quote_products, name="api-dealerportal-quote-products"),
+    path("api-dealerportal-manage-product-to-quote/", views.api_dealerportal_manage_product_to_quote, name="api-dealerportal-manage-product-to-quote"),
     # BACKEND URLS
     path("login/", views.loginPage, name="base-login"),
     path("logout/", views.logoutUser, name="base-logout"),

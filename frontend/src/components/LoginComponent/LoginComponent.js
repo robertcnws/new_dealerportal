@@ -3,7 +3,7 @@ import { Button, TextField, Box, IconButton, Typography, CircularProgress, Alert
 import { VisibilityOff, Visibility } from '@mui/icons-material';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { apiUrl } from '../../config';
+import { apiUrl, apiFrontendRoot } from '../../config';
 import { useAuth } from '../../components/AuthContextComponent/AuthContextComponent';
 import MainLoginComponent from '../MainLoginComponent/MainLoginComponent';
 import CustomAlertComponent from '../Utils/components/CustomAlertComponent/CustomAlertComponent';
@@ -69,7 +69,7 @@ const LoginComponent = () => {
           delete loginResponse.data.data.password;
           localStorage.setItem('userLogged', JSON.stringify(loginResponse.data));
           login();
-          navigate('/api-dealerportal-home');
+          navigate(apiFrontendRoot);
         } else {
           setError(`${loginResponse.data.error} : ${loginResponse.data.description}`);
           throw new Error(`${error}`);

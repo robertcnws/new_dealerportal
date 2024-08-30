@@ -7,7 +7,6 @@ import GroupStockRowComponent from '../../../Stock/components/GroupStockRowCompo
 import { Box, Grid, Table, TableBody, TableContainer } from '@mui/material';
 import CustomFilterComponent from '../../../Utils/components/CustomFilterComponent/CustomFilterComponent';
 import QuoteDetailsComponent from '../QuoteDetailsComponent/QuoteDetailsComponent';
-import { Quote } from 'react-bootstrap-icons';
 import ButtonsbarComponent from '../ButtonsbarComponent/ButtonsbarComponent';
 
 
@@ -23,11 +22,15 @@ const ListStocksQuoteDetailsComponent = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [quote, setQuote] = useState(null);
+  const [quoteProducts, setQuoteProducts] = useState([]);
   const [selectedProducts, setSelectedProducts] = useState([]);
+  const [isSyncing, setIsSyncing] = useState(true);
 
   useEffect(() => {
     document.title = 'Dealer Portal | Stocks';
     fetchStocks();
+    const intervalId = setInterval(fetchStocks, 5000);
+    return () => clearInterval(intervalId);
   }, []);
 
   useEffect(() => {
@@ -38,6 +41,7 @@ const ListStocksQuoteDetailsComponent = () => {
   useEffect(() => {
     const quote = location.state.quote;
     setQuote(quote);
+    fetchQuoteProducts(quote);
   }, []);
 
   const fetchStocks = async () => {
@@ -54,6 +58,24 @@ const ListStocksQuoteDetailsComponent = () => {
       setLoading(false);
     }
   };
+
+  const fetchQuoteProducts = async (quote) => {
+    try {
+      const user = JSON.parse(localStorage.getItem('userLogged'));
+      const payload = {
+        user_id: user.data.id,
+      };
+      const response = await fetchWithToken(`${apiUrl}/api-dealerportal-quote-products/${quote.id}/`, 'GET', payload, {}, apiUrl);
+      if (response.status !== 200) {
+        throw new Error(`Failed to fetch quote products`);
+      }
+      setQuoteProducts(response.data.data.quote_products);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const handleFilterChange = (e) => {
     const newFilter = e.target.value;
@@ -169,7 +191,17 @@ const ListStocksQuoteDetailsComponent = () => {
               <Table>
                 <TableBody>
                   {filteredStocks.map((stock) => (
-                    <GroupStockRowComponent key={stock.id} group={stock} onSelection={handleSelection} expandedItem={expandedItem} />
+                    <GroupStockRowComponent
+                      key={stock.id}
+                      group={stock}
+                      onSelection={handleSelection}
+                      expandedItem={expandedItem}
+                      isInQuoteDetails={true}
+                      quote={quote}
+                      onSyncCompleted={() => fetchQuoteProducts(quote)}
+                      isSyncing={isSyncing}
+                      setIsSyncing={setIsSyncing}
+                    />
                   ))}
                 </TableBody>
               </Table>
@@ -178,12 +210,18 @@ const ListStocksQuoteDetailsComponent = () => {
           <Grid item xs={8}>
             <Grid item container spacing={2} justifyContent="flex-end">
               <Box sx={{ mt: 2, mb: 3 }}>
-                <ButtonsbarComponent quote={quote} onClose={onCloseDetails}/>
+                <ButtonsbarComponent quote={quote} onClose={onCloseDetails} />
               </Box>
             </Grid>
             <Grid item container spacing={2}>
               <Box sx={{ ml: 1, width: '100%' }}>
-                <QuoteDetailsComponent quote={quote} getSelectedProducts={getSelectedProducts}/>
+                <QuoteDetailsComponent
+                  quote={quote}
+                  quoteProducts={quoteProducts}
+                  onSyncCompleted={() => fetchQuoteProducts(quote)}
+                  isSyncing={isSyncing}
+                  setIsSyncing={setIsSyncing}
+                />
               </Box>
             </Grid>
           </Grid>

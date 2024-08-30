@@ -4,12 +4,16 @@ import {
   TableRow,
   TableCell,
   useTheme,
+  Tooltip,
+  Grid
 } from '@mui/material';
 import { makeStyles } from '@mui/styles';
 import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined';
 import FolderOpenOutlinedIcon from '@mui/icons-material/FolderOpenOutlined';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 // import { faFolderOpen } from '@fortawesome/free-solid-svg-icons';
+import { apiUrl } from '../../../../config';
+import { fetchWithToken } from '../../../../utils';
+import { AddBoxRounded } from '@mui/icons-material';
 
 const useStyles = makeStyles({
   row: {
@@ -19,9 +23,11 @@ const useStyles = makeStyles({
   },
 });
 
-const GroupStockRowComponent = ({ group, onSelection, expandedItem }) => {
+const GroupStockRowComponent = ({ group, onSelection, expandedItem, isInQuoteDetails, quote, onSyncComplete }) => {
   const classes = useStyles();
   const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const theme = useTheme();
 
   const handleToggle = () => {
@@ -30,6 +36,33 @@ const GroupStockRowComponent = ({ group, onSelection, expandedItem }) => {
 
   const handleItemOpen = (item, stock) => {
     onSelection(item, stock);
+  }
+
+  const handleAddToQuote = async (quote, item) => {
+    try {
+      const user = JSON.parse(localStorage.getItem('userLogged'));
+      const payload = {
+        quote_id: quote.id,
+        product_id: item.id,
+        user_id: user.data.id,
+        quantity: 1,
+      };
+      console.log('payload', payload);
+      const response = await fetchWithToken(`${apiUrl}/api-dealerportal-manage-product-to-quote/`, 'POST', payload, {}, apiUrl);
+      if (response.status !== 200) {
+        throw new Error(`Failed to fetch data`);
+      }
+      quote.total_sell = response.data.data.quote.total_sell;
+      quote.total_cost = response.data.data.quote.total_cost;
+      quote.markup_total = response.data.data.quote.markup_total;
+      if (onSyncComplete) {
+        onSyncComplete();
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -58,14 +91,14 @@ const GroupStockRowComponent = ({ group, onSelection, expandedItem }) => {
       </TableRow>
       {open && group.items.map((item, index) => (
         <TableRow key={item.id} className={classes.row}
-          onClick={() => handleItemOpen(item, group)}
+          onClick={() => !isInQuoteDetails ? handleItemOpen(item, group) : null}
           sx={{
             bgcolor: expandedItem && expandedItem.item.id === item.id ? '#f1f1fa' : 'white',
           }}>
           <TableCell sx={{
             paddingLeft: '70px',
-            fontSize: '13px',
-            color: 'info.main',
+            fontSize: '14px',
+            color: 'gray',
             position: 'relative',
             cursor: 'pointer',
           }}
@@ -76,8 +109,8 @@ const GroupStockRowComponent = ({ group, onSelection, expandedItem }) => {
                 left: '40px',
                 top: 0,
                 bottom: index === group.items.length - 1 ? '50%' : '0',
-                width: '2px',
-                backgroundColor: theme.palette.info.main,
+                width: '1px',
+                backgroundColor: '#D6DADA',
               }}
             />
 
@@ -87,11 +120,48 @@ const GroupStockRowComponent = ({ group, onSelection, expandedItem }) => {
                 left: '40px',
                 top: '50%',
                 width: '20px',
-                height: '2px',
-                backgroundColor: theme.palette.info.main,
+                height: '1px',
+                backgroundColor: '#D6DADA',
               }}
             />
-            {item.name}
+            <span style={{ fontSize: '13px', color: 'info.main', width: '80%' }}>{item.name}</span>
+            {isInQuoteDetails && (
+              <>
+                <br />
+                <Grid container spacing={1} sx={{ width: '100%' }}>
+                  <Grid item xs={7}>
+                    <span style={{ fontSize: '10px', color: 'info.main' }}>
+                      Price: $ <b>{item.price}</b>
+                    </span>
+                    <br />
+                    <span style={{ fontSize: '10px' }}>Stock: {item.stock}</span>
+                  </Grid>
+                  <Grid item xs={5} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    <Tooltip
+                      title={isInQuoteDetails ? `Click to Add to Quote Product: ${item.name}` : `Click to See details: ${item.name}`}
+                      key={item.id}
+                      arrow
+                      sx={{
+                        '& .MuiTooltip-tooltip': {
+                          backgroundColor: '#000000',
+                          color: 'white',
+                          fontSize: '0.875rem'
+                        }
+                      }}
+                    >
+                      <IconButton
+                        onClick={() => handleAddToQuote(quote, item)}
+                        sx={{ color: 'info.main' }}
+                      >
+                        <AddBoxRounded />
+                      </IconButton>
+                    </Tooltip>
+                  </Grid>
+                </Grid>
+                {/* <span style={{ fontSize: '10px' }}>SKU: <b>{item.sku}</b></span><br /> */}
+
+              </>
+            )}
           </TableCell>
         </TableRow>
       ))}
