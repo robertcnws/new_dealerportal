@@ -1,1 +1,0 @@
-export {SearchContextComponent} from './SearchContextComponent';
