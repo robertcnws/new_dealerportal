@@ -1,12 +1,30 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Modal, Box, Button, Typography, TextField, FormHelperText } from '@mui/material';
 import { useForm } from 'react-hook-form';
+import { fetchWithToken } from '../../../../utils';
+import { apiUrl } from '../../../../config';
 
-const ModalAddQuoteComponent = ({ open, handleClose }) => {
+const ModalAddQuoteComponent = ({ open, handleClose, onSyncComplete }) => {
   const { register, handleSubmit, formState: { errors }, reset } = useForm();
 
-  const onSubmit = (data) => {
-    console.log(data);
+  const onSubmit = async (data) => {
+    const user = JSON.parse(localStorage.getItem('userLogged'));
+    const newQuote = {
+      ...data,
+      markup: parseFloat(data.markup),
+      user_id: user.data.id,
+    };
+    try {
+      const response = await fetchWithToken(`${apiUrl}/api-dealerportal/quotes/create/`, 'POST', newQuote, {}, apiUrl);
+      if (response.status === 200) {
+        const payload = { user_id: user.data.id };
+        onSyncComplete(payload);
+        handleCloseModal();
+      }
+    }
+    catch (error) {
+      console.log(error);
+    }
   };
 
   const handleCloseModal = () => {
@@ -19,7 +37,9 @@ const ModalAddQuoteComponent = ({ open, handleClose }) => {
       open={open}
       onClose={handleCloseModal}
       aria-labelledby="add-new-quote-modal"
-      aria-hidden="true"
+      // aria-hidden="true"
+      // inert="true"
+      // tabIndex="-1"
       sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
     >
       <Box sx={style}>

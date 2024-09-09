@@ -9,6 +9,7 @@
       </div>
       <div class="modal-body">
     <form method="POST" action="{% url 'base-create-quote' %}">
+    
         {% csrf_token %}
         
         <div class="inputDiv">

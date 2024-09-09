@@ -1,7 +1,20 @@
 import React from 'react';
-import { Box, FormControl, ListSubheader, MenuItem, Select, TextField } from '@mui/material';
+import { 
+  Box, 
+  FormControl, 
+  ListSubheader, 
+  MenuItem, 
+  Select, 
+  TextField, 
+  useTheme, 
+  useMediaQuery 
+} from '@mui/material';
 
 const CustomFilterComponent = ({ configCustomFilter, fontSize }) => {
+
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
   return (
     <FormControl variant="outlined" size="small" style={{ marginBottom: configCustomFilter.hasSearch ? configCustomFilter.marginBottomInDetails : '0' }}>
       {/* <InputLabel>{configCustomFilter.items.length}</InputLabel> */}
@@ -16,7 +29,7 @@ const CustomFilterComponent = ({ configCustomFilter, fontSize }) => {
             border: 'none',
           },
           '& .MuiSelect-select': {
-            padding: '10px',
+            padding: isMobile ? '5px' : '10px',
           },
           '& .MuiInputLabel-root': {
             top: '-6px',

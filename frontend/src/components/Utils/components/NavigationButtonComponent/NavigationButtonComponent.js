@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { Grid, IconButton, Menu, MenuItem } from '@mui/material';
+import { Grid, IconButton, Menu, MenuItem, useTheme, useMediaQuery } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { Link } from 'react-router-dom';
 
-const NavigationButtonComponent = ({ children, bgcolor }) => {
+const NavigationButtonComponent = ({ children, bgcolor, row }) => {
 
   const [anchorEl, setAnchorEl] = useState(null);
   const [border, setBorder] = useState('1px solid #ddd');
-  const [borderRight, setBorderRight] = useState('');
   const [borderRadius, setBorderRadius] = useState('');
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   useEffect(() => {
     if (children[0].noBorder) {
@@ -30,7 +31,12 @@ const NavigationButtonComponent = ({ children, bgcolor }) => {
   const handleClose = (onClick) => {
     if (onClick) {
       if (typeof onClick === 'function') {
-        onClick();
+        if (row) {
+          onClick(row);
+        }
+        else {
+          onClick();
+        }
       }
     }
     setAnchorEl(null);
@@ -41,10 +47,10 @@ const NavigationButtonComponent = ({ children, bgcolor }) => {
       <IconButton onClick={handleClick}
         style={{ backgroundColor: bgcolor, borderRadius: borderRadius, border: border }}
         sx={{
-          maxHeight: '40px',
-          maxWidth: '40px',
-          minWidth: '40px',
-          minHeight: '40px',
+          maxHeight: isMobile ? '100%' : '40px',
+          maxWidth: isMobile ? '100%' : '40px',
+          minWidth: isMobile ? '100%' : '40px',
+          minHeight: isMobile ? '100%' : '40px',
           padding: '0px 0px 0px 0px',
         }}
       >
@@ -61,15 +67,15 @@ const NavigationButtonComponent = ({ children, bgcolor }) => {
               backgroundColor: '#f1f1f1', // Color azul en hover
               borderRadius: '5px 5px 5px 5px',
               marginLeft: '2px',
-              maxWidth: '95%',
-              minWidth: '95%',
+              maxWidth: isMobile ? '100%' : '95%',
+              minWidth: isMobile ? '100%' : '95%',
             },
             '&.Mui-selected': {
               backgroundColor: '#f1f1f1', // Color azul cuando seleccionado
               borderRadius: '5px 5px 5px 5px',
               marginLeft: '2px',
-              maxWidth: '95%',
-              minWidth: '95%',
+              maxWidth: isMobile ? '100%' : '95%',
+              minWidth: isMobile ? '100%' : '95%',
             },
           },
         }}

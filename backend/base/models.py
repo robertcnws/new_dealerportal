@@ -122,6 +122,72 @@ class User(AbstractUser):
             queryset = queryset.order_by("-updated_at", "-created_at")
 
         return queryset
+    
+    
+    def get_api_dealerportal_orders_for_user(self, order_limit=None):
+        if self.role == "AppAdmin" or self.is_superuser or self.role == "AppManager":
+            queryset = Order.objects.all().select_related(
+                'owner', 'owner__dealer_account', 'quote', 'quote__owner', 'quote__owner__dealer_account'
+            )
+        elif self.role == "Estimator":
+            queryset = Order.objects.filter(owner=self)
+        elif self.role == "DealerAdmin":
+            estimator_ids = self.get_estimators().values_list("id", flat=True)
+            queryset = Order.objects.filter(Q(owner=self) | Q(owner__in=estimator_ids)).select_related(
+                'owner', 'owner__dealer_account', 'quote', 'quote__owner', 'quote__owner__dealer_account'
+            )
+        else:
+            queryset = Quote.objects.none()
+
+        if order_limit is not None:
+            queryset = queryset.order_by("-updated_at", "-created_at")[:order_limit]
+        else:
+            queryset = queryset.order_by("-updated_at", "-created_at")
+        serialized_orders = []
+        for order in queryset:
+            order_dict = model_to_dict(order)
+            order_dict['created_at'] = order.created_at.strftime("%Y-%m-%d %H:%M:%S")
+            order_dict['updated_at'] = order.updated_at.strftime("%Y-%m-%d %H:%M:%S")
+            if order.owner:
+                owner_dict = model_to_dict(order.owner, exclude=['password', 'profile_pic'])
+                if order.owner.profile_pic:
+                    owner_dict['profile_pic_url'] = order.owner.profile_pic.url  
+                order_dict['owner'] = owner_dict
+                if order.owner.dealer_account:
+                    dealer_account_dict = model_to_dict(order.owner.dealer_account, exclude=['logo'])
+                    if order.owner.dealer_account.logo:
+                        dealer_account_dict['logo_url'] = order.owner.dealer_account.logo.url
+                    order_dict['owner']['dealer_account'] = dealer_account_dict
+            if order.quote:
+                products = order.quote.get_products()
+                quote_dict = model_to_dict(order.quote)
+                quote_dict['created_at'] = order.quote.created_at.strftime("%Y-%m-%d %H:%M:%S")
+                quote_dict['updated_at'] = order.quote.updated_at.strftime("%Y-%m-%d %H:%M:%S")
+                if products:
+                    quote_dict['products'] = []
+                    for product in products:
+                        product_dict = model_to_dict(product)
+                        product_dict['total_price'] = product.total_price
+                        product_dict['product_line_price_with_markup'] = product.product_line_price_with_markup
+                        product_dict['total_price_with_markup'] = product.total_price_with_markup
+                        product_dict['product'] = model_to_dict(product.product, exclude=['image'])
+                        if product.product.image:
+                            product_dict['product']['image_url'] = product.product.image.url
+                        quote_dict['products'].append(product_dict)
+                if order.quote.owner:
+                    owner_dict = model_to_dict(order.quote.owner, exclude=['password', 'profile_pic'])
+                    if order.quote.owner.profile_pic:
+                        owner_dict['profile_pic_url'] = order.quote.owner.profile_pic.url  
+                    quote_dict['owner'] = owner_dict
+                    if order.quote.owner.dealer_account:
+                        dealer_account_dict = model_to_dict(order.quote.owner.dealer_account, exclude=['logo'])
+                        if order.quote.owner.dealer_account.logo:
+                            dealer_account_dict['logo_url'] = order.quote.owner.dealer_account.logo.url
+                        quote_dict['owner']['dealer_account'] = dealer_account_dict
+                order_dict['quote'] = quote_dict
+            serialized_orders.append(order_dict)
+        return serialized_orders
+    
 
     def allowed_to_manage(self, target_user):
         if self.role == "AppAdmin" or self.role == "AppManager":

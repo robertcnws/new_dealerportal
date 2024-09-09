@@ -16,16 +16,18 @@ services:
     # depends_on:
     #   - redis_package
 
-  # frontend_app:
-  #   build:
-  #     context: ./frontend
-  #   container_name: frontend_app
-  #   volumes:
-  #     - ./frontend/build:/app/build 
-  #   env_file:
-  #     - ./frontend/.env
-  #   networks:
-  #     - dealerportal_network
+  frontend_app:
+    build:
+      context: ./frontend
+    container_name: frontend_app
+    volumes:
+      - ./frontend/build:/app/build 
+    ports:
+      - "3005:3005"
+    env_file:
+      - ./frontend/.env
+    networks:
+      - dealerportal_network
 
   postgres_db:
     image: postgres:16.0

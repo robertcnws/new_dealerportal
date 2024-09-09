@@ -4,13 +4,13 @@ import { apiUrl, apiFrontendRoot } from '../../../../config';
 import { fetchWithToken } from '../../../../utils';
 import { SearchContext } from '../../../SearchContextComponent/SearchContextComponent';
 import GroupStockRowComponent from '../../../Stock/components/GroupStockRowComponent/GroupStockRowComponent';
-import { Box, Grid, Table, TableBody, TableContainer } from '@mui/material';
+import { Box, Grid, Table, TableBody, TableContainer, useTheme, useMediaQuery } from '@mui/material';
 import CustomFilterComponent from '../../../Utils/components/CustomFilterComponent/CustomFilterComponent';
 import QuoteDetailsComponent from '../QuoteDetailsComponent/QuoteDetailsComponent';
 import ButtonsbarComponent from '../ButtonsbarComponent/ButtonsbarComponent';
 
 
-const ListStocksQuoteDetailsComponent = () => {
+const ListStocksQuoteDetailsComponent = ({ setIsLoadingOperation, isLoadingOperation }) => {
 
   const [stocks, setStocks] = useState([]);
   const [filteredStocks, setFilteredStocks] = useState([]);
@@ -24,13 +24,14 @@ const ListStocksQuoteDetailsComponent = () => {
   const [quote, setQuote] = useState(null);
   const [quoteProducts, setQuoteProducts] = useState([]);
   const [selectedProducts, setSelectedProducts] = useState([]);
-  const [isSyncing, setIsSyncing] = useState(true);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   useEffect(() => {
     document.title = 'Dealer Portal | Stocks';
     fetchStocks();
-    const intervalId = setInterval(fetchStocks, 5000);
-    return () => clearInterval(intervalId);
+    // const intervalId = setInterval(fetchStocks, 5000);
+    // return () => clearInterval(intervalId);
   }, []);
 
   useEffect(() => {
@@ -41,7 +42,12 @@ const ListStocksQuoteDetailsComponent = () => {
   useEffect(() => {
     const quote = location.state.quote;
     setQuote(quote);
-    fetchQuoteProducts(quote);
+    const fetchQuoteProductsInterval = () => {
+      fetchQuoteProducts(quote);
+    };
+    fetchQuoteProductsInterval();
+    const intervalId = setInterval(fetchQuoteProductsInterval, 1000);
+    return () => clearInterval(intervalId);
   }, []);
 
   const fetchStocks = async () => {
@@ -167,67 +173,152 @@ const ListStocksQuoteDetailsComponent = () => {
     marginBottomInDetails: '10px'
   }
 
+  if (!isMobile) {
+    return (
+      <Box sx={{
+        mt: 3,
+        minWidth: '100%',
+        bgcolor: '#f1f1f1',
+      }}>
+        {stocks && quote && (
+
+          <Grid container spacing={2}>
+            {quote.status === 'active' && (
+              <Grid item xs={4}>
+                <Box>
+                  <CustomFilterComponent configCustomFilter={configCustomFilter} />
+                </Box>
+                <TableContainer sx={{
+                  minWidth: '100%',
+                  bgcolor: 'white',
+                  borderRadius: '10px',
+                  borderTop: '1px solid #ddd',
+                  mb: 2,
+                  maxHeight: 'calc(100vh - 180px)',
+                  overflowY: 'auto'
+                }}>
+                  <Table>
+                    <TableBody>
+                      {filteredStocks.map((stock) => (
+                        <GroupStockRowComponent
+                          key={stock.id}
+                          group={stock}
+                          onSelection={handleSelection}
+                          expandedItem={expandedItem}
+                          isInQuoteDetails={true}
+                          quote={quote}
+                          quoteProducts={quoteProducts}
+                          onSyncCompleted={() => fetchQuoteProducts(quote)}
+                          setIsLoadingOperation={setIsLoadingOperation}
+                          isLoadingOperation={isLoadingOperation}
+                        // isSyncing={isSyncing}
+                        // setIsSyncing={setIsSyncing}
+                        />
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Grid>
+            )}
+            <Grid item xs={quote.status === 'active' ? 8 : 12}>
+              <Grid item container spacing={2} justifyContent="flex-end">
+                <Box sx={{ mt: 2, mb: 3 }}>
+                  <ButtonsbarComponent quote={quote} onClose={onCloseDetails} />
+                </Box>
+              </Grid>
+              <Grid item container spacing={2}>
+                <Box sx={{ ml: 1, width: '100%' }}>
+                  <QuoteDetailsComponent
+                    quote={quote}
+                    quoteProducts={quoteProducts}
+                    onSyncCompleted={() => fetchQuoteProducts(quote)}
+                    setIsLoadingOperation={setIsLoadingOperation}
+                    isLoadingOperation={isLoadingOperation}
+                  />
+                </Box>
+              </Grid>
+            </Grid>
+          </Grid>
+        )}
+      </Box >
+    );
+  }
   return (
+
     <Box sx={{
-      mt: 3,
+      mt: 4,
       minWidth: '100%',
       bgcolor: '#f1f1f1',
     }}>
       {stocks && quote && (
-        <Grid container spacing={2}>
-          <Grid item xs={4}>
-            <Box>
-              <CustomFilterComponent configCustomFilter={configCustomFilter} />
-            </Box>
-            <TableContainer sx={{
-              minWidth: '100%',
-              bgcolor: 'white',
-              borderRadius: '10px',
-              borderTop: '1px solid #ddd',
-              mb: 2,
-              maxHeight: 'calc(100vh - 180px)',
-              overflowY: 'auto'
-            }}>
-              <Table>
-                <TableBody>
-                  {filteredStocks.map((stock) => (
-                    <GroupStockRowComponent
-                      key={stock.id}
-                      group={stock}
-                      onSelection={handleSelection}
-                      expandedItem={expandedItem}
-                      isInQuoteDetails={true}
-                      quote={quote}
-                      onSyncCompleted={() => fetchQuoteProducts(quote)}
-                      isSyncing={isSyncing}
-                      setIsSyncing={setIsSyncing}
-                    />
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Grid>
-          <Grid item xs={8}>
-            <Grid item container spacing={2} justifyContent="flex-end">
-              <Box sx={{ mt: 2, mb: 3 }}>
+        <>
+          {quote.status === 'active' && (
+            <Grid item container xs={12} spacing={2}>
+              <Box>
+                <CustomFilterComponent configCustomFilter={configCustomFilter} />
+              </Box>
+              <TableContainer sx={{
+                minWidth: '100%',
+                bgcolor: 'white',
+                borderRadius: '10px',
+                borderTop: '1px solid #ddd',
+                mb: 2,
+                maxHeight: 'calc(100vh - 180px)',
+                overflowY: 'auto'
+              }}>
+                <Table>
+                  <TableBody>
+                    {filteredStocks.map((stock) => (
+                      <GroupStockRowComponent
+                        key={stock.id}
+                        group={stock}
+                        onSelection={handleSelection}
+                        expandedItem={expandedItem}
+                        isInQuoteDetails={true}
+                        quote={quote}
+                        quoteProducts={quoteProducts}
+                        onSyncCompleted={() => fetchQuoteProducts(quote)}
+                        setIsLoadingOperation={setIsLoadingOperation}
+                        isLoadingOperation={isLoadingOperation}
+                      // isSyncing={isSyncing}
+                      // setIsSyncing={setIsSyncing}
+                      />
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Grid>
+          )}
+
+          <Grid item container xs={12} spacing={1}>
+            <Grid item container spacing={1} justifyContent="flex-end">
+              <Box sx={{ mt: 1, mb: 2 }}>
                 <ButtonsbarComponent quote={quote} onClose={onCloseDetails} />
               </Box>
             </Grid>
-            <Grid item container spacing={2}>
-              <Box sx={{ ml: 1, width: '100%' }}>
-                <QuoteDetailsComponent
-                  quote={quote}
-                  quoteProducts={quoteProducts}
-                  onSyncCompleted={() => fetchQuoteProducts(quote)}
-                  isSyncing={isSyncing}
-                  setIsSyncing={setIsSyncing}
-                />
-              </Box>
+          </Grid>
+
+          <Grid item container xs={12} spacing={2}>
+            <Grid item xs={12}>
+              <Grid item container spacing={2}>
+                <Box sx={{
+                  ml: 1, 
+                  mr: isMobile ? -2 : 0,
+                  width: '100%'
+                }}>
+                  <QuoteDetailsComponent
+                    quote={quote}
+                    quoteProducts={quoteProducts}
+                    onSyncCompleted={() => fetchQuoteProducts(quote)}
+                    setIsLoadingOperation={setIsLoadingOperation}
+                    isLoadingOperation={isLoadingOperation}
+                  />
+                </Box>
+              </Grid>
             </Grid>
           </Grid>
-        </Grid>
-      )
-      }
+        </>
+      )}
     </Box >
 
   );

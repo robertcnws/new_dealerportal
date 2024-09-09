@@ -1,5 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import { Button, TextField, Box, IconButton, Typography, CircularProgress, Alert } from '@mui/material';
+import React, { useState } from 'react';
+import {
+  Button,
+  TextField,
+  Box,
+  IconButton,
+  Typography,
+  CircularProgress,
+  useTheme,
+  useMediaQuery,
+} from '@mui/material';
 import { VisibilityOff, Visibility } from '@mui/icons-material';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -8,7 +17,6 @@ import { useAuth } from '../../components/AuthContextComponent/AuthContextCompon
 import MainLoginComponent from '../MainLoginComponent/MainLoginComponent';
 import CustomAlertComponent from '../Utils/components/CustomAlertComponent/CustomAlertComponent';
 import { getCookie } from '../../utils';
-import './LoginComponent.css';
 import logo from '../../static/styles/img/logo13.png';
 
 const LoginComponent = () => {
@@ -19,6 +27,8 @@ const LoginComponent = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -84,96 +94,98 @@ const LoginComponent = () => {
 
   return (
     <MainLoginComponent>
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        textAlign: 'center'
-      }}>
-        <img src={logo} alt="Logo" style={{ width: '200px', height: 'auto' }} />
-        <Typography variant="h6" gutterBottom>
-          <b>Welcome</b>
+      <Box>
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          textAlign: 'center',
+        }}>
+          <img src={logo} alt="Logo" style={{ width: '200px', height: 'auto' }} />
+          <Typography variant="h6" gutterBottom>
+            <b>Welcome</b>
+          </Typography>
+        </div>
+        <Typography variant="body2" align="center" gutterBottom sx={{ color: 'gray' }}>
+          Enter your credentials to access your account.
         </Typography>
-      </div>
-      <Typography variant="body2" align="center" gutterBottom sx={{ color: 'gray' }}>
-        Enter your credentials to access your account.
-      </Typography>
-      <Box component="form" noValidate onSubmit={(e) => handleSubmit(e)}>
-        <TextField
-          label="Username"
-          variant="outlined"
-          fullWidth
-          margin="normal"
-          name="username"
-          id="username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          required
-          error={!username.trim() && Boolean(error)}
-          helperText={!username.trim() && error ? 'Username is required' : ''}
-        />
-        <Box sx={{ position: 'relative' }}>
+        <Box component="form" noValidate onSubmit={(e) => handleSubmit(e)}>
           <TextField
-            type="password"
-            label="Password"
+            label="Username"
             variant="outlined"
             fullWidth
             margin="normal"
-            name="password"
-            id="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            name="username"
+            id="username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
             required
-            error={!password.trim() && Boolean(error)}
-            helperText={!password.trim() && error ? 'Password is required' : ''}
-            InputProps={{
-              endAdornment: (
-                <IconButton
-                  onClick={() => setShowPassword(true)}
-                  edge="end"
-                >
-                  {showPassword ? <Visibility /> : <VisibilityOff />}
-                </IconButton>
-              ),
-            }}
+            error={!username.trim() && Boolean(error)}
+            helperText={!username.trim() && error ? 'Username is required' : ''}
           />
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10, paddingBottom: 10 }}>
-            <Typography variant="body2" className="forgetLink" component={Link} to="#">
-              ¿Forgot your password?
-            </Typography>
-          </div>
-
-          {success && <CustomAlertComponent severity="success" message={success} sx={{ fontSize: '12px' }} />}
-          {error && <CustomAlertComponent severity="error" message={error} sx={{ fontSize: '12px' }} />}
-
-          <Box sx={{ position: 'relative', mt: 3, mb: 3 }}>
-            <Button
-              variant="contained"
-              type="submit"
+          <Box sx={{ position: 'relative' }}>
+            <TextField
+              type={showPassword ? 'text' : 'password'}
+              label="Password"
+              variant="outlined"
               fullWidth
-              className="submitBtn"
-              sx={{
-                bgcolor: '#669A41',
-                color: 'white',
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+              margin="normal"
+              name="password"
+              id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              error={!password.trim() && Boolean(error)}
+              helperText={!password.trim() && error ? 'Password is required' : ''}
+              InputProps={{
+                endAdornment: (
+                  <IconButton
+                    onClick={() => setShowPassword(!showPassword)}
+                    edge="end"
+                  >
+                    {!showPassword ? <Visibility /> : <VisibilityOff />}
+                  </IconButton>
+                ),
               }}
-              disabled={loading}
-            >
-              {loading && (
-                <CircularProgress
-                  size={24}
-                  sx={{
-                    color: 'primary.main',
-                    marginRight: '8px',
-                  }}
-                />
-              )}
-              Login
-            </Button>
+            />
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10, paddingBottom: 10 }}>
+              <Typography variant="body2" className="forgetLink" component={Link} to="/password-reset">
+                ¿Forgot your password?
+              </Typography>
+            </div>
+
+            {success && <CustomAlertComponent severity="success" message={success} sx={{ fontSize: '12px' }} />}
+            {error && <CustomAlertComponent severity="error" message={error} sx={{ fontSize: '12px' }} />}
+
+            <Box sx={{ position: 'relative', mt: 3, mb: 3 }}>
+              <Button
+                variant="contained"
+                type="submit"
+                fullWidth
+                className="submitBtn"
+                sx={{
+                  bgcolor: '#669A41',
+                  color: 'white',
+                  position: 'relative',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+                disabled={loading}
+              >
+                {loading && (
+                  <CircularProgress
+                    size={24}
+                    sx={{
+                      color: 'primary.main',
+                      marginRight: '8px',
+                    }}
+                  />
+                )}
+                Login
+              </Button>
+            </Box>
           </Box>
         </Box>
       </Box>

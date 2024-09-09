@@ -2,15 +2,17 @@ services:
   aws_backend_app:
     build:
       context: ./backend
+      dockerfile: Dockerfile.aws.backend.prod
     container_name: aws_backend_app
     volumes:
       - ./backend:/app
       - ./backend/nginx/gunicorn.conf.py:/etc/nginx/gunicorn.conf.py
       - ./backend/local_backup:/app/backup
     ports:
-      - "80:8005"
+      - "8005:8005"
     networks:
       - aws_dealerportal_network
+    restart: always
 
 networks:
   aws_dealerportal_network:

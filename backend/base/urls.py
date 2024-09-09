@@ -2,6 +2,7 @@ from django.urls import path
 from django.contrib.auth import views as auth_views
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from . import views, auth
+from .views_password_reset import password_reset_request, password_reset_confirm
 
 urlpatterns = [
     # API URLS TO REACT FRONTEND
@@ -12,6 +13,13 @@ urlpatterns = [
     path("api-dealerportal-get-products/", views.api_dealerportal_get_products, name="api-dealerportal-get-products"),
     path("api-dealerportal-quote-products/<int:pk>/", views.api_dealerportal_view_quote_products, name="api-dealerportal-quote-products"),
     path("api-dealerportal-manage-product-to-quote/", views.api_dealerportal_manage_product_to_quote, name="api-dealerportal-manage-product-to-quote"),
+    path("api-dealerportal/quotes/delete/<int:pk>/", views.api_dealerportal_delete_quote, name="api-dealerportal-delete-quote"),
+    path("api-dealerportal/orders/create/<int:pk>/", views.api_dealerportal_create_order, name="api-dealerportal-create-order"),
+    path("api-dealerportal/quotes/create/", views.api_dealerportal_create_quote, name="api-dealerportal-create-quote"),
+    path("api-dealerportal/quotes/clone/<int:pk>/", views.api_dealerportal_clone_quote, name="api-dealerportal-clone-quote"),
+    path("api-dealerportal-orders/", views.api_dealerportal_orders, name="api-dealerportal-orders"),
+    path('api-dealerportal/password-reset/', password_reset_request, name='password_reset_request'),
+    path('api-dealerportal/password-reset-confirm/', password_reset_confirm, name='password_reset_confirm'),
     # BACKEND URLS
     path("login/", views.loginPage, name="base-login"),
     path("logout/", views.logoutUser, name="base-logout"),

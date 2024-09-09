@@ -1,19 +1,20 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   IconButton,
   TableRow,
   TableCell,
   useTheme,
+  useMediaQuery,
   Tooltip,
-  Grid
+  Grid,
 } from '@mui/material';
 import { makeStyles } from '@mui/styles';
 import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined';
 import FolderOpenOutlinedIcon from '@mui/icons-material/FolderOpenOutlined';
-// import { faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 import { apiUrl } from '../../../../config';
 import { fetchWithToken } from '../../../../utils';
 import { AddBoxRounded } from '@mui/icons-material';
+import { set } from 'react-hook-form';
 
 const useStyles = makeStyles({
   row: {
@@ -23,12 +24,32 @@ const useStyles = makeStyles({
   },
 });
 
-const GroupStockRowComponent = ({ group, onSelection, expandedItem, isInQuoteDetails, quote, onSyncComplete }) => {
+const GroupStockRowComponent = ({ 
+  group, onSelection, expandedItem, isInQuoteDetails, quote, quoteProducts, setIsLoadingOperation
+}) => {
   const classes = useStyles();
   const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [buttonsDisabled, setButtonsDisabled] = useState([]);
   const [error, setError] = useState('');
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+  useEffect(() => {
+    const updateButtons = () => {
+      if (group.items.length > 0 && isInQuoteDetails) {
+        const buttonsDisabled = group.items.map((item) => {
+          return {
+            id: item.id,
+            disabled: setDisabledAddToQuote(item),
+          };
+        });
+        setButtonsDisabled(buttonsDisabled);
+      }
+    };
+    updateButtons();
+    
+  }, [group, quoteProducts]);
 
   const handleToggle = () => {
     setOpen(!open);
@@ -38,7 +59,15 @@ const GroupStockRowComponent = ({ group, onSelection, expandedItem, isInQuoteDet
     onSelection(item, stock);
   }
 
-  const handleAddToQuote = async (quote, item) => {
+  const handleAddToQuote = async (event, quote, item) => {
+    event.stopPropagation();
+    setLoading(true);
+    setIsLoadingOperation(true);
+    buttonsDisabled.forEach((button) => {
+      if (button.id === item.id) {
+        button.disabled = true;
+      }
+    });
     try {
       const user = JSON.parse(localStorage.getItem('userLogged'));
       const payload = {
@@ -47,7 +76,6 @@ const GroupStockRowComponent = ({ group, onSelection, expandedItem, isInQuoteDet
         user_id: user.data.id,
         quantity: 1,
       };
-      console.log('payload', payload);
       const response = await fetchWithToken(`${apiUrl}/api-dealerportal-manage-product-to-quote/`, 'POST', payload, {}, apiUrl);
       if (response.status !== 200) {
         throw new Error(`Failed to fetch data`);
@@ -55,14 +83,23 @@ const GroupStockRowComponent = ({ group, onSelection, expandedItem, isInQuoteDet
       quote.total_sell = response.data.data.quote.total_sell;
       quote.total_cost = response.data.data.quote.total_cost;
       quote.markup_total = response.data.data.quote.markup_total;
-      if (onSyncComplete) {
-        onSyncComplete();
-      }
+      setIsLoadingOperation(false);
+
+      // if (onSyncComplete) {
+      //   onSyncComplete();
+      // }
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
+  }
+
+  const setDisabledAddToQuote = (item) => {
+    return quoteProducts.some((quoteProduct) => {
+      // console.log(quoteProduct.id, item.id);
+      return quoteProduct.id === item.id
+    });
   }
 
   return (
@@ -149,12 +186,17 @@ const GroupStockRowComponent = ({ group, onSelection, expandedItem, isInQuoteDet
                         }
                       }}
                     >
-                      <IconButton
-                        onClick={() => handleAddToQuote(quote, item)}
-                        sx={{ color: 'info.main' }}
-                      >
-                        <AddBoxRounded />
-                      </IconButton>
+                      <span>
+                        {buttonsDisabled.length > 0 && (
+                          <IconButton
+                            onClick={(e) => handleAddToQuote(e, quote, item)}
+                            sx={{ color: 'info.main' }}
+                            disabled={buttonsDisabled.find((button) => button.id === item.id).disabled}
+                          >
+                            <AddBoxRounded />
+                          </IconButton>
+                        )}
+                      </span>
                     </Tooltip>
                   </Grid>
                 </Grid>

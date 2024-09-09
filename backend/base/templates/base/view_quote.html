@@ -126,7 +126,7 @@
                       <code>
                         {{status}}
                       </code>
-                      <a href="#" class="details-tooltip" data-toggle="tooltip" data-trigger="click" data-placement="right" data-html="true" title="{{ quote_product.product.description }}" style="color: inherit; text-decoration: inherit;">
+                      <a href="#" class="details-tooltip" data-toggle="tooltip" data-trigger="click" data-placement="right" data-html="true" title="{{ quote_product.product.description  }}" style="color: inherit; text-decoration: inherit;">
                         CLICK FOR MORE DETAILS
                     </a>
                       </small>
@@ -288,6 +288,7 @@
           <button
             type="button"
             onclick="deleteQuoteItem('{% url 'base-delete-quote' quote.id %}')"
+            
             class="btn mx-auto btn-danger"
             data-bs-dismiss="modal"
           >

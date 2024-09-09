@@ -1,18 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { Container, Grid, Typography, Divider, Box, Alert } from '@mui/material';
+import { Grid, Typography, Box, } from '@mui/material';
 import SpeedIcon from '@mui/icons-material/Speed';
 import { Badge } from 'react-bootstrap';
-import StatsCardComponent from '../StatCardComponent/StatCardComponent';
-import DealershipOverviewComponent from '../DealershipOverviewComponent/DealershipOverviewComponent';
-import SalesPerformanceComponent from '../SalesPerformanceComponent/SalesPerformanceComponent';
-import RecentQuotesTableComponent from '../RecentQuotesTableComponent/RecentQuotesTableComponent';
-import FAQSectionComponent from '../FAQSectionComponent/FAQSectionComponent';
+import DealershipOverviewComponent from '../Dashboard/components/DealershipOverviewComponent/DealershipOverviewComponent';
+import SalesPerformanceComponent from '../Dashboard/components/SalesPerformanceComponent/SalesPerformanceComponent';
+import RecentQuotesTableComponent from '../Dashboard/components/RecentQuotesTableComponent/RecentQuotesTableComponent';
+import FAQSectionComponent from '../Dashboard/components/FAQSectionComponent/FAQSectionComponent';
+import UserSalesStatsComponent from '../Dashboard/components/UserSalesStatsComponent/UserSalesStatsComponent';
 import CustomStatCardComponent from '../Utils/components/CustomStatCardComponent/CustomStatCardComponent';
 
 
 import { fetchWithToken } from '../../utils';
 import { apiUrl } from '../../config';
-import UserSalesStatsComponent from '../UserSalesStatsComponent/UserSalesStatsComponent';
+
 
 const HomeComponent = () => {
 

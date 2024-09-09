@@ -12,6 +12,10 @@ from django.core.mail import send_mail
 from django.utils.crypto import get_random_string
 from django.db import transaction
 from django.core.mail import EmailMessage
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 
 from django.template.loader import render_to_string
 from base.decorators import role_required
@@ -834,3 +838,102 @@ def encode_sku(manufacturer, frame_color, budget, item):
         sku = f"{manufacturer}{model} {frame_color}{glass_color}{privacy} {width} X {height}".upper()
 
     return sku, qty
+
+
+
+# API Functions
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def api_dealerportal_quote_render_pdf_view(request, pk):
+    valid_token = validateJWTTokenRequest(request)
+    if valid_token:
+        template_path = "utils/quote_pdf.html"
+        quote = Quote.objects.select_related("owner__dealer_account").get(pk=pk)
+        dealership = quote.owner.dealer_account  # remove parentheses
+
+        quote_products = quote.get_products()
+
+        context = {
+            "quote": quote,
+            "quote_products": quote_products,
+            "dealership": dealership,
+        }
+        # Create a Django response object, and specify content_type as pdf
+        response = HttpResponse(content_type="application/pdf")
+        # if download:
+        # response['Content-Disposition'] = 'attachment; filename="report.pdf"'
+        # if display
+        response["Content-Disposition"] = 'filename="report.pdf"'
+        # find the template and render it.
+        template = get_template(template_path)
+        html = template.render(context)
+
+        # create a pdf
+        pisa_status = pisa.CreatePDF(html, dest=response)
+        # if error then show some funny view
+        if pisa_status.err:
+            return HttpResponse("We had some errors <pre>" + html + "</pre>")
+        return response
+    else:
+        return JsonResponse({"error": "Invalid token."}, status=401)
+    
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def api_dealerportal_quote_render_cost_pdf_view(request, pk):
+    valid_token = validateJWTTokenRequest(request)  
+    if valid_token:
+        template_path = "utils/quote_pdf_cost_sell.html"
+        quote = Quote.objects.select_related("owner__dealer_account").get(pk=pk)
+        dealership = quote.owner.dealer_account  # remove parentheses
+
+        quote_products = quote.get_products()
+
+        context = {
+            "quote": quote,
+            "quote_products": quote_products,
+            "dealership": dealership,
+        }
+        # Create a Django response object, and specify content_type as pdf
+        response = HttpResponse(content_type="application/pdf")
+        # if download:
+        # response['Content-Disposition'] = 'attachment; filename="report.pdf"'
+        # if display
+        response["Content-Disposition"] = 'filename="report.pdf"'
+        # find the template and render it.
+        template = get_template(template_path)
+        html = template.render(context)
+
+        # create a pdf
+        pisa_status = pisa.CreatePDF(html, dest=response)
+        # if error then show some funny view
+        if pisa_status.err:
+            return HttpResponse("We had some errors <pre>" + html + "</pre>")
+        return response
+    return JsonResponse({"error": "Invalid token."}, status=401)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def api_dealerportal_equalize_quote_view(request, quote_id):
+    valid_token = validateJWTTokenRequest(request)
+    if valid_token:
+        quote = get_object_or_404(Quote, pk=quote_id)
+        data = equalize_quote_analysis(quote)
+        return JsonResponse(data, status=200)
+    return JsonResponse({"error": "Invalid token."}, status=401)
+
+
+def validateJWTTokenRequest(request):
+    auth_header = request.headers.get('Authorization')
+    if auth_header:
+        token = auth_header.split(' ')[1]
+        jwt_auth = JWTAuthentication()
+        try:
+            validated_token = jwt_auth.get_validated_token(token)
+            user = jwt_auth.get_user(validated_token)
+            return True if user else False
+        except (InvalidToken, TokenError) as e:
+            return False
+    else:
+        return False

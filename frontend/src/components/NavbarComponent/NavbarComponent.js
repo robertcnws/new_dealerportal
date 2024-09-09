@@ -8,29 +8,24 @@ import {
   Menu,
   MenuItem,
   Badge,
-  Avatar,
   Box,
-  CircularProgress,
   useMediaQuery,
   useTheme
 } from '@mui/material';
 import {
   Search as SearchIcon,
-  // Notifications as NotificationsIcon,
-  Brightness4 as Brightness4Icon,
-  Brightness7 as Brightness7Icon,
-  MoreVert as MoreVertIcon,
-  Menu as MenuIcon
-} from '@mui/icons-material';
+  MoreVert as MoreVertIcon} from '@mui/icons-material';
 import { Bell } from 'react-bootstrap-icons';
 import { Link, useLocation } from 'react-router-dom';
 import ThemeToggleComponent from '../ThemeToggleComponent/ThemeToggleComponent';
 import { SearchContext } from '../SearchContextComponent/SearchContextComponent';
+import { useAuth } from '../AuthContextComponent/AuthContextComponent';
 import Swal from 'sweetalert2';
+import SidebarComponent from '../SidebarComponent/SidebarComponent';
 // import './NavbarComponent.css';
 
 
-const NavbarComponent = ({ user, onThemeChange }) => {
+const NavbarComponent = ({ activePage, user, onThemeChange }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const { searchTermGlobal, setSearchTermGlobal } = useContext(SearchContext);
   const [labelSearch, setLabelSearch] = useState('');
@@ -38,6 +33,8 @@ const NavbarComponent = ({ user, onThemeChange }) => {
   const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isIpad = useMediaQuery('(max-width: 1024px)');
+  const { logout } = useAuth();
 
   useEffect(() => {
     setSearchTermGlobal(''); // Resetear el valor cuando la ruta cambie
@@ -48,8 +45,11 @@ const NavbarComponent = ({ user, onThemeChange }) => {
     } else if (currentPath.includes('quotes')) {
       setLabelSearch('Search Quotes (/)');
       setVisibleSearch(true);
-    } else if (currentPath.includes('quote_details')) {
+    } else if (currentPath.includes('quote-details')) {
       setLabelSearch('Search Products (/)');
+      setVisibleSearch(true);
+    } else if (currentPath.includes('orders')) {
+      setLabelSearch('Search Orders (/)');
       setVisibleSearch(true);
     } else {
       setLabelSearch('Search...');
@@ -65,19 +65,26 @@ const NavbarComponent = ({ user, onThemeChange }) => {
     setAnchorEl(null);
   };
 
-  const showAlert = () => {
+  const handleLogout = () => {
     handleMenuClose();
     Swal.fire({
-      title: 'Hello World!',
-      text: 'This is a small alert!',
-      icon: 'success',
-      confirmButtonText: 'Cool',
+      title: 'Are you sure?',
+      text: 'You are about to log out',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, log out',
+      cancelButtonText: 'No, cancel',
       customClass: {
         popup: 'small-popup',
         title: 'small-title',
         icon: 'custom-icon',
         content: 'small-content',
-        confirmButton: 'small-confirm-button'
+        confirmButton: 'small-confirm-button',
+        cancelButton: 'small-cancel-button',
+      }
+    }).then((result) => {
+      if (result.isConfirmed) {
+        logout();
       }
     });
   };
@@ -89,21 +96,21 @@ const NavbarComponent = ({ user, onThemeChange }) => {
       bgcolor: 'background.paper',
       boxShadow: 'none',
       borderBottom: '1px solid #d0d0d0',
-      mt: -10,
-      ml: '-2%',
-      width: '103.2%',
+      mt: isMobile ? 0 : -10,  // Ajuste para mobile
+      ml: isMobile || isIpad ? '-5%' : '-2%',  // Ajuste para mobile
+      width: isMobile || isIpad ? '110%' : '103.2%',  // Ajuste para mobile
     }}>
       <Toolbar sx={{ bgcolor: 'background.paper' }}>
         {isMobile ? (
-          <IconButton edge="start" color="inherit" aria-label="menu">
-            <MenuIcon />
-          </IconButton>
+          <Box sx={{ ml: -2, mr: 13 }}>
+            <SidebarComponent activePage={activePage} user={user} />
+          </Box>
         ) : (
           <Typography variant="h6" component="div"></Typography>
         )}
 
 
-        <Box sx={{ flexGrow: 0, ml: visibleSearch ? 0 : 145 }}>
+        <Box sx={{ flexGrow: 0, ml: isMobile ? 1 : (visibleSearch ? 0 : ( isIpad ? '46%' : 145)) }}>
           {visibleSearch && (
             <InputBase
               placeholder={labelSearch}
@@ -112,8 +119,8 @@ const NavbarComponent = ({ user, onThemeChange }) => {
               startAdornment={<SearchIcon sx={{ mr: 1, ml: 1 }} />}
               sx={{
                 ml: 0,
-                mr: 130,
-                width: '30%',
+                mr: isMobile ? 0 : ( isIpad ? '40%' : 130),
+                width: isIpad ? '100%' : '30%',
                 flexGrow: 1,
                 bgcolor: 'background.paper',
                 borderRadius: 1,
@@ -128,16 +135,9 @@ const NavbarComponent = ({ user, onThemeChange }) => {
           )}
         </Box>
 
-        {!isMobile && (
-          // <>
-          //   <IconButton color="gray">
-          //     <Brightness4Icon />
-          //   </IconButton>
-          //   <IconButton color="gray">
-          //     <Brightness7Icon />
-          //   </IconButton>
-          // </>
-          <ThemeToggleComponent onThemeChange={onThemeChange} />
+        {!isMobile && !isIpad && (
+          // <ThemeToggleComponent onThemeChange={onThemeChange} />
+          <ThemeToggleComponent onThemeChange={null} />
         )}
 
         <IconButton color="gray" sx={{
@@ -149,24 +149,22 @@ const NavbarComponent = ({ user, onThemeChange }) => {
         </IconButton>
 
         <Box sx={{
-          borderRadius: '20%',
+          borderRadius: '10px',
           border: '1px solid lightgray',
           display: 'flex',
           alignItems: 'center',
-          borderRadius: '10px',
-          border: '1px solid lightgray',
-          width: '200px',
+          width: isMobile ? '100%' : '200px', // Ajuste de ancho según si es mobile o no
           height: '50px',
           bgcolor: '#f2f2f2',
-          ml: 5,
-          p: 0,
+          ml: isMobile ? 0 : 5, // Ajuste de margen según si es mobile o no
+          p: 1,
         }}>
           <div style={{ marginLeft: '1%', marginTop: '3%', marginBottom: '4%' }}>
             <Link to="/">
-              <img src="https://nws-dealer-portal.s3.amazonaws.com/profile-pic.png" alt="Logo" style={{ width: '47%' }} />
+              <img src="https://nws-dealer-portal.s3.amazonaws.com/profile-pic.png" alt="Logo" style={{ width: isMobile ? '40%': '47%' }} />
             </Link>
           </div>
-          <Typography component="div" sx={{ fontSize: '11px', color: 'gray', ml: 0, p: 0, width: 200 }}>
+          <Typography component="div" sx={{ fontSize: '11px', color: 'gray', ml: 0, p: 0, width: isMobile ? '100%' : 200 }}>
             {user.username} - {user.role}
           </Typography>
           <IconButton edge="end" color="gray" onClick={handleMenuOpen} sx={{ mr: 0.5 }}>
@@ -185,8 +183,8 @@ const NavbarComponent = ({ user, onThemeChange }) => {
               horizontal: 'right',
             }}
             sx={{
-              marginTop: '15px',
-              width: '400px',
+              marginTop: isMobile ? '10px' : '15px',
+              width: isMobile ? '100%' : '400px',
               '& .MuiPaper-root': {
                 backgroundColor: '#f0f0f0',
                 border: '1px solid #ddd',
@@ -194,13 +192,13 @@ const NavbarComponent = ({ user, onThemeChange }) => {
               },
             }}
           >
-            <MenuItem component={Link} to="/profile" onClick={handleMenuClose}>
+            {/* <MenuItem component={Link} to="/profile" onClick={handleMenuClose}>
               View Profile
             </MenuItem>
             <MenuItem component={Link} to="/edit-profile" onClick={handleMenuClose}>
               Edit Profile
-            </MenuItem>
-            <MenuItem onClick={() => showAlert()}>
+            </MenuItem> */}
+            <MenuItem onClick={() => handleLogout()}>
               Logout
             </MenuItem>
           </Menu>

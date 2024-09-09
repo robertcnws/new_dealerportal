@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TableRow, TableCell, TablePagination, IconButton, Menu, MenuItem, Typography } from '@mui/material';
+import { TableRow, TableCell, TablePagination, IconButton, Menu, MenuItem } from '@mui/material';
 import { Settings } from '@mui/icons-material';
 
 const CustomTablePaginationComponent = ({ columnsLength, data, page, rowsPerPage, handleChangePage, handleChangeRowsPerPage }) => {

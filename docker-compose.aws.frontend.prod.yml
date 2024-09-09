@@ -1,0 +1,17 @@
+services:
+  aws_frontend_app:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.aws.frontend.prod
+    container_name: aws_frontend_app
+    environment:
+      - NODE_ENV=production
+    ports:
+      - "3005:3005"
+    networks:
+      - aws_dealerportal_network
+    restart: always
+
+networks:
+  aws_dealerportal_network:
+    driver: bridge

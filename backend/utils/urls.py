@@ -4,6 +4,23 @@ from . import views
 app_name = "utils"
 
 urlpatterns = [
+    # API Paths
+    path(
+        "api-dealerportal/quote/pdf-view/<int:pk>/", 
+        views.api_dealerportal_quote_render_pdf_view, 
+        name="utils-api-dealerportal-quote-render-pdf-view"
+    ),
+    path(
+        "api-dealerportal/quote/pdf-view-cost/<int:pk>/", 
+        views.api_dealerportal_quote_render_cost_pdf_view, 
+        name="utils-api-dealerportal-quote-render-cost-pdf-view"
+    ),
+    path(
+        "api-dealerportal-equalize-quote/<int:quote_id>/",
+        views.equalize_quote_view,
+        name="utils-equalize_quote",
+    ),
+    # Django Paths
     path(
         "quote/pdf-view/<int:pk>",
         views.quote_render_pdf_view,

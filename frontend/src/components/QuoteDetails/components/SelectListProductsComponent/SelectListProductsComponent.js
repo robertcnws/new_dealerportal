@@ -8,7 +8,6 @@ import { apiUrl } from '../../../../config';
 
 
 const StyledMenuItem = styled(MenuItem)({
-  // Estilos personalizados
   backgroundColor: '#f0f0f0',
   '&:hover': {
     backgroundColor: '#d0d0d0',

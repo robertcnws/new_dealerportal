@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Container, Box, Typography } from '@mui/material';
+import { Box, useTheme, useMediaQuery } from '@mui/material';
 import { Outlet } from 'react-router-dom';
 import SidebarComponent from '../SidebarComponent/SidebarComponent';
 import NavbarComponent from '../NavbarComponent/NavbarComponent';
@@ -8,11 +8,13 @@ import { fetchWithToken } from '../../utils';
 import { apiUrl } from '../../config';
 
 const MainContentComponent = ({ onThemeChange }) => {
+
   const [contextDashboard, setContextDashboard] = useState(null);
   const [userLogged, setUserLogged] = useState(null);
-  const [activePage, setActivePage] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   useEffect(() => {
     document.title = 'Dealer Portal | Home';
@@ -42,23 +44,34 @@ const MainContentComponent = ({ onThemeChange }) => {
   };
 
   return (
-    <Box sx={{ display: 'flex', bgcolor: '#f1f1f1' }}>
-      {/* <Typography variant="h6" component="h1" sx={{ flexGrow: 1, p: 2 }}>{ userLogged.role }</Typography> */}
+    <Box sx={{ display: 'flex', bgcolor: '#f1f1f1', width: '100%', minHeight: '100%' }}>
       {userLogged && contextDashboard && (
         <>
-          <SidebarComponent activePage={contextDashboard.active_page} user={userLogged} />
+          {!isMobile && (
+            <SidebarComponent activePage={contextDashboard.active_page} user={userLogged} />
+          )}
           <Box
             component="main"
-            sx={{ flexGrow: 1, p: 3, display: 'flex', flexDirection: 'column', width: '100%', bgcolor: '#f1f1f1' }}
+            sx={{
+              flexGrow: 1,
+              p: isMobile ? 2 : 3,
+              display: 'flex',
+              flexDirection: 'column',
+              width: '100%',
+              bgcolor: '#f1f1f1',
+              mt: isMobile ? -4 : 0, // Adjust margin for mobile view
+              ml: isMobile ? 0 : 'auto', // Adjust margin for mobile view
+              maxWidth: isMobile ? '100%' : 'calc(100% - 250px)', // Adjust max width for mobile view
+            }}
           >
-            <NavbarComponent user={userLogged} onThemeChange={onThemeChange} />
+            <NavbarComponent activePage={contextDashboard.active_page} user={userLogged} onThemeChange={onThemeChange} />
             <Box sx={{
-              mt: 5,
-              ml: -1,
-              // border: '1px solid #ddd',
-              width: '101%',
+              mt: isMobile ? 1 : 5,
+              ml: isMobile ? 0 : -1, // Adjust margin for mobile view
+              width: '100%', // Adjust width for mobile view
               display: 'flex',
               bgcolor: '#f1f1f1',
+              minHeight: isMobile ? 'calc(100vh - 80px)' : 'calc(100vh - 100px)',
             }}>
               <Outlet />
             </Box>

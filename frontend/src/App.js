@@ -13,6 +13,10 @@ import { SearchProvider } from './components/SearchContextComponent/SearchContex
 import ListQuotesComponent from './components/Quotes/components/ListQuotesComponent/ListQuotesComponent';
 import { apiFrontendRoot } from './config';
 import ListStocksQuoteDetailsComponent from './components/QuoteDetails/components/ListStocksQuoteDetailsComponent/ListStocksQuoteDetailsComponent';
+import ListOrdersComponent from './components/Orders/components/ListOrdersComponent/ListOrdersComponent';
+import OrderDetailsComponent from './components/Orders/components/OrderDetailsComponent/OrderDetailsComponent';
+import './App.css';
+import PasswordResetRequestComponent from './components/ForgotPassword/components/PasswordResetRequestComponent/PasswordResetRequestComponent';
 
 const HomeRedirect = () => {
   const { isAuthenticated } = useAuth();
@@ -62,6 +66,7 @@ const App = () => {
   const navigate = useNavigate();
   useIdleTimer(navigate, 1800000);
   const [theme, setTheme] = useState('light');
+  const [isLoadingOperation, setIsLoadingOperation] = useState(false);
 
   const handleThemeChange = () => {
     setTheme((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
@@ -75,11 +80,14 @@ const App = () => {
           {isAuthenticated && <ToastContainer />}
           <Routes>
             <Route path="/" element={<HomeRedirect />} />
+            <Route path="/password-reset" element={<PasswordResetRequestComponent />} />
             <Route path={`${apiFrontendRoot}/*`} element={<ProtectedRoutesComponent><MainContentComponent onThemeChange={handleThemeChange} /></ProtectedRoutesComponent>} >
               <Route path="" element={<HomeComponent />} />
               <Route path="check-stock" element={<ListStocksComponent />} />
               <Route path="quotes" element={<ListQuotesComponent />} />
-              <Route path="quote-details" element={<ListStocksQuoteDetailsComponent />} />
+              <Route path="quote-details" element={<ListStocksQuoteDetailsComponent setIsLoadingOperation={setIsLoadingOperation} isLoadingOperation={isLoadingOperation} />} />
+              <Route path="orders" element={<ListOrdersComponent />} />
+              <Route path="order-details" element={<OrderDetailsComponent />} />
             </Route>
           </Routes>
         </ThemeProvider>

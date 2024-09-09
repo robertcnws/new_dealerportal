@@ -7,7 +7,8 @@ const ThemeToggleComponent = ({onThemeChange}) => {
 
   const handleToggle = () => {
     setDarkMode(prevMode => !prevMode);
-    onThemeChange();
+    if (onThemeChange)
+      onThemeChange();
   };
 
   return (

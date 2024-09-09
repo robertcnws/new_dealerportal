@@ -1,6 +1,20 @@
 import React from 'react';
 import { useForm, Controller } from 'react-hook-form';
-import { Dialog, DialogActions, DialogContent, DialogTitle, TextField, Button, RadioGroup, FormControlLabel, Radio, TextareaAutosize, Box, Grid, FormControl, FormHelperText } from '@mui/material';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogTitle, 
+  TextField, 
+  Button, 
+  RadioGroup, 
+  FormControlLabel, 
+  Radio, 
+  TextareaAutosize, 
+  Box, 
+  Grid, 
+  FormControl, 
+  FormHelperText 
+} from '@mui/material';
 import { styled } from '@mui/system';
 
 const StyledDialog = styled(Dialog)({
@@ -62,6 +76,10 @@ const ModalAddSmartQuoteComponent = ({ open, handleClose }) => {
   const handleCloseModal = () => {
     reset();
     handleClose();
+  }
+
+  const handleAddQuote = () => {
+    console.log('Add Quote');
   }
 
   return (

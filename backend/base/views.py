@@ -547,6 +547,7 @@ def update_quote(request, pk):
 @login_required(login_url="base-login")
 def delete_quote(request, pk):
     quote = Quote.objects.get(id=pk)
+    
 
     if not quote.is_editable_by(request.user) or quote.status == "ordered":
         messages.error(request, "You are not allowed to delete this quote.")
@@ -1179,6 +1180,12 @@ class CustomPasswordResetDoneView(PasswordResetDoneView):
 class CustomPasswordResetCompleteView(PasswordResetCompleteView):
     template_name = 'base/password_reset/password_reset_complete.html'
     
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        login_url = f"{settings.FRONTEND_API_URL}"
+        context['login_url'] = login_url
+        return context
+    
 
 # API VIEWS AND FUNCTIONS
 
@@ -1222,8 +1229,9 @@ def apiDealerportalHome(request):
         month_name = datetime.now().strftime("%B")  # this will give you current month name
         user_stats = calculate_user_stats(user)
 
-        if request.user.role != "AppAdmin" or "AppManager":
-            dealership = request.user.dealer_account
+        if user.role != "AppAdmin" or "AppManager":
+            dealership = user.dealer_account
+            dealership = custom_model_to_dict(dealership) if dealership else None
 
         # We will get stats for both orders and quotes in single database calls
         # For Orders
@@ -1365,14 +1373,14 @@ def api_dealerportal_manage_product_to_quote(request):
     if valid_token:
         data = json.loads(request.body)
         quote_id = data.get('quote_id')
-        product_id = data.get('product_id')
-        quantity = data.get('quantity')
         user_id = data.get('user_id')
+        product_id = data.get('product_id', None)
         quote_product_id = data.get('quote_product_id', None)
+        quantity = data.get('quantity', None)
         is_deletion = data.get('is_deletion', False)
         user = get_object_or_404(User, id=user_id)
         quote = get_object_or_404(Quote, id=quote_id)
-        product = get_object_or_404(Product, id=product_id)
+        product = get_object_or_404(Product, id=product_id) if product_id else None
         data = {}   
         if quote.is_editable_by(user):
             quote_product, quote_product_return = None, None
@@ -1385,11 +1393,13 @@ def api_dealerportal_manage_product_to_quote(request):
                 quote_product.save()
                 quote_product_return = custom_model_to_dict(quote_product)  
             elif quote_product_id and is_deletion:
+                print('delete')
                 quote_product = get_object_or_404(QuoteProduct, id=quote_product_id)
                 quote_product.delete()
                 quote_product_return = None
             quote.calculate_price()
             quote_return = custom_model_to_dict(quote)
+            
             data = {
                 'quote': quote_return,
                 'quote_product': quote_product_return
@@ -1399,4 +1409,171 @@ def api_dealerportal_manage_product_to_quote(request):
             return JsonResponse({'error': 'Permission denied', 'description': 'You do not have permission to add product to this quote'}, status=403)
     return JsonResponse({'error': 'Invalid token', 'description': 'Invalid Token for this request'}, status=401)
 
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def api_dealerportal_delete_quote(request, pk):
+    valid_token = validateJWTTokenRequest(request)
+    if valid_token:
+        data = json.loads(request.body)
+        user_id = data.get('user_id')
+        user = get_object_or_404(User, id=user_id)
+        quote = Quote.objects.get(id=pk)
+        id_quote = quote.id
+        if not quote.is_editable_by(user) or quote.status == "ordered":
+            return JsonResponse({'error': 'Permission denied', 'description': 'You do not have permission to delete this quote'}, status=403)
+        quote.delete()
+        message = f"Estimate #{id_quote} deleted by {user.username}"
+        data = {
+            'message': message,
+            'info': 'Quote deleted successfully.'
+        }
+        create_notification(user.get_users_to_notify(), "estimate", message=message)
+        return JsonResponse({'data': data}, status=200)
+    return JsonResponse({'error': 'Invalid token', 'description': 'Invalid Token for this request'}, status=401)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def api_dealerportal_create_order(request, pk):
+    valid_token = validateJWTTokenRequest(request)
+    if valid_token:
+        data = json.loads(request.body)
+        user_id = data.get('user_id')
+        user = get_object_or_404(User, id=user_id)
+        quote = Quote.objects.get(id=pk)
+        info = ''
+        if user.role != "DealerAdmin":
+            info = "You dont have permission to create orders."
+            data = {
+                'info': info, 
+                'error': 'Permission denied'
+            }
+            return JsonResponse({'data': data}, status=200)
+        if quote.get_products().count() == 0:
+            info = "Cannot create order from empty quote."
+            data = {
+                'info': info, 
+                'error': 'Invalid request'
+            }
+            return JsonResponse({'data': data}, status=200)
+
+        if not quote.is_editable_by(user) or quote.status == "ordered":
+            info = "Cannot create order from this quote."
+            data = {
+                'info': info, 
+                'error': 'Invalid request'
+            }
+            return JsonResponse({'data': data}, status=200)
+        else:
+            order = Order(quote=quote)
+            order.owner = user
+            order.total_cost = quote.total_cost
+            order.save()
+            quote.status = "ordered"
+            quote.save()
+            info = "Order created successfully."
+            message = f"Estimate #{quote.id} ordered by {user.username}"
+            create_notification(
+                user.get_users_to_notify(), "order", message=message
+            )
+                # SENDING ORDER TO ZOHO API INVENTORY
+            success, message = sync_order_to_zoho(order)
+            data = {
+                'info': info,
+                'message': message
+            }
+            if success:
+                return JsonResponse({'data': data}, status=200)
+            else:
+                return JsonResponse({'error': 'Error', 'info': message}, status=400)
+    return JsonResponse({'error': 'Invalid token', 'description': 'Invalid Token for this request'}, status=401)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def api_dealerportal_create_quote(request):
+    valid_token = validateJWTTokenRequest(request)  
+    if valid_token:
+        data = json.loads(request.body)
+        user_id = data.get('user_id')
+        user = get_object_or_404(User, id=user_id)
+        name = data.get('name')
+        markup = data.get('markup')
+        form = QuoteForm({'name': name, 'markup': markup})
+        if form.is_valid():
+            quote = form.save(commit=False)
+            quote.owner = user
+            quote.save()
+            info = "Quote created successfully."
+            message = f"Estimate #{quote.id} created by {request.user.username}"
+            create_notification(
+                user.get_users_to_notify(), "estimate", message=message
+            )
+            data = {
+                'info': info,
+                'message': message
+            }
+        else:
+            message = "Error creating quote."
+            data = {
+                'error': 'Error',
+                'message': message
+            }
+        return JsonResponse({'data': data}, status=200)
+    return JsonResponse({'error': 'Invalid token', 'description': 'Invalid Token for this request'}, status=401)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def api_dealerportal_clone_quote(request, pk):
+    valid_token = validateJWTTokenRequest(request)
+    if valid_token:
+        data = json.loads(request.body)
+        user_id = data.get('user_id')
+        user = get_object_or_404(User, id=user_id)
+        original_quote = get_object_or_404(Quote, pk=pk)
+
+        if (
+            not original_quote.is_editable_by(user)
+            or original_quote.status != "active"
+        ):
+            message = "You are not allowed to clone this quote."
+            data = {
+                'error': 'Permission denied',
+                'message': message
+            }
+            return JsonResponse({'data': data}, status=200)
+
+        cloned_quote = copy.copy(original_quote)
+        cloned_quote.pk = None
+        cloned_quote.name += " (Cloned)"
+        cloned_quote.owner = user 
+        cloned_quote.save()
+
+        # Copy associated quote products
+        for quote_product in original_quote.get_products():
+            cloned_quote_product = copy.copy(quote_product)
+            cloned_quote_product.pk = None
+            cloned_quote_product.quote = cloned_quote
+            cloned_quote_product.save()
+
+        message = "Quote cloned successfully."
+        data = {
+            'info': message,
+            'message': message
+        } 
+        return JsonResponse({'data': data}, status=200)
+    return JsonResponse({'error': 'Invalid token', 'description': 'Invalid Token for this request'}, status=401)
+
     
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def api_dealerportal_orders(request):
+    valid_token = validateJWTTokenRequest(request)
+    if valid_token:
+        user_id = request.GET.get('user_id')
+        user = get_object_or_404(User, id=user_id)
+        orders = user.get_api_dealerportal_orders_for_user()
+        return JsonResponse({'data': orders}, status=200)
+    return JsonResponse({'error': 'Invalid token', 'description': 'Invalid Token for this request'}, status=401)

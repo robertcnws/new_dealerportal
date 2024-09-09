@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
-  Button,
   Paper,
   IconButton,
   Grid,
   Alert,
-  Tooltip
+  Tooltip,
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -18,6 +19,8 @@ const ItemStockDetailsComponent = ({ item, stock, onClose }) => {
   const [imageUrl, setImageUrl] = useState('');
   const [aspectRatio, setAspectRatio] = useState(0);
   const [copySuccess, setCopySuccess] = useState(false);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   useEffect(() => {
     const fetchImageUrl = async () => {
@@ -40,7 +43,7 @@ const ItemStockDetailsComponent = ({ item, stock, onClose }) => {
   }, [item.id, aspectRatio]);
 
   const getImageStyle = () => {
-    if (aspectRatio == 1) {
+    if (aspectRatio === 1) {
       return {
         width: '80%',
         height: '80%',
@@ -64,8 +67,69 @@ const ItemStockDetailsComponent = ({ item, stock, onClose }) => {
     });
   };
 
+  if (!isMobile) {
+
+    return (
+      <Box sx={{ padding: 1, overflowY: 'auto', ml: -1, minWidth: '100%', mt: 5 }}>
+        <Paper elevation={3} sx={{ padding: 2, boxShadow: 'none', borderRadius: '10px', minHeight: 'calc(100vh - 175px)' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant="h5">{stock.group_name}</Typography>
+            <IconButton onClick={onClose}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
+          <Grid container spacing={2}>
+            <Grid item xs={6}>
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="h6">{item.name}</Typography>
+                <Typography variant="body1">
+                  Selling Price: <strong>${item.price}</strong>
+                </Typography>
+                <Typography variant="body1">
+                  Available Stock: <strong>{item.stock}</strong>
+                </Typography>
+                <Box
+                  sx={{
+                    backgroundColor: '#f2f2f2',
+                    padding: 2,
+                    mt: 2,
+                    whiteSpace: 'pre-line'
+                  }}
+                >
+                  <Typography variant="body2" color="textSecondary">
+                    {item.description}
+                  </Typography>
+                </Box>
+                <Typography variant="body1">
+                  <strong>SKU :</strong> <code>{item.sku}</code>
+                  <Tooltip title={copySuccess ? "Copied!" : "Copy SKU"}>
+                    <IconButton onClick={handleCopySKU}>
+                      <ContentCopyIcon />
+                    </IconButton>
+                  </Tooltip>
+                </Typography>
+              </Box>
+            </Grid>
+            <Grid container justifyContent="center" alignItems="center" item xs={6}>
+              <Box sx={{ mb: 2, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                {aspectRatio > 0 ? (
+                  <img
+                    src={imageUrl}
+                    alt={item.name}
+                    style={getImageStyle()}
+                  />
+                ) : (
+                  <Alert severity="warning">Image not available</Alert>
+                )}
+              </Box>
+            </Grid>
+          </Grid>
+        </Paper>
+      </Box>
+    );
+  }
   return (
-    <Box sx={{ padding: 1, overflowY: 'auto', ml: -1, minWidth: '100%', mt: 5 }}>
+    <Box sx={{ padding: 1, overflowY: 'auto', ml: -1, minWidth: '100%', mt: 2 }}>
       <Paper elevation={3} sx={{ padding: 2, boxShadow: 'none', borderRadius: '10px', minHeight: 'calc(100vh - 175px)' }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <Typography variant="h5">{stock.group_name}</Typography>
@@ -73,55 +137,62 @@ const ItemStockDetailsComponent = ({ item, stock, onClose }) => {
             <CloseIcon />
           </IconButton>
         </Box>
-        <Grid container spacing={2}>
-          <Grid item xs={6}>
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="h6">{item.name}</Typography>
-              <Typography variant="body1">
-                Selling Price: <strong>${item.price}</strong>
-              </Typography>
-              <Typography variant="body1">
-                Available Stock: <strong>{item.stock}</strong>
-              </Typography>
-              <Box
-                sx={{
-                  backgroundColor: '#f2f2f2',
-                  padding: 2,
-                  mt: 2,
-                  whiteSpace: 'pre-line'
-                }}
-              >
-                <Typography variant="body2" color="textSecondary">
-                  {item.description}
+        <Box>
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="h6">{item.name}</Typography>
+                <Typography variant="body1">
+                  Selling Price: <strong>${item.price}</strong>
+                </Typography>
+                <Typography variant="body1">
+                  Available Stock: <strong>{item.stock}</strong>
+                </Typography>
+                <Box
+                  sx={{
+                    backgroundColor: '#f2f2f2',
+                    padding: 2,
+                    mt: 2,
+                    whiteSpace: 'pre-line'
+                  }}
+                >
+                  <Typography variant="body2" color="textSecondary">
+                    {item.description}
+                  </Typography>
+                </Box>
+                <Typography variant="body1">
+                  <strong>SKU :</strong> <code>{item.sku}</code>
+                  <Tooltip title={copySuccess ? "Copied!" : "Copy SKU"}>
+                    <IconButton onClick={handleCopySKU}>
+                      <ContentCopyIcon />
+                    </IconButton>
+                  </Tooltip>
                 </Typography>
               </Box>
-              <Typography variant="body1">
-                <strong>SKU :</strong> <code>{item.sku}</code>
-                <Tooltip title={copySuccess ? "Copied!" : "Copy SKU"}>
-                  <IconButton onClick={handleCopySKU}>
-                    <ContentCopyIcon />
-                  </IconButton>
-                </Tooltip>
-              </Typography>
-            </Box>
+            </Grid>
           </Grid>
-          <Grid container justifyContent="center" alignItems="center" item xs={6}>
-            <Box sx={{ mb: 2, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-              {aspectRatio > 0 ? (
-                <img
-                  src={imageUrl}
-                  alt={item.name}
-                  style={getImageStyle()}
-                />
-              ) : (
-                <Alert severity="warning">Image not available</Alert>
-              )}
-            </Box>
+        </Box>
+        <Box>
+          <Grid container spacing={2}>
+            <Grid container justifyContent="center" alignItems="center" item xs={12}>
+              <Box sx={{ mb: 2, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                {aspectRatio > 0 ? (
+                  <img
+                    src={imageUrl}
+                    alt={item.name}
+                    style={getImageStyle()}
+                  />
+                ) : (
+                  <Alert severity="warning">Image not available</Alert>
+                )}
+              </Box>
+            </Grid>
           </Grid>
-        </Grid>
+        </Box>
       </Paper>
     </Box>
   );
+
 };
 
 export default ItemStockDetailsComponent;

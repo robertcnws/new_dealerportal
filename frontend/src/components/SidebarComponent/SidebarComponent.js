@@ -6,22 +6,18 @@ import {
     ListItemText,
     Divider,
     IconButton,
-    Typography,
     ListItemButton,
     useMediaQuery,
     useTheme,
     Box
 } from '@mui/material';
 import {
-    Grid3x3,
     Menu as MenuIcon
 } from '@mui/icons-material';
 import {
     Cart,
     GraphUp,
     JournalBookmark,
-    Building,
-    Gear,
     Grid
 } from 'react-bootstrap-icons';
 import { Link } from 'react-router-dom';
@@ -49,65 +45,65 @@ const SidebarComponent = ({ activePage, user }) => {
             </div>
             <Divider />
             <List sx={{ color: '#677488'}}>
-                <ListItemButton component={Link} to="/" className={isActive('dashboard')}>
+                <ListItemButton component={Link} to="/" className={isActive('dashboard')} onClick={isMobile ? handleDrawerToggle : undefined}>
                     <ListItemIcon>
                         <Grid />
                     </ListItemIcon>
                     <ListItemText primary="Dashboard"/>
                 </ListItemButton>
-                <ListItemButton component={Link} to={`${apiFrontendRoot}/quotes`} className={isActive('quotes')}>
+                <ListItemButton component={Link} to={`${apiFrontendRoot}/quotes`} className={isActive('quotes')} onClick={isMobile ? handleDrawerToggle : undefined}>
                     <ListItemIcon>
                         <JournalBookmark />
                     </ListItemIcon>
                     <ListItemText primary="Quotes" />
                 </ListItemButton>
-                <ListItemButton component={Link} to="/orders" className={isActive('orders')}>
+                <ListItemButton component={Link} to={`${apiFrontendRoot}/orders`} className={isActive('orders')} onClick={isMobile ? handleDrawerToggle : undefined}>
                     <ListItemIcon>
                         <Cart />
                     </ListItemIcon>
                     <ListItemText primary="Orders" />
                 </ListItemButton>
-                <ListItemButton component={Link} to={`${apiFrontendRoot}/check-stock`} className={isActive('stock')}>
+                <ListItemButton component={Link} to={`${apiFrontendRoot}/check-stock`} className={isActive('stock')} onClick={isMobile ? handleDrawerToggle : undefined}>
                     <ListItemIcon>
                         <GraphUp />
                     </ListItemIcon>
                     <ListItemText primary="Stock" />
                 </ListItemButton>
 
-                {hasRole('AppManager') && (
-                    <ListItemButton component={Link} to="/manage-dealers" className={isActive('dealerships')}>
+                {/* {hasRole('AppManager') && (
+                    <ListItemButton component={Link} to="/manage-dealers" className={isActive('dealerships')} onClick={isMobile ? handleDrawerToggle : undefined}>
                         <ListItemIcon>
                             <Building />
                         </ListItemIcon>
                         <ListItemText primary="Manage Dealerships" />
                     </ListItemButton>
-                )}
+                )} */}
 
-                {hasRole('AppAdmin') && (
+                {/* {hasRole('AppAdmin') && (
                     <>
-                        <ListItemButton component={Link} to="/manage-dealers" className={isActive('dealerships')}>
+                        <ListItemButton component={Link} to="/manage-dealers" className={isActive('dealerships')} onClick={isMobile ? handleDrawerToggle : undefined}>
                             <ListItemIcon>
                                 <Building />
                             </ListItemIcon>
                             <ListItemText primary="Manage Dealerships" />
                         </ListItemButton>
-                        <ListItemButton component={Link} to="/settings" className={isActive('settings')}>
+                        <ListItemButton component={Link} to="/settings" className={isActive('settings')} onClick={isMobile ? handleDrawerToggle : undefined}>
                             <ListItemIcon>
                                 <Gear />
                             </ListItemIcon>
                             <ListItemText primary="Settings" />
                         </ListItemButton>
                     </>
-                )}
+                )} */}
 
-                {hasRole('DealerAdmin') && (
-                    <ListItemButton component={Link} to={`/manage-dealership/${user.dealerAccountId}`} className={isActive('dealerships')}>
+                {/* {hasRole('DealerAdmin') && (
+                    <ListItemButton component={Link} to={`/manage-dealership/${user.dealerAccountId}`} className={isActive('dealerships')} onClick={isMobile ? handleDrawerToggle : undefined}>
                         <ListItemIcon>
                             <Gear />
                         </ListItemIcon>
                         <ListItemText primary="Manage Dealership" />
                     </ListItemButton>
-                )}
+                )} */}
             </List>
         </Box>
     );
@@ -117,11 +113,11 @@ const SidebarComponent = ({ activePage, user }) => {
             {isMobile ? (
                 <>
                     <IconButton
-                        color="inherit"
+                        color="black"
                         aria-label="open drawer"
                         edge="start"
                         onClick={handleDrawerToggle}
-                        sx={{ mr: 2, display: { sm: 'none' } }}
+                        sx={{ mr: 0, ml: 1, display: { sm: 'none' } }}
                     >
                         <MenuIcon />
                     </IconButton>

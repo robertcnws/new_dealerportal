@@ -8,12 +8,12 @@ WORKDIR /app
 COPY package*.json ./
 
 # Instala dependencias
-RUN npm ci
+RUN npm install
 
 # Copia el resto de los archivos del proyecto
 COPY . /app/
 
 # Construye la aplicación React
-RUN npm run build
+RUN npm run build --omit=dev
 
 CMD ["npm", "start"]

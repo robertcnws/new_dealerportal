@@ -1,35 +1,31 @@
 import React, { useEffect, useState, useContext } from 'react';
-import { Box, TextField } from '@mui/material';
+import { Box } from '@mui/material';
 import { fetchWithToken } from '../../../../utils';
 import { apiUrl } from '../../../../config';
 import {
   Grid,
   TableContainer,
   Table,
-  TableHead,
-  TableRow,
-  TableCell,
   TableBody,
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
-import FolderIcon from '@mui/icons-material/Folder';
-import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined';
-import FolderOpenOutlinedIcon from '@mui/icons-material/FolderOpenOutlined';
 import CustomFilterComponent from '../../../Utils/components/CustomFilterComponent/CustomFilterComponent';
 import GroupStockRowComponent from '../GroupStockRowComponent/GroupStockRowComponent';
 import ItemStockDetailsComponent from '../ItemStockDetailsComponent/ItemStockDetailsComponent';
 import { SearchContext } from '../../../SearchContextComponent/SearchContextComponent';
 
-const ListStocksComponent = () => {
+const ListStocksComponent = ({ setIsLoadingOperation }) => {
   const [stocks, setStocks] = useState([]);
   const [filteredStocks, setFilteredStocks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState('all');
   const { searchTermGlobal } = useContext(SearchContext);
-  const [open, setOpen] = useState(false);
-  const [itemSelected, setItemSelected] = useState(null);
-  const [stockSelected, setStockSelected] = useState(null);
   const [expandedItem, setExpandedItem] = useState(null);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const [isListVisible, setIsListVisible] = useState(true);
 
   useEffect(() => {
     document.title = 'Dealer Portal | Stocks';
@@ -125,10 +121,16 @@ const ListStocksComponent = () => {
     } else {
       setExpandedItem({ item, stock });
     }
+    if (isMobile) {
+      setIsListVisible(false);
+    }
   };
 
   const handleCloseSelection = () => {
     setExpandedItem(null);
+    if (isMobile) {
+      setIsListVisible(true);
+    }
   };
 
   const configCustomFilter = {
@@ -145,6 +147,60 @@ const ListStocksComponent = () => {
     marginBottomInDetails: '10px'
   }
 
+  if (!isMobile) {
+
+    return (
+      <Box sx={{
+        mt: 3,
+        minWidth: '100%',
+        bgcolor: '#f1f1f1',
+      }}>
+        {stocks && (
+          <Grid container spacing={2}>
+            <Grid item xs={expandedItem ? 4 : 12}>
+              <Box>
+                <CustomFilterComponent configCustomFilter={configCustomFilter} />
+              </Box>
+              <TableContainer sx={{
+                minWidth: '100%',
+                bgcolor: 'white',
+                borderRadius: '10px',
+                borderTop: '1px solid #ddd',
+                mb: 2,
+                maxHeight: 'calc(100vh - 180px)',
+                overflowY: 'auto'
+              }}>
+                <Table>
+                  <TableBody>
+                    {filteredStocks.map((stock) => (
+                      <GroupStockRowComponent
+                        key={stock.id}
+                        group={stock}
+                        onSelection={handleSelection}
+                        expandedItem={expandedItem}
+                        setIsLoadingOperation={setIsLoadingOperation}
+                      />
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Grid>
+            <Grid item xs={8}>
+              {expandedItem && (
+                <ItemStockDetailsComponent
+                  item={expandedItem.item}
+                  stock={expandedItem.stock}
+                  onClose={handleCloseSelection}
+                />
+              )}
+            </Grid>
+          </Grid>
+        )
+        }
+      </Box >
+
+    );
+  }
   return (
     <Box sx={{
       mt: 3,
@@ -152,35 +208,55 @@ const ListStocksComponent = () => {
       bgcolor: '#f1f1f1',
     }}>
       {stocks && (
-        <Grid container spacing={2}>
-          <Grid item xs={expandedItem ? 4 : 12}>
+        <>
+          {isListVisible && (
             <Box>
-              <CustomFilterComponent configCustomFilter={configCustomFilter} />
+              <Grid container spacing={2}>
+                <Grid item xs={12}>
+                  <Box>
+                    <CustomFilterComponent configCustomFilter={configCustomFilter} />
+                  </Box>
+                  <TableContainer sx={{
+                    minWidth: '100%',
+                    bgcolor: 'white',
+                    borderRadius: '10px',
+                    borderTop: '1px solid #ddd',
+                    mb: 0,
+                    maxHeight: 'calc(100vh - 180px)',
+                    overflowY: 'auto'
+                  }}>
+                    <Table>
+                      <TableBody>
+                        {filteredStocks.map((stock) => (
+                          <GroupStockRowComponent
+                            key={stock.id}
+                            group={stock}
+                            onSelection={handleSelection}
+                            expandedItem={expandedItem}
+                            setIsLoadingOperation={setIsLoadingOperation}
+                          />
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Grid>
+              </Grid>
             </Box>
-            <TableContainer sx={{
-              minWidth: '100%',
-              bgcolor: 'white',
-              borderRadius: '10px',
-              borderTop: '1px solid #ddd',
-              mb: 2,
-              maxHeight: 'calc(100vh - 180px)',
-              overflowY: 'auto'
-            }}>
-              <Table>
-                <TableBody>
-                  {filteredStocks.map((stock) => (
-                    <GroupStockRowComponent key={stock.id} group={stock} onSelection={handleSelection} expandedItem={expandedItem} />
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Grid>
-          <Grid item xs={8}>
-            {expandedItem && (
-              <ItemStockDetailsComponent item={expandedItem.item} stock={expandedItem.stock} onClose={handleCloseSelection} />
-            )}
-          </Grid>
-        </Grid>
+          )}
+          <Box>
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                {expandedItem && (
+                  <ItemStockDetailsComponent
+                    item={expandedItem.item}
+                    stock={expandedItem.stock}
+                    onClose={handleCloseSelection}
+                  />
+                )}
+              </Grid>
+            </Grid>
+          </Box>
+        </>
       )
       }
     </Box >
