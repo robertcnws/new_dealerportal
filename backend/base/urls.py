@@ -21,6 +21,7 @@ urlpatterns = [
     path('api-dealerportal/password-reset/', password_reset_request, name='password_reset_request'),
     path('api-dealerportal/password-reset-confirm/', password_reset_confirm, name='password_reset_confirm'),
     # BACKEND URLS
+    path('health/', views.health_check, name='health_check'),
     path("login/", views.loginPage, name="base-login"),
     path("logout/", views.logoutUser, name="base-logout"),
     path("register", views.registerPage, name="base-register"),

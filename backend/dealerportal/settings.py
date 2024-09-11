@@ -2,48 +2,34 @@ from pathlib import Path
 import os
 import django_heroku
 import environ
-
-# from dotenv import load_dotenv
-
-
-# Import to schedule celery beat to schedule
 from datetime import timedelta
-
 import logging
 
 logger = logging.getLogger('django')
 logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler())
 
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
 
 LOGIN_URL = 'base-login'
 
-
-# dotenv_path = os.path.join(BASE_DIR, ".env")
-# load_dotenv(dotenv_path)  # take environment variables from .env.
-
-
-
-# SECURITY WARNING: keep the secret key used in production secret!
-# SECRET_KEY = "django-insecure-0%2tx+jpy^w+gu7xmny1sn@4@1e)#2@g2nfh6chi=ri7rx*&^9"
-SECRET_KEY = os.environ.get("SECRET_KEY")
-
-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
-# DEBUG = bool(os.environ.get("DEBUG", False))
-
-# ALLOWED_HOSTS = ["dealerportal.herokuapp.com", "127.0.0.1"]
-
 
 env = environ.Env(
     DEBUG=(bool, False)
 )
 
 environ.Env.read_env()
+
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['api.newwindowsystem.net', 'www.newwindowsystem.net', 'newwindowsystem.net', 'localhost'])
+
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=[])
+CORS_ALLOW_METHODS = env.list('CORS_ALLOW_METHODS', default=[])
+CORS_ALLOW_HEADERS = env.list('CORS_ALLOW_HEADERS', default=[])
+CORS_TRUSTED_ORIGINS = env.list('CORS_TRUSTED_ORIGINS', default=[])
 
 ENVIRONMENT = env('ENVIRONMENT')
 
@@ -57,18 +43,7 @@ SECRET_KEY = env('SECRET_KEY_DEV') if ENVIRONMENT == 'DEV' else env('SECRET_KEY_
 DB_PORT = env('DB_PORT')
 DB_ENGINE = env('DB_ENGINE')
 
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
-
-CORS_ALLOW_CREDENTIALS = True
-
-CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=[])
-
-CORS_ALLOW_METHODS = env.list('CORS_ALLOW_METHODS', default=[])
-
-CORS_ALLOW_HEADERS = env.list('CORS_ALLOW_HEADERS', default=[])
-
 # Application definition
-
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -103,16 +78,15 @@ AUTH_USER_MODEL = "base.User"
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    # "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
     'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.common.CommonMiddleware',
+    "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
 django_heroku.settings(locals())
 ROOT_URLCONF = "dealerportal.urls"
 
@@ -147,10 +121,8 @@ DATABASES = {
     }
 }
 
-
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
@@ -166,24 +138,16 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
-
 LANGUAGE_CODE = "en-us"
-
 TIME_ZONE = "US/Eastern"
-
 USE_I18N = True
-
 USE_TZ = True
-
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
 
 ALLOWED_MODELS_TO_SEARCH = [
     "base.Products",
@@ -191,7 +155,6 @@ ALLOWED_MODELS_TO_SEARCH = [
     "base.Quote",
     "base.Order",
 ]
-
 
 LOGGING = {
     "version": 1,
@@ -232,36 +195,27 @@ LOGGING = {
     },
 }
 
-
 EMAIL_BACKEND = env("EMAIL_BACKEND")
 EMAIL_HOST_USER = env("EMAIL_HOST_USER_DEV") if ENVIRONMENT == 'DEV' else env("EMAIL_HOST_USER_QA") if ENVIRONMENT == 'QA' else env("EMAIL_HOST_USER_PROD")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD_DEV") if ENVIRONMENT == 'DEV' else env("EMAIL_HOST_PASSWORD_QA") if ENVIRONMENT == 'QA' else env("EMAIL_HOST_PASSWORD_PROD")
 EMAIL_HOST = env('EMAIL_HOST_DEV') if ENVIRONMENT == 'DEV' else env('EMAIL_HOST_QA') if ENVIRONMENT == 'QA' else env('EMAIL_HOST_PROD')
 EMAIL_PORT = env('EMAIL_PORT_DEV') if ENVIRONMENT == 'DEV' else env('EMAIL_PORT_QA') if ENVIRONMENT == 'QA' else env('EMAIL_PORT_PROD')
-EMAIL_USE_TLS = env('EMAIL_USE_TLS_DEV') if ENVIRONMENT == 'DEV' else env('EMAIL_USE_TLS_QA') if ENVIRONMENT == 'QA' else env('EMAIL_USE_TLS_PROD') 
+EMAIL_USE_TLS = env('EMAIL_USE_TLS_DEV') if ENVIRONMENT == 'DEV' else env('EMAIL_USE_TLS_QA') if ENVIRONMENT == 'QA' else env('EMAIL_USE_TLS_PROD')
 EMAIL_USE_SSL = False
 DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL_DEV') if ENVIRONMENT == 'DEV' else env('DEFAULT_FROM_EMAIL_QA') if ENVIRONMENT == 'QA' else env('DEFAULT_FROM_EMAIL_PROD')
 
+# Adding Celery config to schedule sync and tasks
+# CELERY_BROKER_URL = env("CELERY_BROKER_URL")
+# CELERY_ACCEPT_CONTENT = env("CELERY_ACCEPT_CONTENT")
+# CELERY_RESULT_SERIALIZER = env("CELERY_RESULT_SERIALIZER")
+# CELERY_TASK_SERIALIZER = env("CELERY_TASK_SERIALIZER")
+# CELERY_TIMEZONE = env("CELERY_TIMEZONE")
+# CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND")
 
+# Celery beat settings
+# CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 
-# ADDING CELERY CONFIG TO SCHEDUE SYNC AND TASKS
-# URL FOR HEROKU
-# CELERY_BROKER_URL = os.environ["REDIS_URL"]
-
-
-CELERY_BROKER_URL = env("CELERY_BROKER_URL")
-CELERY_ACCEPT_CONTENT = env("CELERY_ACCEPT_CONTENT")
-CELERY_RESULT_SERIALIZER = env("CELERY_RESULT_SERIALIZER")
-CELERY_TASK_SERIALIZER = env("CELERY_TASK_SERIALIZER")
-CELERY_TIMEZONE = env("CELERY_TIMEZONE")
-CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND")
-
-
-# CELERY BEAT SETTINGS
-CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
-
-
-# AWS S3 CONFIG
+# AWS S3 config
 AWS_ACCESS_KEY_ID = env("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = env("AWS_SECRET_ACCESS_KEY")
 AWS_STORAGE_BUCKET_NAME = env("AWS_STORAGE_BUCKET_NAME")
@@ -270,15 +224,18 @@ AWS_S3_CUSTOM_DOMAIN = env("AWS_S3_CUSTOM_DOMAIN")
 DEFAULT_FILE_STORAGE = env("DEFAULT_FILE_STORAGE")
 STATICFILES_STORAGE = env("STATICFILES_STORAGE")
 
-# Static files (CSS, JavaScript, Images)
-
-
 # Static files config
-
-# STATIC_URL = os.environ.get("STATIC_URL")
-
 STATIC_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/static/"
-
 STATICFILES_DIRS = [BASE_DIR / "static"]
-
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+
+# Security settings
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+# SECURE_SSL_REDIRECT = True
+X_FRAME_OPTIONS = 'DENY'
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_REDIRECT_EXEMPT = [r'^health/$']

@@ -62,6 +62,10 @@ from rest_framework.permissions import IsAuthenticated
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+@csrf_exempt
+def health_check(request):
+    return HttpResponse("OK", status=200)
+
 
 def loginPage(request):
     page = "login"
