@@ -7,6 +7,8 @@ urlpatterns = [
     # API DEALERPORTAL
     
     path("dealerportal-zoho/settings/", views.api_dealerportal_zoho_api_settings, name="api_dealerportal_zoho_api_settings"),
+    path("dealerportal-zoho/sync_zoho_items/", views.api_dealerportal_sync_zoho_items_view, name="api_dealerportal_sync_zoho_items_view"),
+    path("dealerportal-zoho/sync_zoho_customers/", views.api_dealerportal_sync_zoho_customers_view, name="api_dealerportal_sync_zoho_customers_view"),
     
     #########
     

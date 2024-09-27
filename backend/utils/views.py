@@ -990,6 +990,7 @@ def api_dealerportal_send_invitation(request):
                 dealership
                 and invitation.dealership
                 and invitation.dealership.id != dealership.id
+                
             ):
                 message = "An invitation for this email already exists for a different dealership."
                 return JsonResponse({"error": message}, status=200)

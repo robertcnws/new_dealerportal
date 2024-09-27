@@ -1,13 +1,38 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Grid, useTheme, useMediaQuery } from '@mui/material';
 import QuickActionsButtonsComponent from '../QuickActionsButtonsComponent/QuickActionsButtonsComponent';
 import InviteAppManagerComponent from '../InviteAppManagerComponent/InviteAppManagerComponent';
 import TableAppManagersComponent from '../TableAppManagersComponent/TableAppManagersComponent';
+import { fetchWithToken } from '../../../../utils';
+import { apiUrl } from '../../../../config';
+
 
 const MainSettingsComponent = () => {
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const [managers, setManagers] = useState(null);
+
+  const fetchManagers = async (payload) => {
+    try {
+      const response = await fetchWithToken(`${apiUrl}/app_settings/dealeportal/settings/`, 'GET', payload, {}, apiUrl);
+      if (response.status === 200) {
+        setManagers(response.data.managers);
+      } else {
+        throw new Error(`Failed to fetch managers`);
+      }
+    } catch (err) {
+      console.error(err.message);
+    }
+  };
+
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem('userLogged') || '{}'); 
+    const payload = {
+      user_id: user.data.id,
+    }
+    fetchManagers(payload);
+  }, []);
 
 
   return (
@@ -20,7 +45,7 @@ const MainSettingsComponent = () => {
           <InviteAppManagerComponent />
         </Grid>
         <Grid item xs={isMobile ? 12 : 8}>
-          <TableAppManagersComponent />
+          <TableAppManagersComponent managers={managers} setManagers={setManagers} onSyncComplete={fetchManagers}/>
         </Grid>
       </Grid>
     </Box>

@@ -51,6 +51,7 @@
             <label for="invitation">Email Invitation</label>
             <input type="email" id="invitation" name="email" placeholder="example@gmail.com" required />
             <input type="hidden"  name="role" value="K54Rl" />
+
           </div>
           <input class="btn btn-success" type="submit" value="Send Invitation">
         </div>
@@ -103,6 +104,7 @@
                       <li
                         class="dropdown-item"
                         onclick="navigateTo('{% url 'app_settings:change-authuser-status' manager.id %}')"
+                        
                       >
                         <i class="bi bi-power"></i>
                         {% if manager.is_active %}Deactivate{% else %}Activate{% endif %}

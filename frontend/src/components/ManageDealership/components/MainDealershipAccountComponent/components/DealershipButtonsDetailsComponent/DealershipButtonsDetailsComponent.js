@@ -80,7 +80,7 @@ const DealershipButtonsDetailsComponent = ({ dealership, setDealership }) => {
                 title: 'Error',
                 text: `${response.data.message}`,
                 icon: 'error',
-                confirmButtonText: 'Cool',
+                confirmButtonText: 'Accept',
                 customClass: customClassSwal,
               });
             }
@@ -89,7 +89,7 @@ const DealershipButtonsDetailsComponent = ({ dealership, setDealership }) => {
               title: 'Error',
               text: `${response.data.message}`,
               icon: 'error',
-              confirmButtonText: 'Cool',
+              confirmButtonText: 'Accept',
               customClass: customClassSwal,
             });
           }
@@ -100,7 +100,7 @@ const DealershipButtonsDetailsComponent = ({ dealership, setDealership }) => {
         title: 'Error',
         text: err.message,
         icon: 'error',
-        confirmButtonText: 'Cool',
+        confirmButtonText: 'Accept',
         customClass: customClassSwal,
       });
     }

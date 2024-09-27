@@ -24,6 +24,7 @@ const ModalManageUserComponent = ({ user, open, handleClose, onSyncComplete }) =
   } = useForm();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const userLogged = JSON.parse(localStorage.getItem('userLogged') || '{}');
 
   useEffect(() => {
     reset({
@@ -69,14 +70,23 @@ const ModalManageUserComponent = ({ user, open, handleClose, onSyncComplete }) =
               text: `${response.data.message}`,
               icon: 'success',
               confirmButtonText: 'OK',
-              customClass: customClassSwal
+              customClass: customClassSwal,
+              willClose: () => {
+                if (onSyncComplete){
+                  const payload = {
+                    user_id: userLogged.data.id,
+                  };
+                  onSyncComplete(payload);
+                }
+              },
+
             });
           } else {
             Swal.fire({
               title: 'Error',
               text: `${response.data.message}`,
               icon: 'error',
-              confirmButtonText: 'Cool',
+              confirmButtonText: 'Accept',
               customClass: customClassSwal,
             });
           }

@@ -106,7 +106,7 @@ const RecentQuotesTableComponent = ({ data }) => {
           title: 'Error',
           text: 'Failed to delete quote',
           icon: 'error',
-          confirmButtonText: 'Cool',
+          confirmButtonText: 'Accept',
           customClass: customClassSwal
         });
       }

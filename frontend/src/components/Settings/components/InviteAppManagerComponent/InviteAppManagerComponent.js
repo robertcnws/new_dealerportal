@@ -1,16 +1,60 @@
 import React from 'react';
 import { Box, Typography, useTheme, useMediaQuery, TextField, FormHelperText, Button } from '@mui/material';
 import { useForm } from 'react-hook-form';
+import Swal from 'sweetalert2';
+import { apiUrl, customClassSwal } from '../../../../config';
+import { fetchWithToken } from '../../../../utils';
 
 const InviteAppManagerComponent = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { register, handleSubmit, formState: { errors }, reset } = useForm();
 
+  const customClassSwal = {
+    popup: 'small-popup',
+    title: 'small-title',
+    icon: 'custom-icon',
+    content: 'small-content',
+    confirmButton: 'small-confirm-button',
+  };
+
   const onSubmit = async (data) => {
-    console.log(data);
-    // Aquí puedes agregar la lógica para enviar la invitación
-    reset(); // Limpia el formulario después de enviar
+    const user = JSON.parse(localStorage.getItem('userLogged'));
+    const payload = {
+      ...data,
+      user_id: user.data.id,
+      role: 'K54Rl',
+    };
+    try {
+      const url = `${apiUrl}/utils/dealerportal-send-invitation/`;
+      const response = await fetchWithToken(url, 'POST', payload, {}, apiUrl);
+      if (response.status === 200) {
+        if (response.data.error) {
+          Swal.fire({
+            title: 'Error',
+            text: response.data.error,
+            icon: 'error',
+            confirmButtonText: 'OK',
+            customClass: customClassSwal,
+          });
+        }
+        else {
+          Swal.fire({
+            title: 'Success!',
+            text: `${response.data.message}`,
+            icon: 'success',
+            confirmButtonText: 'OK',
+            customClass: customClassSwal,
+            willClose: () => {
+              reset();
+            },
+          });
+        }
+      }
+    }
+    catch (error) {
+      console.log(error);
+    }
   };
 
   return (
@@ -53,7 +97,7 @@ const InviteAppManagerComponent = () => {
           </Box>
 
           <Box sx={{ textAlign: 'right', mb: 1 }}>
-            <Button type="submit" variant="contained" color="success" disabled>
+            <Button type="submit" variant="contained" color="success">
               Send Invitation
             </Button>
           </Box>

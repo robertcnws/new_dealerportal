@@ -212,7 +212,7 @@ const ListManageDealershipComponent = () => {
                 title: 'Error',
                 text: `${response.data.message}`,
                 icon: 'error',
-                confirmButtonText: 'Cool',
+                confirmButtonText: 'Accept',
                 customClass: customClassSwal
               });
             }
@@ -221,7 +221,7 @@ const ListManageDealershipComponent = () => {
               title: 'Error',
               text: `${response.data.message}`,
               icon: 'error',
-              confirmButtonText: 'Cool',
+              confirmButtonText: 'Accept',
               customClass: customClassSwal
             });
           }
@@ -232,7 +232,7 @@ const ListManageDealershipComponent = () => {
         title: 'Error',
         text: err.message,
         icon: 'error',
-        confirmButtonText: 'Cool',
+        confirmButtonText: 'Accept',
         customClass: customClassSwal
       });
     }

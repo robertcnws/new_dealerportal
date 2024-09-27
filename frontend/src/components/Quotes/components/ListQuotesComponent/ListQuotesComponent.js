@@ -230,7 +230,7 @@ const ListQuotesComponent = () => {
         title: 'Error',
         text: 'Failed to clone quote',
         icon: 'error',
-        confirmButtonText: 'Cool',
+        confirmButtonText: 'Accept',
         customClass: customClassSwal
       });
     }
@@ -284,7 +284,7 @@ const ListQuotesComponent = () => {
         title: 'Error',
         text: 'Failed to delete quote',
         icon: 'error',
-        confirmButtonText: 'Cool',
+        confirmButtonText: 'Accept',
         customClass: customClassSwal
       });
     }

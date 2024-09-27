@@ -210,7 +210,7 @@ const ListOrdersComponent = () => {
         title: 'Error',
         text: 'Failed to delete order',
         icon: 'error',
-        confirmButtonText: 'Cool',
+        confirmButtonText: 'Accept',
         customClass: customClassSwal
       });
     }

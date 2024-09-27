@@ -114,7 +114,7 @@ const ButtonsbarComponent = ({ quote, onClose, isOrder = false, onEdit, setMenuO
         title: 'Error',
         text: 'Failed to delete quote',
         icon: 'error',
-        confirmButtonText: 'Cool',
+        confirmButtonText: 'Accept',
         customClass: customClassSwal
       });
     }
@@ -179,7 +179,7 @@ const ButtonsbarComponent = ({ quote, onClose, isOrder = false, onEdit, setMenuO
         title: 'Error',
         text: 'Failed to place order',
         icon: 'error',
-        confirmButtonText: 'Cool',
+        confirmButtonText: 'Accept',
         customClass: customClassSwal
       });
     }
@@ -244,7 +244,7 @@ const ButtonsbarComponent = ({ quote, onClose, isOrder = false, onEdit, setMenuO
         title: 'Error',
         text: 'Failed to delete quote',
         icon: 'error',
-        confirmButtonText: 'Cool',
+        confirmButtonText: 'Accept',
         customClass: customClassSwal
       });
     }
