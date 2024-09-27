@@ -15,6 +15,7 @@ import {
   useTheme,
   useMediaQuery
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import Swal from 'sweetalert2';
 import { apiUrl } from '../../../../config';
 import { fetchWithToken } from '../../../../utils';
@@ -31,6 +32,9 @@ const TableQuoteProductsComponent = ({ quote, setIsLoadingOperation }) => {
   const [openTooltipId, setOpenTooltipId] = useState(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  // const isMobile = useMediaQuery('(max-width:999px)');
+  const warningColor = theme.palette.warning.main;
+  const transparentWarningColor = alpha(warningColor, 0.2);
 
   const columns = [
     { field: 'id', headerName: 'ID', width: 0 },
@@ -73,6 +77,7 @@ const TableQuoteProductsComponent = ({ quote, setIsLoadingOperation }) => {
       setProducts([]);
     }
   }, [quoteProducts, modifiedQuantities]);
+  
 
   const fetchQuoteProducts = async (quote) => {
     try {
@@ -80,7 +85,7 @@ const TableQuoteProductsComponent = ({ quote, setIsLoadingOperation }) => {
       const payload = {
         user_id: user.data.id,
       };
-      const response = await fetchWithToken(`${apiUrl}/api-dealerportal-quote-products/${quote.id}/`, 'GET', payload, {}, apiUrl);
+      const response = await fetchWithToken(`${apiUrl}/dealerportal-quote-products/${quote.id}/`, 'GET', payload, {}, apiUrl);
       if (response.status !== 200) {
         throw new Error(`Failed to fetch quote products`);
       }
@@ -100,7 +105,7 @@ const TableQuoteProductsComponent = ({ quote, setIsLoadingOperation }) => {
       [row.id]: newQuantity,
     });
     if (!isNaN(newQuantity) && newQuantity > 0) {
-      setIsLoadingOperation(true);
+      // setIsLoadingOperation(true);
       try {
         const user = JSON.parse(localStorage.getItem('userLogged'));
         const payload = {
@@ -110,7 +115,7 @@ const TableQuoteProductsComponent = ({ quote, setIsLoadingOperation }) => {
           user_id: user.data.id,
           quantity: newQuantity,
         };
-        const response = await fetchWithToken(`${apiUrl}/api-dealerportal-manage-product-to-quote/`, 'POST', payload, {}, apiUrl);
+        const response = await fetchWithToken(`${apiUrl}/dealerportal-manage-product-to-quote/`, 'POST', payload, {}, apiUrl);
         if (response.status !== 200) {
           throw new Error(`Failed to fetch data`);
         }
@@ -153,7 +158,7 @@ const TableQuoteProductsComponent = ({ quote, setIsLoadingOperation }) => {
             is_deletion: true,
             user_id: user.data.id,
           };
-          const response = await fetchWithToken(`${apiUrl}/api-dealerportal-manage-product-to-quote/`, 'POST', payload, {}, apiUrl);
+          const response = await fetchWithToken(`${apiUrl}/dealerportal-manage-product-to-quote/`, 'POST', payload, {}, apiUrl);
           if (response.status !== 200) {
             throw new Error(`Failed to fetch data`);
           }
@@ -205,30 +210,35 @@ const TableQuoteProductsComponent = ({ quote, setIsLoadingOperation }) => {
             <TableBody>
               {products.map((row) => (
                 <TableRow key={`${row.id_quote_product}`} sx={{
-                  bgcolor: row.product.is_in_stock === 'Out of stock' ? '#ffcccc' : 'white',
+                  bgcolor: row.product.is_in_stock === 'Out of stock' ? '#ffcccc' :
+                    (row.product.is_in_stock === 'Insufficient stock for quote' ? transparentWarningColor : 'white'),
                 }}>
                   {columns.map((column) => (
                     column.field !== 'id' && (
                       <TableCell key={column.field}>
                         {column.field === 'quantity' ? (
-                          <TextField
-                            sx={{
-                              width: '100%',
-                              '& .MuiInputBase-root': {
-                                height: '35px',
-                              },
-                              '& .MuiOutlinedInput-root': {
-                                '& fieldset': {
-                                  borderRadius: '4px',
+                          quote.status !== 'ordered' ? (
+                            <TextField
+                              sx={{
+                                width: '100%',
+                                '& .MuiInputBase-root': {
+                                  height: '35px',
                                 },
-                              },
-                            }}
-                            type="number"
-                            value={row[column.field]}
-                            onChange={(e) => onChangeQuantity(e, row)}
-                            variant="outlined"
-                            inputProps={{ min: 1 }}
-                          />
+                                '& .MuiOutlinedInput-root': {
+                                  '& fieldset': {
+                                    borderRadius: '4px',
+                                  },
+                                },
+                              }}
+                              type="number"
+                              value={row[column.field]}
+                              onChange={(e) => onChangeQuantity(e, row)}
+                              variant="outlined"
+                              inputProps={{ min: 1 }}
+                            />
+                          ) : (
+                            row[column.field]
+                          )
                         ) : column.field === 'product' ? (
                           <Box>
                             <Typography sx={{ fontSize: '12px' }}>
@@ -256,15 +266,15 @@ const TableQuoteProductsComponent = ({ quote, setIsLoadingOperation }) => {
                                 componentsProps={{
                                   tooltip: {
                                     sx: {
-                                      bgcolor: 'whitesmoke', 
-                                      color: 'black', 
-                                      boxShadow: 3,   
-                                      fontSize: '12px', 
+                                      bgcolor: 'whitesmoke',
+                                      color: 'black',
+                                      boxShadow: 3,
+                                      fontSize: '12px',
                                     },
                                   },
                                   arrow: {
                                     sx: {
-                                      color: 'black', 
+                                      color: 'black',
                                     },
                                   },
                                 }}
@@ -319,7 +329,7 @@ const TableQuoteProductsComponent = ({ quote, setIsLoadingOperation }) => {
     );
   }
   return (
-    <Box sx={{ width: '100%', mt: 1 }}>
+    <Box sx={{ width: '100%', mt: 0 }}>
       <TableContainer style={{ height: isMobile ? '100%' : '500px' }}>
         <Table stickyHeader>
           <TableHead>
@@ -334,7 +344,8 @@ const TableQuoteProductsComponent = ({ quote, setIsLoadingOperation }) => {
           <TableBody>
             {products.map((row) => (
               <TableRow key={`${row.id_quote_product}`} sx={{
-                bgcolor: row.product.is_in_stock === 'Out of stock' ? '#ffcccc' : 'white',
+                bgcolor: row.product.is_in_stock === 'Out of stock' ? '#ffcccc' :
+                  (row.product.is_in_stock === 'Insufficient stock for quote' ? transparentWarningColor : 'white'),
               }}>
                 <TableCell key="product">
                   <Box>
@@ -365,7 +376,7 @@ const TableQuoteProductsComponent = ({ quote, setIsLoadingOperation }) => {
                             sx: {
                               bgcolor: 'whitesmoke',
                               color: 'black',
-                              boxShadow: 3,  
+                              boxShadow: 3,
                               fontSize: '12px',
                             },
                           },

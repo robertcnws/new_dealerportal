@@ -13,6 +13,7 @@
   <hr/>
   <form method="POST" action="">
     {% csrf_token %} 
+    
     {% if form.errors %}
     <div>
       <p style="color:red">Please review your information. There were errors found in your form submission:</p>
@@ -64,7 +65,7 @@
           {% endif %}
           <p>{{ form.password2.help_text }}</p>
         </div>
-        <input class="submitBtn" type="submit" value="Create Account" />
+        <input class="submitBtn" type="submit" value="Create Account"/>
   </form>
 </div>
 
@@ -84,6 +85,10 @@
       } else {
           inputPass.type = "password";
       }
+  }
+
+  function redirectFrontend() {
+    window.location.href = 'https://www.newwindowsystem.net/';
   }
 </script>
 </body>

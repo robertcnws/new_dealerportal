@@ -17,26 +17,26 @@ logger = logging.getLogger(__name__)
 #         print(i)
 #     return "Done"
 
-
 @shared_task(bind=True)
 def sync_zoho_items_task(self):
     app_config = AppConfig.objects.first()
-    # Get the superuser
     superadmin = User.objects.get(is_superuser=True)
 
-    # Check if zoho is configured
+    print("Starting sync_zoho_items_task")
+
     if not app_config.zoho_connection_configured:
         print("Zoho API connection is not configured.")
         return "Failed"
 
     try:
-        # Get access token
+        print("Getting access token")
         access_token = get_access_token(
             app_config.zoho_client_id,
             app_config.zoho_client_secret,
             app_config.zoho_refresh_token,
         )
-        # Sync items
+
+        print("Syncing items")
         synced_items_count = sync_zoho_items(access_token)
         success_message = (
             f"Successfully synced {synced_items_count} items from Zoho Inventory"
@@ -54,6 +54,7 @@ def sync_zoho_items_task(self):
         )
         notification.users.add(superadmin)
         print(f"Error syncing items: {str(e)}")
+
 
 
 @shared_task(bind=True)

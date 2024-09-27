@@ -1,19 +1,50 @@
-import React from 'react';
-import { AddShoppingCartOutlined, Print, PrintTwoTone } from '@mui/icons-material';
-import { Box, Button, Grid } from '@mui/material';
+import React, { useState } from 'react';
+import { AddShoppingCartOutlined, Edit, Print, PrintRounded, PrintTwoTone, ExpandLess, ExpandMore, Delete, DeleteOutline, EditOutlined, Settings, ConfirmationNumberTwoTone } from '@mui/icons-material';
+import { Box, Button, Grid, Menu, MenuItem, Popover, useMediaQuery, useTheme } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
 import { alpha } from '@mui/material/styles';
-import { useTheme } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import { apiUrl } from '../../../../config';
 import { fetchWithToken } from '../../../../utils';
+import { set } from 'date-fns';
 
-const ButtonsbarComponent = ({ quote, onClose, isOrder=false }) => {
+const ButtonsbarComponent = ({ quote, onClose, isOrder = false, onEdit, setMenuOpened = null, order = null }) => {
 
   const theme = useTheme();
-  // const isMobile = useMediaQuery(theme.breakpoints.down('sm')); 
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
+  // const isMobile = useMediaQuery('(max-width:999px)');
   const navigate = useNavigate();
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isMenuManageOpen, setIsMenuManageOpen] = useState(false);
+
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+    setIsMenuOpen(!isMenuOpen);
+    if (!isOrder && isMobile) {
+      setMenuOpened(!isMenuOpen);
+    }
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+    setIsMenuOpen(false);
+    if (!isOrder && isMobile) {
+      setMenuOpened(false);
+    }
+  };
+
+  const handleManageClick = (event) => {
+    setAnchorEl(event.currentTarget);
+    setIsMenuManageOpen(!isMenuManageOpen);
+  };
+
+  const handleManageClose = () => {
+    setAnchorEl(null);
+    setIsMenuManageOpen(false);
+  };
 
   const handlePrint = async (route) => {
     let url = '';
@@ -32,7 +63,13 @@ const ButtonsbarComponent = ({ quote, onClose, isOrder=false }) => {
     }
   }
 
+  const onEditManage = (quote) => {
+    setIsMenuManageOpen(false);
+    onEdit(quote);
+  }
+
   const handleDeleteQuote = async (quote) => {
+    setIsMenuManageOpen(false);
     const customClassSwal = {
       popup: 'small-popup',
       title: 'small-title',
@@ -55,7 +92,7 @@ const ButtonsbarComponent = ({ quote, onClose, isOrder=false }) => {
           const payload = {
             user_id: user.data.id
           };
-          const response = await fetchWithToken(`${apiUrl}/api-dealerportal/quotes/delete/${quote.id}/`, 'POST', payload, {}, apiUrl);
+          const response = await fetchWithToken(`${apiUrl}/dealerportal/quotes/delete/${quote.id}/`, 'POST', payload, {}, apiUrl);
           if (response.status === 200) {
             Swal.fire({
               title: `${response.data.data.info}`,
@@ -64,7 +101,7 @@ const ButtonsbarComponent = ({ quote, onClose, isOrder=false }) => {
               confirmButtonText: 'OK',
               customClass: customClassSwal,
               willClose: () => {
-                navigate('/api-dealerportal/quotes');
+                navigate('/dealerportal/quotes');
               }
             });
           } else {
@@ -84,6 +121,7 @@ const ButtonsbarComponent = ({ quote, onClose, isOrder=false }) => {
   };
 
   const handlePlaceOrder = async (quote) => {
+    setIsMenuManageOpen(false);
     const customClassSwal = {
       popup: 'small-popup',
       title: 'small-title',
@@ -106,7 +144,7 @@ const ButtonsbarComponent = ({ quote, onClose, isOrder=false }) => {
           const payload = {
             user_id: user.data.id
           };
-          const response = await fetchWithToken(`${apiUrl}/api-dealerportal/orders/create/${quote.id}/`, 'POST', payload, {}, apiUrl);
+          const response = await fetchWithToken(`${apiUrl}/dealerportal/orders/create/${quote.id}/`, 'POST', payload, {}, apiUrl);
           if (response.status === 200) {
             const error = response.data.data.error;
             if (error) {
@@ -127,7 +165,7 @@ const ButtonsbarComponent = ({ quote, onClose, isOrder=false }) => {
                 confirmButtonText: 'OK',
                 customClass: customClassSwal,
                 willClose: () => {
-                  navigate('/api-dealerportal/orders');
+                  navigate('/dealerportal/orders');
                 }
               });
             }
@@ -148,17 +186,130 @@ const ButtonsbarComponent = ({ quote, onClose, isOrder=false }) => {
   }
 
 
+  const handleStatusOrder = async (order, newStatus) => {
+    setIsMenuManageOpen(false);
+    const customClassSwal = {
+      popup: 'small-popup',
+      title: 'small-title',
+      icon: 'custom-icon',
+      content: 'small-content',
+      confirmButton: 'small-confirm-button'
+    }
+    try {
+      Swal.fire({
+        title: 'Are you sure?',
+        text: `You want to change status order # ${order.id} to ${newStatus}!`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, change it!',
+        cancelButtonText: 'No, keep it',
+        customClass: customClassSwal
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          const user = JSON.parse(localStorage.getItem('userLogged'));
+          const payload = {
+            id: order.id,
+            status: newStatus,
+            user_id: user.data.id,
+          };
+          const response = await fetchWithToken(`${apiUrl}/dealerportal/update_order_status/`, 'POST', payload, {}, apiUrl);
+          if (response.status === 200) {
+            if (response.data.error) {
+              Swal.fire({
+                title: `${response.data.error}`,
+                text: `${response.data.message}`,
+                icon: 'error',
+                confirmButtonText: 'OK',
+                customClass: customClassSwal
+              });
+              return;
+            }
+            Swal.fire({
+              title: 'Success',
+              text: `${response.data.message}`,
+              icon: 'success',
+              confirmButtonText: 'OK',
+              customClass: customClassSwal,
+              willClose: () => {
+                navigate('/dealerportal/orders');
+              }
+            });
+          } else {
+            throw new Error('Failed to change status order');
+          }
+        }
+      });
+    } catch (err) {
+      Swal.fire({
+        title: 'Error',
+        text: 'Failed to delete quote',
+        icon: 'error',
+        confirmButtonText: 'Cool',
+        customClass: customClassSwal
+      });
+    }
+  };
+
+
   return (
-    <Box className="buttons-bar">
+    <Box className="buttons-bar" sx={{ display: 'flex', alignContent: 'flex-end' }}>
       <Grid container spacing={1}>
         <Grid item>
+          <Button sx={{
+            bgcolor: isMobile ? '#F2F2F2' : 'white',
+            color: 'black',
+            boxShadow: '1px 2px 2px rgba(0, 0, 0, 0.1)',
+          }}
+            fullWidth
+            onClick={handleClick}
+            endIcon={isMenuOpen ? <ExpandLess /> : <ExpandMore />}
+          >
+            <Print />
+            {isMobile ? '' : 'Print'}
+          </Button>
+          <Menu
+            anchorEl={anchorEl}
+            open={isMenuOpen}
+            onClose={handleClose}
+            anchorOrigin={{
+              vertical: 'bottom',
+              horizontal: 'left',
+            }}
+            transformOrigin={{
+              vertical: 'top',
+              horizontal: 'left',
+            }}
+            sx={{
+              '& .MuiPaper-root': {
+                backgroundColor: '#f0f0f0',
+                border: '1px solid #ddd',
+                boxShadow: 'none',
+                zIndex: 9999,
+                // maxWidth: '100%', // Ajusta según necesites
+              },
+            }}
+          >
+            <MenuItem onClick={() => handlePrint('utils/dealerportal/quote/pdf-view')}>
+              <Print /> Print Sell
+            </MenuItem>
+            <MenuItem onClick={() => handlePrint('utils/dealerportal/quote/pdf-view-cost')}>
+              <PrintRounded /> Print Cost
+            </MenuItem>
+            <MenuItem onClick={() => handlePrint('utils/dealerportal/quote/pdf-view-total')}>
+              <PrintTwoTone /> Print Total
+            </MenuItem>
+          </Menu>
+        </Grid>
+
+
+        {/* <Grid item>
           <Button sx={{
             bgcolor: 'white',
             color: 'black',
             boxShadow: '0px 1px 1px rgba(0, 0, 0, 0.1)'
           }}
             fullWidth
-            onClick={() => handlePrint('utils/api-dealerportal/quote/pdf-view')}
+            onClick={() => handlePrint('utils/dealerportal/quote/pdf-view')}
           >
             <Print />
             Print Sell
@@ -171,38 +322,133 @@ const ButtonsbarComponent = ({ quote, onClose, isOrder=false }) => {
             boxShadow: '0px 1px 1px rgba(0, 0, 0, 0.1)'
           }}
             fullWidth
-            onClick={() => handlePrint('utils/api-dealerportal/quote/pdf-view-cost')}
+            onClick={() => handlePrint('utils/dealerportal/quote/pdf-view-cost')}
           >
             <PrintTwoTone />
             Print Cost
           </Button>
-        </Grid>
+        </Grid> */}
         {!isOrder && quote.status === 'active' && (
+          !isMobile ? (
+            <>
+              <Grid item>
+                <Button sx={{
+                  bgcolor: isMobile ? '#F2F2F2' : 'white',
+                  color: 'black',
+                  boxShadow: '1px 2px 2px rgba(0, 0, 0, 0.1)'
+                }}
+                  fullWidth
+                  onClick={() => onEdit(quote)}
+                >
+                  <EditOutlined />
+                  {isMobile ? '' : 'Edit'}
+                </Button>
+              </Grid>
+              <Grid item>
+                <Button sx={{
+                  bgcolor: isMobile ? '#F2F2F2' : 'white',
+                  color: 'black',
+                  boxShadow: '1px 2px 2px rgba(0, 0, 0, 0.1)'
+                }}
+                  fullWidth
+                  onClick={() => handleDeleteQuote(quote)}
+                >
+                  <DeleteOutline />
+                  {isMobile ? '' : 'Delete'}
+                </Button>
+              </Grid>
+              <Grid item>
+                <Button sx={{
+                  bgcolor: alpha(theme.palette.success.main, 0.1),
+                  color: 'black',
+                  boxShadow: '1px 2px 2px rgba(0, 0, 0, 0.1)'
+                }}
+                  fullWidth
+                  onClick={() => handlePlaceOrder(quote)}
+                >
+                  <AddShoppingCartOutlined sx={{ color: 'success.main' }} />
+                  {isMobile ? '' : 'Place Order'}
+                </Button>
+              </Grid>
+            </>
+          ) : (
+            <>
+              <Grid item>
+                <Button sx={{
+                  bgcolor: isMobile ? '#F2F2F2' : 'white',
+                  color: 'black',
+                  boxShadow: '1px 2px 2px rgba(0, 0, 0, 0.1)',
+                }}
+                  fullWidth
+                  onClick={handleManageClick}
+                  endIcon={isMenuManageOpen ? <ExpandLess /> : <ExpandMore />}
+                >
+                  <Settings />
+                </Button>
+                <Menu
+                  anchorEl={anchorEl}
+                  open={isMenuManageOpen}
+                  onClose={handleManageClose}
+                  anchorOrigin={{
+                    vertical: 'bottom',
+                    horizontal: 'left',
+                  }}
+                  transformOrigin={{
+                    vertical: 'top',
+                    horizontal: 'left',
+                  }}
+                  sx={{
+                    '& .MuiPaper-root': {
+                      backgroundColor: '#f0f0f0',
+                      border: '1px solid #ddd',
+                      boxShadow: 'none',
+                      zIndex: 9999,
+                      // maxWidth: '100%', // Ajusta según necesites
+                    },
+                  }}
+                >
+                  <MenuItem onClick={() => onEditManage(quote)}>
+                    <EditOutlined /> Edit Quote
+                  </MenuItem>
+                  <MenuItem onClick={() => handlePlaceOrder(quote)}>
+                    <AddShoppingCartOutlined /> Place Order
+                  </MenuItem>
+                  <MenuItem onClick={() => handleDeleteQuote(quote)}>
+                    <DeleteOutline /> Delete Quote
+                  </MenuItem>
+                </Menu>
+              </Grid>
+            </>
+          )
+        )}
+        {isOrder && (
           <>
             <Grid item>
               <Button sx={{
-                bgcolor: 'white',
+                bgcolor: order.status === 'accepted' || order.status === 'completed' || order.status === 'paid' ? '#F1F1F1' : alpha(theme.palette.success.main, 0.1),
                 color: 'black',
-                boxShadow: '0px 1px 1px rgba(0, 0, 0, 0.1)'
+                boxShadow: '1px 2px 2px rgba(0, 0, 0, 0.1)'
               }}
                 fullWidth
-                onClick={() => handleDeleteQuote(quote)}
+                onClick={() => handleStatusOrder(order, 'accepted')}
+                disabled={order.status === 'accepted' || order.status === 'completed' || order.status === 'paid'}
               >
-                <i className="bi bi-trash me-2"></i>
-                Delete
+                <i className="bi bi-clipboard2-plus-fill"></i>
+                {isMobile ? '' : 'Accept Order'}
               </Button>
             </Grid>
             <Grid item>
               <Button sx={{
-                bgcolor: alpha(theme.palette.success.main, 0.1),
+                bgcolor: order.status === 'canceled' || order.status === 'completed' ? '#F1F1F1' : alpha(theme.palette.error.main, 0.1),
                 color: 'black',
-                boxShadow: '0px 1px 1px rgba(0, 0, 0, 0.1)'
+                boxShadow: '1px 2px 2px rgba(0, 0, 0, 0.1)'
               }}
                 fullWidth
-                onClick={() => handlePlaceOrder(quote)}
+                onClick={() => handleStatusOrder(order, 'canceled')}
+                disabled={order.status === 'canceled' || order.status === 'completed'}
               >
-                <AddShoppingCartOutlined sx={{ color: 'success.main' }} />
-                Place Order
+                <i className="bi bi-clipboard2-x"></i>
+                {isMobile ? '' : 'Decline Order'}
               </Button>
             </Grid>
           </>
@@ -221,18 +467,18 @@ const ButtonsbarComponent = ({ quote, onClose, isOrder=false }) => {
         </Grid> */}
         <Grid item>
           <Button sx={{
-            bgcolor: alpha(theme.palette.error.main, 0.1),
+            bgcolor: alpha(theme.palette.warning.main, 0.1),
             color: 'black',
-            boxShadow: '0px 1px 1px rgba(0, 0, 0, 0.1)'
+            boxShadow: '1px 2px 2px rgba(0, 0, 0, 0.1)'
           }}
             onClick={onClose}
             fullWidth>
-            <CloseIcon sx={{ color: 'error.main' }} />
-            Close
+            <CloseIcon sx={{ color: 'warning.main' }} />
+            {isMobile ? '' : 'Close'}
           </Button>
         </Grid>
       </Grid>
-    </Box>
+    </Box >
   );
 }
 

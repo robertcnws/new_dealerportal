@@ -21,6 +21,7 @@ const ItemStockDetailsComponent = ({ item, stock, onClose }) => {
   const [copySuccess, setCopySuccess] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  // const isMobile = useMediaQuery('(max-width:999px)');
 
   useEffect(() => {
     const fetchImageUrl = async () => {
@@ -67,6 +68,10 @@ const ItemStockDetailsComponent = ({ item, stock, onClose }) => {
     });
   };
 
+  const handleClose = () => {
+    onClose();
+  };
+
   if (!isMobile) {
 
     return (
@@ -74,7 +79,7 @@ const ItemStockDetailsComponent = ({ item, stock, onClose }) => {
         <Paper elevation={3} sx={{ padding: 2, boxShadow: 'none', borderRadius: '10px', minHeight: 'calc(100vh - 175px)' }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Typography variant="h5">{stock.group_name}</Typography>
-            <IconButton onClick={onClose}>
+            <IconButton onClick={handleClose}>
               <CloseIcon />
             </IconButton>
           </Box>
@@ -133,7 +138,7 @@ const ItemStockDetailsComponent = ({ item, stock, onClose }) => {
       <Paper elevation={3} sx={{ padding: 2, boxShadow: 'none', borderRadius: '10px', minHeight: 'calc(100vh - 175px)' }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <Typography variant="h5">{stock.group_name}</Typography>
-          <IconButton onClick={onClose}>
+          <IconButton onClick={handleClose}>
             <CloseIcon />
           </IconButton>
         </Box>

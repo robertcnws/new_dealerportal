@@ -26,4 +26,8 @@ COPY . /app/
 EXPOSE 8005
 
 # Ejecuta el script de inicialización y luego arranca Gunicorn y cron
-CMD ["sh", "-c", "python manage.py makemigrations && python manage.py migrate && python init_script.py && gunicorn --bind 0.0.0.0:8005 dealerportal.wsgi:application"]
+# CMD ["sh", "-c", "python manage.py makemigrations && python manage.py migrate && python init_script.py && gunicorn --bind 0.0.0.0:8005 dealerportal.wsgi:application"]
+CMD sh -c "python manage.py makemigrations && python manage.py migrate && \
+           celery -A dealerportal worker --loglevel=info & \
+           celery -A dealerportal beat --loglevel=info & \
+           gunicorn --bind 0.0.0.0:8005 dealerportal.wsgi:application"

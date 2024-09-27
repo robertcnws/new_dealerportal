@@ -6,19 +6,39 @@ app_name = "utils"
 urlpatterns = [
     # API Paths
     path(
-        "api-dealerportal/quote/pdf-view/<int:pk>/", 
+        "dealerportal/quote/pdf-view/<int:pk>/", 
         views.api_dealerportal_quote_render_pdf_view, 
-        name="utils-api-dealerportal-quote-render-pdf-view"
+        name="utils-dealerportal-quote-render-pdf-view"
     ),
     path(
-        "api-dealerportal/quote/pdf-view-cost/<int:pk>/", 
+        "dealerportal/quote/pdf-view-cost/<int:pk>/", 
         views.api_dealerportal_quote_render_cost_pdf_view, 
-        name="utils-api-dealerportal-quote-render-cost-pdf-view"
+        name="utils-dealerportal-quote-render-cost-pdf-view"
     ),
     path(
-        "api-dealerportal-equalize-quote/<int:quote_id>/",
+        "dealerportal/quote/pdf-view-total/<int:pk>/", 
+        views.api_dealerportal_quote_render_total_view, 
+        name="utils-dealerportal-quote-render-total-pdf-view"
+    ),
+    path(
+        "dealerportal-equalize-quote/<int:quote_id>/",
         views.equalize_quote_view,
         name="utils-equalize_quote",
+    ),
+    path(
+        "dealerportal-send-invitation/",
+        views.api_dealerportal_send_invitation,
+        name="utils-dealerportal-send-invitation",
+    ),
+    path(
+        "dealerportal-delete-invitation/",
+        views.api_dealerportal_delete_invitation,
+        name="utils-dealerportal-delete-invitation",
+    ),
+    path(
+        "dealerportal-resend-invitation/<int:invitation_id>/",
+        views.api_dealerportal_resend_invitation,
+        name="utils-dealerportal-resend-invitation",
     ),
     # Django Paths
     path(

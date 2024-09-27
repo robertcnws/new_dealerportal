@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { 
   Box, 
   FormControl, 
@@ -10,13 +10,15 @@ import {
   useMediaQuery 
 } from '@mui/material';
 
-const CustomFilterComponent = ({ configCustomFilter, fontSize }) => {
+const CustomFilterComponent = ({ configCustomFilter, fontSize, isItemGroupToggle, sx }) => {
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  // const isMobile = useMediaQuery('(max-width:999px)');
+  const menuRef = useRef(null);
 
   return (
-    <FormControl variant="outlined" size="small" style={{ marginBottom: configCustomFilter.hasSearch ? configCustomFilter.marginBottomInDetails : '0' }}>
+    <FormControl variant="outlined" size="small" sx={sx} style={{ marginBottom: configCustomFilter.hasSearch ? configCustomFilter.marginBottomInDetails : '0' }}>
       {/* <InputLabel>{configCustomFilter.items.length}</InputLabel> */}
       <Select
         value={configCustomFilter.filter}
@@ -51,6 +53,7 @@ const CustomFilterComponent = ({ configCustomFilter, fontSize }) => {
               display: 'flex',
               flexDirection: 'column',
             },
+            onClick: isItemGroupToggle ?  (e) => {e.stopPropagation();} : null,
           },
           anchorOrigin: {
             vertical: 'bottom',

@@ -24,7 +24,7 @@ import { fetchWithToken } from '../../../../utils';
 const RecentQuotesTableComponent = ({ data }) => {
 
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isMobile = useMediaQuery('(max-width:999px)');;
   const [isQuoteSelected, setIsQuoteSelected] = useState(false);
   const [quoteSelected, setQuoteSelected] = useState(null);
   const navigate = useNavigate();
@@ -84,7 +84,7 @@ const RecentQuotesTableComponent = ({ data }) => {
             const payload = {
               user_id: user.data.id
             };
-            const response = await fetchWithToken(`${apiUrl}/api-dealerportal/quotes/delete/${quote.id}/`, 'POST', payload, {}, apiUrl);
+            const response = await fetchWithToken(`${apiUrl}/dealerportal/quotes/delete/${quote.id}/`, 'POST', payload, {}, apiUrl);
             if (response.status === 200) {
               Swal.fire({
                 title: `${response.data.data.info}`,
@@ -135,7 +135,7 @@ const RecentQuotesTableComponent = ({ data }) => {
             const payload = {
               user_id: user.data.id
             };
-            const response = await fetchWithToken(`${apiUrl}/api-dealerportal/quotes/clone/${quote.id}/`, 'POST', payload, {}, apiUrl);
+            const response = await fetchWithToken(`${apiUrl}/dealerportal/quotes/clone/${quote.id}/`, 'POST', payload, {}, apiUrl);
             if (response.status === 200) {
               Swal.fire({
                 title: !response.data.data.error ? `${response.data.data.info}` : `${response.data.data.error}`,

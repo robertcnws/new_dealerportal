@@ -14,7 +14,6 @@ app.conf.enable_utc = False
 
 app.conf.update(timezone="America/Havana")
 
-
 app.config_from_object(settings, namespace="CELERY")
 
 # CELLERY BEAT SETTINGS
@@ -38,7 +37,6 @@ app.conf.beat_schedule = {
         "schedule": crontab(minute=0, hour=0, day_of_month=1, month_of_year="2,4,6,8,10,12"),
     },
 }
-
 
 # Load task modules from all registered Django app configs.
 app.autodiscover_tasks()

@@ -7,6 +7,8 @@ from .forms import ZohoAPIForm
 import requests
 from django.urls import reverse
 from django.contrib import messages
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import concurrent.futures
 import time
 from datetime import datetime
 from utils.views import is_after
@@ -15,6 +17,22 @@ from django.contrib.auth.decorators import login_required
 from notifications.views import create_notification
 
 from django.db.models import Q
+from django.db import transaction
+from django.views.decorators.csrf import csrf_exempt
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from django.http import JsonResponse
+from django.forms.models import model_to_dict
+
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
+
+
 
 
 def generate_auth_url(request):
@@ -387,56 +405,119 @@ def sync_zoho_customers_view(request):
     return redirect(reverse("zoho_api:zoho_api_settings"))
 
 
+BATCH_SIZE = 100  
+MAX_WORKERS = 10 
+
+def fetch_customers_page(url, headers, params):
+    try:
+        response = requests.get(url, headers=headers, params=params)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.HTTPError as e:
+        raise Exception(f"Failed to fetch customers data: {str(e)}")
+    
+
+def process_batch(batch):
+    with transaction.atomic(): 
+        dealer_accounts_to_update = []
+        for customer in batch:
+            zoho_customer_id = customer["contact_id"]
+            email = customer["email"]
+            dealer_account = DealerAccount.objects.filter(zoho_email=email).first()
+            if dealer_account:
+                dealer_account.zoho_id = zoho_customer_id
+                dealer_accounts_to_update.append(dealer_account)
+
+        if dealer_accounts_to_update:
+            DealerAccount.objects.bulk_update(dealer_accounts_to_update, ['zoho_id'])
+
+    return len(dealer_accounts_to_update)  
+
+
 def sync_zoho_customers(access_token, app_config):
     organization_id = app_config.zoho_org_id
-    url = (
-        f"https://www.zohoapis.com/inventory/v1/contacts?organization_id={organization_id}"
-    )
+    url = f"https://www.zohoapis.com/inventory/v1/contacts?organization_id={organization_id}"
     headers = {"Authorization": f"Zoho-oauthtoken {access_token}"}
 
-    customers_data = []
-    page = 1
     num_customers_synced = 0
+    page = 1
+    
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        futures = []
+        while True:
+            params = {"page": page, "per_page": 200}
+            data = fetch_customers_page(url, headers, params)
+            contacts = data.get("contacts", [])
 
-    while True:
-        params = {
-            "page": page,
-            "per_page": 200,
-        }
+            if not contacts:
+                break
+            
+            batches = [contacts[i:i + BATCH_SIZE] for i in range(0, len(contacts), BATCH_SIZE)]
+            
+            for batch in batches:
+                futures.append(executor.submit(process_batch, batch))
 
-        try:
-            response = requests.get(url, headers=headers, params=params)
-            response.raise_for_status()
-        except requests.exceptions.HTTPError as e:
-            raise Exception(f"Failed to fetch customers data: {str(e)}")
+            page += 1
 
-        data = response.json()
-        contacts = data.get("contacts", [])
-
-        if not contacts:
-            break
-
-        customers_data.extend(contacts)
-        page += 1
-
-        # Sleep for 1 seconds to avoid making too many API calls in a short period
-        time.sleep(1)
-
-    for customer in customers_data:
-        zoho_customer_id = customer["contact_id"]
-        email = customer["email"]
-
-        dealer_account = DealerAccount.objects.filter(zoho_email=email).first()
-
-        if dealer_account:
-            dealer_account.zoho_id = zoho_customer_id
-            dealer_account.save()
-            num_customers_synced += 1
-
+        for future in concurrent.futures.as_completed(futures):
+            num_customers_synced += future.result() 
+    
     app_config.zoho_last_sync_time = datetime.now()
     app_config.save()
 
     return num_customers_synced
+
+
+# def sync_zoho_customers(access_token, app_config):
+#     organization_id = app_config.zoho_org_id
+#     url = (
+#         f"https://www.zohoapis.com/inventory/v1/contacts?organization_id={organization_id}"
+#     )
+#     headers = {"Authorization": f"Zoho-oauthtoken {access_token}"}
+
+#     customers_data = []
+#     page = 1
+#     num_customers_synced = 0
+
+#     while True:
+#         params = {
+#             "page": page,
+#             "per_page": 200,
+#         }
+
+#         try:
+#             response = requests.get(url, headers=headers, params=params)
+#             response.raise_for_status()
+#         except requests.exceptions.HTTPError as e:
+#             raise Exception(f"Failed to fetch customers data: {str(e)}")
+
+#         data = response.json()
+#         contacts = data.get("contacts", [])
+
+#         if not contacts:
+#             break
+
+#         customers_data.extend(contacts)
+#         page += 1
+
+#         # Sleep for 1 seconds to avoid making too many API calls in a short period
+#         time.sleep(1)
+
+#     for customer in customers_data:
+#         zoho_customer_id = customer["contact_id"]
+#         email = customer["email"]
+
+#         dealer_account = DealerAccount.objects.filter(zoho_email=email).first()
+
+#         if dealer_account:
+#             dealer_account.zoho_id = zoho_customer_id
+#             dealer_account.save()
+#             num_customers_synced += 1
+
+#     app_config.zoho_last_sync_time = datetime.now()
+#     app_config.save()
+
+#     return num_customers_synced
 
 
 @login_required(login_url="base-login")
@@ -550,3 +631,68 @@ def sync_zoho_pricebook(access_token):
     app_config.save()
 
     return len(pricebook["pricebook_items"])
+
+
+# VALIDATE JWT TOKEN
+
+def validateJWTTokenRequest(request):
+    auth_header = request.headers.get('Authorization')
+    if auth_header:
+        token = auth_header.split(' ')[1]
+        jwt_auth = JWTAuthentication()
+        try:
+            validated_token = jwt_auth.get_validated_token(token)
+            user = jwt_auth.get_user(validated_token)
+            return True if user else False
+        except (InvalidToken, TokenError) as e:
+            logger.error(f"Error validating token: {e}")
+            return False
+    else:
+        return False
+
+
+# API DEALERPORTAL
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+@role_required(["AppAdmin"])
+def api_dealerportal_zoho_api_settings(request):
+    valid_token = validateJWTTokenRequest(request)
+    if valid_token:
+        app_config = AppConfig.objects.first()
+        if not app_config:
+            app_config = AppConfig.objects.create()
+
+        zoho_connection_configured = app_config.zoho_connection_configured
+        connected = (
+            app_config.zoho_connection_configured
+            and app_config.zoho_refresh_token is not None
+            or ""
+        )
+        if request.method == "GET":
+            form = ZohoAPIForm(instance=app_config)
+        elif request.method == "POST":
+            form = ZohoAPIForm(request.POST, instance=app_config)
+            if form.is_valid():
+                form.save()
+                message = "Zoho API settings have been updated successfully."
+                return JsonResponse({"message": message}, status=200)
+            else:
+                message = "There was an error updating Zoho API settings. Please correct the errors below."
+        
+        auth_url = None
+        if not connected:
+            auth_url = reverse("zoho_api:generate_auth_url")
+        context = {
+            "connected": connected,
+            "last_sync_time": app_config.zoho_last_sync_time,
+            "auth_url": auth_url,
+            "zoho_connection_configured": zoho_connection_configured,
+            "app_config": model_to_dict(app_config, exclude=["logo"]),
+            "active_page": "settings",
+        }
+        return JsonResponse(context, status=200)
+    return JsonResponse({"error": "Unauthorized"}, status=401)
+
+
+

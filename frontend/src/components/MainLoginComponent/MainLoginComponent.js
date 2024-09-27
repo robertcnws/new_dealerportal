@@ -8,10 +8,12 @@ const MainLoginComponent = ({ children }) => {
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery('(min-width: 600px) and (max-width: 1024px)');
+  // const isMobile = useMediaQuery('(max-width:999px)');
 
   return (
     <Box className="containerMain">
-      <Container className="container" maxWidth={isMobile ? '' : 'xs'} sx={{ maxWidth : isMobile ? '80%' : '100%' }}>
+      <Container className="container" maxWidth={isMobile || isTablet ? '' : 'xs'} sx={{ maxWidth : isMobile || isTablet ? '80%' : '100%' }}>
         <Box>
           {children}
         </Box>

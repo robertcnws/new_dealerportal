@@ -10,6 +10,7 @@ const NavigationButtonComponent = ({ children, bgcolor, row }) => {
   const [borderRadius, setBorderRadius] = useState('');
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  // const isMobile = useMediaQuery('(max-width:999px)');
 
   useEffect(() => {
     if (children[0].noBorder) {

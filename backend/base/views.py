@@ -56,6 +56,8 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.decorators import parser_classes
 
 # USER MANAGMENT VIEWS AND FUNCTIONS
 
@@ -1414,6 +1416,29 @@ def api_dealerportal_manage_product_to_quote(request):
     return JsonResponse({'error': 'Invalid token', 'description': 'Invalid Token for this request'}, status=401)
 
 
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def api_dealerportal_get_quote(request, pk):
+    valid_token = validateJWTTokenRequest(request) 
+    if valid_token:
+        data = json.loads(request.body)
+        user_id = data.get('user_id')
+        user = get_object_or_404(User, id=user_id)
+        quote = get_object_or_404(Quote, id=pk)
+        data = {}   
+        if quote.is_editable_by(user):
+            quote.calculate_price()
+            quote_return = custom_model_to_dict(quote)
+            data = {
+                'quote': quote_return,
+            }
+            return JsonResponse({'data': data}, status=200)
+        else:
+            return JsonResponse({'error': 'Permission denied', 'description': 'You do not have permission to see this quote'}, status=403)
+    return JsonResponse({'error': 'Invalid token', 'description': 'Invalid Token for this request'}, status=401)
+
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def api_dealerportal_delete_quote(request, pk):
@@ -1530,6 +1555,47 @@ def api_dealerportal_create_quote(request):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
+def api_dealerportal_update_quote(request, pk):
+    valid_token = validateJWTTokenRequest(request)  
+    if valid_token:
+        quote = Quote.objects.get(id=pk)
+        data = json.loads(request.body)
+        user_id = data.get('user_id')
+        user = get_object_or_404(User, id=user_id)
+        name = data.get('name')
+        markup = data.get('markup')
+        if not quote.is_editable_by(user) or quote.status != "active":
+            messages.error(request, "You are not allowed to edit this quote.")
+            return redirect(
+                "base-view-quotes"
+            )  # Redirect to the list of quotes or appropriate view
+
+        if request.method == "POST":
+            form = QuoteForm({'name': name, 'markup': markup}, instance=quote)
+            if form.is_valid():
+                form.save()
+                info = "Quote updated successfully."
+                message = f"Estimate #{quote.id} updated by {user.username}"
+                create_notification(
+                    user.get_users_to_notify(), "estimate", message=message
+                )
+                data = {
+                    'info': info,
+                    'message': message
+                }
+            else:
+                message = "Error updating quote."
+                data = {
+                    'error': 'Error',
+                    'message': message
+                }
+            return JsonResponse({'data': data}, status=200)
+        return JsonResponse({'error': 'Method not allowed', 'description': 'Method not allowed'}, status=405)
+    return JsonResponse({'error': 'Invalid token', 'description': 'Invalid Token for this request'}, status=401)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def api_dealerportal_clone_quote(request, pk):
     valid_token = validateJWTTokenRequest(request)
     if valid_token:
@@ -1580,4 +1646,338 @@ def api_dealerportal_orders(request):
         user = get_object_or_404(User, id=user_id)
         orders = user.get_api_dealerportal_orders_for_user()
         return JsonResponse({'data': orders}, status=200)
+    return JsonResponse({'error': 'Invalid token', 'description': 'Invalid Token for this request'}, status=401)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def api_dealerportal_manage_dealers(request):
+    valid_token = validateJWTTokenRequest(request)
+    if valid_token:
+        dealerships = DealerAccount.objects.all()
+        list_dealerships = []
+        for dealer in dealerships:
+            dealer_admin = dealer.dealer_admin
+            dict_dealer = custom_model_to_dict(dealer)
+            dict_dealer['dealer_admin'] = custom_model_to_dict(dealer_admin) if dealer_admin else None
+            list_dealerships.append(dict_dealer)
+        return JsonResponse({'data': list_dealerships}, status=200)
+    return JsonResponse({'error': 'Invalid token', 'description': 'Invalid Token for this request'}, status=401)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def api_dealerportal_manage_dealer(request, user_id):
+    valid_token = validateJWTTokenRequest(request)
+    if valid_token:
+        dealerships = DealerAccount.objects.all()
+        matching_dealerships = [dealer for dealer in dealerships if dealer.dealer_admin and dealer.dealer_admin.id == user_id]
+        if matching_dealerships:
+            dealership = matching_dealerships[0]
+            dealer_admin = dealership.dealer_admin
+            dict_dealer = custom_model_to_dict(dealership)
+            dict_dealer['dealer_admin'] = custom_model_to_dict(dealer_admin) if dealer_admin else None
+            return JsonResponse({'data': dict_dealer}, status=200)
+        else:
+            return JsonResponse({'error': 'Not found', 'message': 'Dealership not found'}, status=404)
+    return JsonResponse({'error': 'Invalid token', 'description': 'Invalid Token for this request'}, status=401)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+@role_required(["AppAdmin", "AppManager"])
+@parser_classes([MultiPartParser, FormParser])
+def api_dealerportal_create_dealership(request):
+    valid_token = validateJWTTokenRequest(request)
+    if valid_token:
+        data = request.POST.copy()
+        files = request.FILES
+        form = DealerAccountForm(data, files)
+        if form.is_valid():
+            dealer = form.save(commit=False)
+            dealer.save()
+            message = "Dealership created successfully."
+            return JsonResponse({'data': message}, status=200)
+        else:
+            message = "Error Creating Dealership Account"
+            return JsonResponse({'error': 'Error', 'message': message, 'details': form.errors}, status=400)
+    return JsonResponse({'error': 'Invalid token', 'description': 'Invalid Token for this request'}, status=401)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+@role_required(["AppAdmin", "AppManager", "DealerAdmin"])
+@parser_classes([MultiPartParser, FormParser])
+def api_dealerportal_update_dealership_details(request, pk):
+    valid_token = validateJWTTokenRequest(request)
+    if valid_token:
+        try:
+            dealership = DealerAccount.objects.get(pk=pk)
+        except DealerAccount.DoesNotExist:
+            message = "Dealer account does not exist."
+            return JsonResponse({'error': 'Error', 'message': message}, status=200)
+        
+        print("request.FILES:", request.FILES)
+        print("request.POST:", request.POST)
+        
+        data = request.POST.copy()
+
+        dealership_form = DealerAccountForm(
+            data, request.FILES, instance=dealership
+        )
+        if dealership_form.is_valid():
+            dealership_form.save()
+            message = "Dealership details updated successfully."
+            return JsonResponse({'message': message}, status=200)
+        else:
+            message = "Error updating dealership details. Please correct the errors and try again."
+            return JsonResponse({'error': 'Error', 'message': message, 'details': dealership_form.errors}, status=200)
+    return JsonResponse({'error': 'Invalid token', 'description': 'Invalid Token for this request'}, status=401)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+@role_required(["AppAdmin", "AppManager", "DealerAdmin"])
+def api_dealerportal_manage_dealership(request, pk):
+    valid_token = validateJWTTokenRequest(request)
+    if valid_token:
+        try:
+            user_id = request.GET.get('user_id')
+            user = get_object_or_404(User, id=user_id)
+            dealership = DealerAccount.objects.get(pk=pk)
+        except DealerAccount.DoesNotExist:
+            message = "Dealer account does not exist."
+            return JsonResponse({'error': 'Error', 'message': message}, status=400)
+        
+        if dealership.allowed_to_manage(user):
+            estimators = dealership.get_estimators()
+            # estimator_form = MyUserCreationForm()
+            # dealership_form = DealerAccountForm(instance=dealership)
+            pending_invitations = Invitation.objects.filter(
+                dealership=dealership, is_accepted=False
+            ).values('id', 'email', 'is_accepted', 'created_at', 'user_id')
+            
+            # fields = [field.name for field in User._meta.get_fields()]
+            list_estimators = [custom_model_to_dict(estimator) for estimator in estimators]
+                
+            data = {
+                'dealership': custom_model_to_dict(dealership),
+                'estimators': list_estimators,
+                # 'estimator_form': estimator_form,
+                # 'dealership_form': dealership_form,
+                'dealership_admin': custom_model_to_dict(dealership.dealer_admin) if dealership.dealer_admin else None,
+                'pending_invitations': list(pending_invitations)
+            }    
+            return JsonResponse({'data': data}, status=200)
+        else:
+            message = "You are not allowed here"
+            return JsonResponse({'error': 'Permission denied', 'message': message}, status=403)
+    return JsonResponse({'error': 'Invalid token', 'description': 'Invalid Token for this request'}, status=401)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+@role_required(["AppAdmin", "AppManager", "DealerAdmin"])
+def api_dealerportal_dealership_stats(request, pk):
+    valid_token = validateJWTTokenRequest(request)
+    if valid_token:
+        try:
+            user_id = request.GET.get('user_id')
+            user = get_object_or_404(User, id=user_id)
+            dealership = DealerAccount.objects.get(pk=pk)
+        except DealerAccount.DoesNotExist:
+            message = "Dealer account does not exist."
+            return JsonResponse({'error': 'Error', 'message': message}, status=400)
+        
+        if dealership.allowed_to_manage(user):
+            
+            total_quotes = Quote.objects.filter(owner__dealer_account=dealership).count()
+            confirmed_orders_count = Order.objects.filter(
+                quote__owner__dealer_account=dealership,
+                status='confirmed'
+            ).count()
+            pending_orders_count = Order.objects.filter(
+                quote__owner__dealer_account=dealership,
+                status='pending'
+            ).count()
+                
+            data = {
+                'total_quotes': total_quotes,
+                'confirmed_orders_count': confirmed_orders_count,
+                'pending_orders_count': pending_orders_count,
+            }    
+            return JsonResponse({'data': data}, status=200)
+        else:
+            message = "You are not allowed here"
+            return JsonResponse({'error': 'Permission denied', 'message': message}, status=403)
+    return JsonResponse({'error': 'Invalid token', 'description': 'Invalid Token for this request'}, status=401)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+@role_required(["AppAdmin", "AppManager"])
+def api_dealerportal_manage_dealership_status(request, pk):
+    valid_token = validateJWTTokenRequest(request)  
+    if valid_token: 
+        try:
+            data = json.loads(request.body)
+            user_id = data.get('user_id')
+            sup_user = get_object_or_404(User, id=user_id)
+            dealer_account = DealerAccount.objects.get(id=pk)
+        except DealerAccount.DoesNotExist:
+            message = "Dealer account does not exist."
+            return JsonResponse({'error': 'Error', 'message': message}, status=200)
+
+        user = User.objects.get(id=pk)
+
+        if not sup_user.allowed_to_manage(user):
+            message = "You do not have permission to deactivate this user."
+            return JsonResponse({'error': 'Permission denied', 'message': message}, status=200)
+
+        dealer_account.is_active = not dealer_account.is_active
+        dealer_account.save()
+
+        if not dealer_account.is_active:
+            associated_users = User.objects.filter(dealer_account=dealer_account, is_active=True)
+            for user in associated_users:
+                user.is_active = False
+                user.save()
+
+        if not user.is_active:
+            message = "You do not have permission to deactivate this user."
+            return JsonResponse({'error': 'Permission denied', 'message': message}, status=200)
+
+        if user.role == "DealerAdmin":
+            User.objects.filter(dealer_admin=user).update(is_active=False)
+
+        action = "activated" if dealer_account.is_active else "deactivated"
+        message = f"Dealer account and associated users have been {action}."
+        return JsonResponse({'message': message, 'info': action}, status=200)
+    return JsonResponse({'error': 'Invalid token', 'description': 'Invalid Token for this request'}, status=401)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def api_dealerportal_manage_user(request, pk):
+    valid_token = validateJWTTokenRequest(request)
+    if valid_token:
+        try:
+            mange_user = User.objects.get(id=pk)
+        except User.DoesNotExist:
+            return HttpResponse("User does not exist.")
+        data = json.loads(request.body)
+        form = UserForm(data, instance=mange_user)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.username = user.username.lower()
+            user.save()
+            message = "Profile updated successfully."
+            return JsonResponse({'message': message}, status=200)
+        return JsonResponse({'error': 'Error', 'message': 'Error updating user profile'}, status=200)
+    return JsonResponse({'error': 'Invalid token', 'description': 'Invalid Token for this request'}, status=401)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+@role_required(["AppAdmin", "AppManager", "DealerAdmin"])
+def api_dealerportal_manage_dealership_user_status(request, pk):
+    valid_token = validateJWTTokenRequest(request)
+    if valid_token:
+        data = json.loads(request.body)
+        user_id =data.get('user_id')
+        sup_user = get_object_or_404(User, id=user_id)  
+        try:
+            user_to_manage = User.objects.get(id=pk)
+        except User.DoesNotExist:
+            message = "An error occurred."
+            return JsonResponse({'error': 'Error', 'message': message}, status=200)
+        
+        if not sup_user.allowed_to_manage(user_to_manage):
+            message = "You do not have permission to perform this operation."
+            return JsonResponse({'error': 'Permission denied', 'message': message}, status=200)
+        
+        if not user_to_manage.dealer_account.is_active:
+            message = "Cannot activate user status. The Dealer Account is inactive."
+            return JsonResponse({'error': 'Error', 'message': message}, status=200)
+        
+        user_to_manage.is_active = not user_to_manage.is_active
+        user_to_manage.save()
+
+        if user_to_manage.role == "DealerAdmin":
+            if not user_to_manage.is_active:
+                User.objects.filter(
+                    dealer_account=user_to_manage.dealer_account, role="Estimator"
+                ).update(is_active=False)
+
+        action = "activated" if user_to_manage.is_active else "deactivated"
+        message = f"User has been {action}."
+        return JsonResponse({'message': message, 'info': action}, status=200)
+    return JsonResponse({'error': 'Invalid token', 'description': 'Invalid Token for this request'}, status=401)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+@role_required(["AppAdmin", "AppManager"])
+def api_dealerportal_manage_dealer_admin_user(request, pk):
+    valid_token = validateJWTTokenRequest(request)
+    if valid_token:
+        try:
+            user = User.objects.get(id=pk)
+        except User.DoesNotExist:
+            message = "An error occurred performing this action"
+            return JsonResponse({'error': 'Error', 'message': message}, status=200)
+
+        dealer_account = user.dealer_account
+        if request.method == "POST":
+            dealer_admin_count = (
+                User.objects.filter(
+                    dealer_account=dealer_account, role="DealerAdmin", is_active=True
+                )
+                .exclude(id=pk)
+                .count()
+            )
+            if dealer_admin_count > 10:
+                message = "You have reached the Max Number of Admins Allowed."
+                return JsonResponse({'error': 'Error', 'message': message}, status=200)
+            if user.role == "DealerAdmin":
+                user.role = "Estimator"
+                message = "User role updated to Estimator successfully."
+            else:
+                user.role = "DealerAdmin"
+                message = "User role updated to Dealer Admin successfully." 
+                user.is_active = True
+            user.save()
+            return JsonResponse({'message': message}, status=200)
+        return JsonResponse({'error': 'Method not allowed', 'description': 'Method not allowed'}, status=405)
+    return JsonResponse({'error': 'Invalid token', 'description': 'Invalid Token for this request'}, status=401)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+@role_required(["AppAdmin", "AppManager"])
+def api_dealerportal_order_status_update(request):
+    valid_token = validateJWTTokenRequest(request)
+    if valid_token:
+        if request.method == "POST":
+            try:
+                data = json.loads(request.body)
+                user_id = data.get('user_id')
+                order_id = data.get("id")
+                new_status = data.get("status")
+                user = get_object_or_404(User, id=user_id)
+                order = get_object_or_404(Order, id=order_id)
+                order.status = new_status
+                order.save()
+                message = f"Order {order_id} status updated successfully!"
+                message = f"Order #{order_id} ordered by {user.username}"
+                error = None
+                create_notification(
+                    request.user.get_users_to_notify(), "order", message=message
+                )
+            except Exception as e:
+                message = f"Error updating order {order_id}: {str(e)}"
+                error = message
+            finally:
+                return JsonResponse({'message': message, 'error': error}, status=200)
+        return JsonResponse({'error': 'Method not allowed', 'description': 'Method not allowed'}, status=405)
     return JsonResponse({'error': 'Invalid token', 'description': 'Invalid Token for this request'}, status=401)

@@ -23,8 +23,10 @@ const ListStocksComponent = ({ setIsLoadingOperation }) => {
   const [filter, setFilter] = useState('all');
   const { searchTermGlobal } = useContext(SearchContext);
   const [expandedItem, setExpandedItem] = useState(null);
+  const [expandedGroups, setExpandedGroups] = useState(new Set());
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  // const isMobile = useMediaQuery('(max-width:999px)');
   const [isListVisible, setIsListVisible] = useState(true);
 
   useEffect(() => {
@@ -39,7 +41,7 @@ const ListStocksComponent = ({ setIsLoadingOperation }) => {
 
   const fetchStocks = async () => {
     try {
-      const response = await fetchWithToken(`${apiUrl}/api-dealerportal-check-stock/`, 'GET', null, {}, apiUrl);
+      const response = await fetchWithToken(`${apiUrl}/dealerportal-check-stock/`, 'GET', null, {}, apiUrl);
       if (response.status !== 200) {
         throw new Error(`Failed to fetch data`);
       }
@@ -129,6 +131,7 @@ const ListStocksComponent = ({ setIsLoadingOperation }) => {
   const handleCloseSelection = () => {
     setExpandedItem(null);
     if (isMobile) {
+      // setExpandedItem({ item, stock });
       setIsListVisible(true);
     }
   };
@@ -151,7 +154,7 @@ const ListStocksComponent = ({ setIsLoadingOperation }) => {
 
     return (
       <Box sx={{
-        mt: 3,
+        mt: -3,
         minWidth: '100%',
         bgcolor: '#f1f1f1',
       }}>
@@ -159,14 +162,16 @@ const ListStocksComponent = ({ setIsLoadingOperation }) => {
           <Grid container spacing={2}>
             <Grid item xs={expandedItem ? 4 : 12}>
               <Box>
-                <CustomFilterComponent configCustomFilter={configCustomFilter} />
+                <CustomFilterComponent configCustomFilter={configCustomFilter} sx={{ ml: 4 }} />
               </Box>
               <TableContainer sx={{
                 minWidth: '100%',
                 bgcolor: 'white',
                 borderRadius: '10px',
                 borderTop: '1px solid #ddd',
-                mb: 2,
+                mb: 0,
+                mr: 0,
+                ml: 3,
                 maxHeight: 'calc(100vh - 180px)',
                 overflowY: 'auto'
               }}>
@@ -178,6 +183,8 @@ const ListStocksComponent = ({ setIsLoadingOperation }) => {
                         group={stock}
                         onSelection={handleSelection}
                         expandedItem={expandedItem}
+                        expandedGroups={expandedGroups}
+                        setExpandedGroups={setExpandedGroups}
                         setIsLoadingOperation={setIsLoadingOperation}
                       />
                     ))}
@@ -187,11 +194,17 @@ const ListStocksComponent = ({ setIsLoadingOperation }) => {
             </Grid>
             <Grid item xs={8}>
               {expandedItem && (
-                <ItemStockDetailsComponent
-                  item={expandedItem.item}
-                  stock={expandedItem.stock}
-                  onClose={handleCloseSelection}
-                />
+                <>
+                  <Box sx={{ ml: 2, width: '100%' }}>
+                    <ItemStockDetailsComponent
+                      item={expandedItem.item}
+                      stock={expandedItem.stock}
+                      onSelection={handleSelection}
+                      onClose={handleCloseSelection}
+                    />
+                  </Box>
+                </>
+
               )}
             </Grid>
           </Grid>
@@ -203,7 +216,7 @@ const ListStocksComponent = ({ setIsLoadingOperation }) => {
   }
   return (
     <Box sx={{
-      mt: 3,
+      mt: 1,
       minWidth: '100%',
       bgcolor: '#f1f1f1',
     }}>
@@ -233,6 +246,8 @@ const ListStocksComponent = ({ setIsLoadingOperation }) => {
                             group={stock}
                             onSelection={handleSelection}
                             expandedItem={expandedItem}
+                            expandedGroups={expandedGroups}
+                            setExpandedGroups={setExpandedGroups}
                             setIsLoadingOperation={setIsLoadingOperation}
                           />
                         ))}
@@ -250,6 +265,7 @@ const ListStocksComponent = ({ setIsLoadingOperation }) => {
                   <ItemStockDetailsComponent
                     item={expandedItem.item}
                     stock={expandedItem.stock}
+                    onSelection={handleSelection}
                     onClose={handleCloseSelection}
                   />
                 )}

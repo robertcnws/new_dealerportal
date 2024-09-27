@@ -4,6 +4,12 @@ from . import views
 app_name = "zoho_api"
 
 urlpatterns = [
+    # API DEALERPORTAL
+    
+    path("dealerportal-zoho/settings/", views.api_dealerportal_zoho_api_settings, name="api_dealerportal_zoho_api_settings"),
+    
+    #########
+    
     path("zoho/generate_auth_url/", views.generate_auth_url, name="generate_auth_url"),
     path("zoho/get_refresh_token/", views.get_refresh_token, name="get_refresh_token"),
     path("zoho/settings/", views.zoho_api_settings, name="zoho_api_settings"),

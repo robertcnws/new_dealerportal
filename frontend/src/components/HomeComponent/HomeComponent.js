@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Grid, Typography, Box, } from '@mui/material';
+import { Grid, Typography, Box, useTheme, useMediaQuery } from '@mui/material';
 import SpeedIcon from '@mui/icons-material/Speed';
 import { Badge } from 'react-bootstrap';
 import DealershipOverviewComponent from '../Dashboard/components/DealershipOverviewComponent/DealershipOverviewComponent';
@@ -25,9 +25,12 @@ const HomeComponent = () => {
   const [orderProgress, setOrderProgress] = useState(0);
   const [quoteChangePercent, setQuoteChangePercent] = useState(0);
   const [orderChangePercent, setOrderChangePercent] = useState(0);
+  const theme = useTheme();
+  // const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isMobile = useMediaQuery('(max-width:999px)');
 
   useEffect(() => {
-    document.title = 'Dealer Portal | Home';
+    document.title = 'NWS Dealer Portal';
     const user = localStorage.getItem('userLogged') ? JSON.parse(localStorage.getItem('userLogged')) : {};
     if (user.data.id) {
       const payload = {
@@ -41,7 +44,7 @@ const HomeComponent = () => {
 
   const fetchStats = async (payload) => {
     try {
-      const response = await fetchWithToken(`${apiUrl}/api-dealerportal-home/`, 'GET', payload);
+      const response = await fetchWithToken(`${apiUrl}/dealerportal-home/`, 'GET', payload);
       if (response.status !== 200) {
         throw new Error(`Failed to fetch data`);
       }
@@ -75,7 +78,8 @@ const HomeComponent = () => {
 
   return (
     <Box sx={{
-      mt: 3,
+      mt: isMobile ? 2 : -3,
+      ml: isMobile ? 0 : 4,
       minWidth: '100%',
       bgcolor: '#f1f1f1',
     }}>

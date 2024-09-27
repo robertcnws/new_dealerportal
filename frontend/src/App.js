@@ -17,6 +17,10 @@ import ListOrdersComponent from './components/Orders/components/ListOrdersCompon
 import OrderDetailsComponent from './components/Orders/components/OrderDetailsComponent/OrderDetailsComponent';
 import './App.css';
 import PasswordResetRequestComponent from './components/ForgotPassword/components/PasswordResetRequestComponent/PasswordResetRequestComponent';
+import ListManageDealershipComponent from './components/ManageDealership/components/ListManageDealershipComponent/ListManageDealershipComponent';
+import MainDealershipAccountComponent from './components/ManageDealership/components/MainDealershipAccountComponent/MainDealershipAccountComponent';
+import MainSettingsComponent from './components/Settings/components/MainSettingsComponent/MainSettingsComponent';
+import IntegrationComponent from './components/Settings/components/IntegrationComponent/IntegrationComponent';
 
 const HomeRedirect = () => {
   const { isAuthenticated } = useAuth();
@@ -88,6 +92,10 @@ const App = () => {
               <Route path="quote-details" element={<ListStocksQuoteDetailsComponent setIsLoadingOperation={setIsLoadingOperation} isLoadingOperation={isLoadingOperation} />} />
               <Route path="orders" element={<ListOrdersComponent />} />
               <Route path="order-details" element={<OrderDetailsComponent />} />
+              <Route path="dealerships" element={<ListManageDealershipComponent />} />
+              <Route path="dealership-details" element={<MainDealershipAccountComponent />} />
+              <Route path="settings" element={<MainSettingsComponent />} />
+              <Route path="z-integration" element={<IntegrationComponent />} />
             </Route>
           </Routes>
         </ThemeProvider>

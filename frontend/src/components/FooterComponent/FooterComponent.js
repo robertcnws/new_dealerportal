@@ -17,6 +17,7 @@ const FooterComponent = () => {
         py: 1,
         textAlign: 'center',
         zIndex: 1300,
+        mb: 0
       }}
     >
       <Typography

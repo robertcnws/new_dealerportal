@@ -15,7 +15,7 @@ const PasswordResetConfirmComponent = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${apiUrl}/api-dealerportal/password-reset-confirm/`, { uid, token, new_password: newPassword });
+      await axios.post(`${apiUrl}/dealerportal/password-reset-confirm/`, { uid, token, new_password: newPassword });
       setMessage('Password has been reset successfully.');
       setError('');
     } catch (err) {

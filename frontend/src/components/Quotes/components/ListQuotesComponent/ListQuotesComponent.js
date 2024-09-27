@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState, useContext, useRef } from 'react';
 import {
   Box,
   Grid,
@@ -26,6 +26,7 @@ import CustomTablePaginationComponent from '../../../Utils/components/CustomTabl
 import ModalAddQuoteComponent from '../ModalAddQuoteComponent/ModalAddQuoteComponent';
 import ModalAddSmartQuoteComponent from '../ModalSmartQuoteComponent/ModalSmartQuoteComponent';
 import CustomAlertComponent from '../../../Utils/components/CustomAlertComponent/CustomAlertComponent';
+import CustomDateComponent from '../../../Utils/components/CustomDateComponent/CustomDateComponent';
 
 
 
@@ -37,7 +38,7 @@ const useStyles = makeStyles({
   },
 });
 
-const ListQuotesComponent = ({ setIsLoadingOperation }) => {
+const ListQuotesComponent = () => {
   const classes = useStyles();
   const [quotes, setQuotes] = useState([]);
   const [filteredQuotes, setFilteredQuotes] = useState([]);
@@ -59,13 +60,15 @@ const ListQuotesComponent = ({ setIsLoadingOperation }) => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isFetching = useRef(false);
+  // const isMobile = useMediaQuery('(max-width:999px)');
 
   const columns = [
+    { field: 'id', headerName: 'Quote #', width: 80 },
     { field: 'created_at', headerName: 'Date', width: isMobile ? 80 : 100 },
     { field: 'status', headerName: 'Status', width: isMobile ? 60 : 80 },
     { field: 'job_name', headerName: 'Job Name', width: 120 },
     ...(!isMobile ? [
-      { field: 'id', headerName: 'Quote #', width: 80 },
       { field: 'dealer_account', headerName: 'Dealer Account', width: 120 },
       { field: 'owner', headerName: 'Created By', width: 120 },
       { field: 'total_sell', headerName: 'Total Sell', width: 100 },
@@ -77,16 +80,25 @@ const ListQuotesComponent = ({ setIsLoadingOperation }) => {
   useEffect(() => {
     document.title = 'Dealer Portal | Quotes';
     const user = JSON.parse(localStorage.getItem('userLogged') || '{}');
+
     if (user.data?.id) {
       const payload = { user_id: user.data.id };
-      const fetchQuotesWithPayload = () => fetchQuotes(payload);
-      fetchQuotesWithPayload();
-      const intervalId = setInterval(fetchQuotesWithPayload, 5000);
 
-      // Limpieza del intervalo al desmontar el componente
+      const fetchQuotesWithPayload = async () => {
+        if (!isFetching.current) {
+          isFetching.current = true;
+          await fetchQuotes(payload);
+          isFetching.current = false;
+        }
+      };
+      fetchQuotesWithPayload();
+      const intervalId = setInterval(() => {
+        fetchQuotesWithPayload();
+      }, 5000);
       return () => clearInterval(intervalId);
     }
-  }, []);
+  }, [filter]);
+
 
   useEffect(() => {
     const filteredList = filterQuotes(filter, searchTermGlobal);
@@ -114,12 +126,17 @@ const ListQuotesComponent = ({ setIsLoadingOperation }) => {
 
   const fetchQuotes = async (payload) => {
     try {
-      const response = await fetchWithToken(`${apiUrl}/api-dealerportal-quotes/`, 'GET', payload, {}, apiUrl);
+      const response = await fetchWithToken(`${apiUrl}/dealerportal-quotes/`, 'GET', payload, {}, apiUrl);
+
       if (response.status === 200) {
-        setQuotes(response.data.data);
-        setFilteredQuotes(response.data.data);
+        const newQuotes = response.data.data;
+        // Compare new data with existing quotes
+        if (JSON.stringify(newQuotes) !== JSON.stringify(quotes)) {
+          setQuotes(newQuotes);
+          setFilteredQuotes(newQuotes);
+        }
       } else {
-        throw new Error(`Failed to fetch data`);
+        throw new Error('Failed to fetch data');
       }
     } catch (err) {
       setError(err.message);
@@ -143,7 +160,7 @@ const ListQuotesComponent = ({ setIsLoadingOperation }) => {
         quote.updated_at
       ].some(field => field?.toLowerCase().includes(normalizedSearchTerm));
 
-      return filter === 'all' ? matchesSearchTerm : matchesSearchTerm;
+      return filter === 'all' ? matchesSearchTerm : quote.status === filter && matchesSearchTerm;
     });
   };
 
@@ -193,7 +210,7 @@ const ListQuotesComponent = ({ setIsLoadingOperation }) => {
           const payload = {
             user_id: user.data.id
           };
-          const response = await fetchWithToken(`${apiUrl}/api-dealerportal/quotes/clone/${quote.id}/`, 'POST', payload, {}, apiUrl);
+          const response = await fetchWithToken(`${apiUrl}/dealerportal/quotes/clone/${quote.id}/`, 'POST', payload, {}, apiUrl);
           if (response.status === 200) {
             Swal.fire({
               title: !response.data.data.error ? `${response.data.data.info}` : `${response.data.data.error}`,
@@ -201,13 +218,7 @@ const ListQuotesComponent = ({ setIsLoadingOperation }) => {
               icon: !response.data.data.error ? 'success' : 'error',
               confirmButtonText: 'OK',
               customClass: customClassSwal,
-              // willClose: () => {
-              //   if (!response.data.data.error) {
-              //     const newQuotes = [...quotes, response.data.data.quote];
-              //     setQuotes(newQuotes);
-              //     setFilteredQuotes(newQuotes);
-              //   }
-              // }
+              
             });
           } else {
             throw new Error('Failed to clone quote');
@@ -249,7 +260,7 @@ const ListQuotesComponent = ({ setIsLoadingOperation }) => {
           const payload = {
             user_id: user.data.id
           };
-          const response = await fetchWithToken(`${apiUrl}/api-dealerportal/quotes/delete/${quote.id}/`, 'POST', payload, {}, apiUrl);
+          const response = await fetchWithToken(`${apiUrl}/dealerportal/quotes/delete/${quote.id}/`, 'POST', payload, {}, apiUrl);
           if (response.status === 200) {
             Swal.fire({
               title: `${response.data.data.info}`,
@@ -280,13 +291,16 @@ const ListQuotesComponent = ({ setIsLoadingOperation }) => {
   };
 
 
-
-
-
   const configCustomFilter = {
     filter: filter,
     handleFilterChange: handleFilterChange,
-    listValues: [{ value: 'all', label: 'All Quotes' }],
+    listValues: [
+      { value: 'all', label: 'All Quotes' },
+      { value: 'active', label: 'Active Quotes' },
+      { value: 'ordered', label: 'Ordered Quotes' },
+      { value: 'inactive', label: 'Inactive Quotes' },
+      { value: 'pending', label: 'Pending Quotes' },
+    ],
     hasSearch: false,
     marginBottomInDetails: '10px'
   };
@@ -303,27 +317,51 @@ const ListQuotesComponent = ({ setIsLoadingOperation }) => {
     // { label: 'Smart Quote', icon: <i className="bi bi-robot me-2" style={{ marginRight: 1 }}></i>, onClick: handleOpenModalAddSmart, visibility: true, noBorder: false },
   ];
 
-  if (loading) return <Box sx={{ mt: 3, minWidth: '100%', bgcolor: '#f1f1f1' }}>Loading...</Box>;
-  if (error) return <Box sx={{ mt: 3, minWidth: '100%', bgcolor: '#f1f1f1' }}>Error: {error}</Box>;
+  if (loading) return <Box sx={{
+    mt: isMobile ? 1 : -3,
+    ml: isMobile ? 0 : 4,
+    minWidth: '100%',
+    bgcolor: '#f1f1f1'
+  }}>
+    Loading...
+  </Box>;
+  if (error) return <Box sx={{
+    mt: isMobile ? 1 : -3,
+    ml: isMobile ? 0 : 4,
+    minWidth: '100%',
+    bgcolor: '#f1f1f1'
+  }}>
+    Error: {error}
+  </Box>;
 
   return (
     <>
-      <Box sx={{ mt: 3, minWidth: '100%', bgcolor: '#f1f1f1' }}>
+      <Box sx={{ mt: isMobile ? 1 : -3, minWidth: '100%', bgcolor: '#f1f1f1' }}>
         <Grid container spacing={2}>
           <Grid item xs={12}>
-            <Box>
+            <Box sm={{ display: 'flex', minWidth: '100%' }}>
               <Grid container spacing={2}>
                 {!isMobile ? (
                   <>
                     <Grid item xs={12} sm={11}>
                       {tableData.length > 0 ? (
-                        <CustomFilterComponent configCustomFilter={configCustomFilter} />
+                        <CustomFilterComponent configCustomFilter={configCustomFilter} sx={{ ml: 4 }} />
                       ) : (
-                        <CustomAlertComponent severity='warning' title='No quotes found' message='Proceed to create Quotes in the next button' sx={{ mb: 2 }} />
+                        <>
+                          {quotes.length > 0 && (
+                            <CustomFilterComponent configCustomFilter={configCustomFilter} sx={{ ml: 4 }} />
+                          )}
+                          < CustomAlertComponent
+                            severity='warning'
+                            title='No quotes found'
+                            message={quotes.length === 0 ? 'Proceed to create Quotes in the next button' : ''}
+                            sx={{ mb: 2, ml: 5 }}
+                          />
+                        </>
                       )}
                     </Grid>
                     <Grid item xs={12} sm={1}>
-                      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2, mr: -3 }}>
                         <NavigationButtonComponent children={childrenNavigationUpButton} bgcolor='white' />
                       </Box>
                     </Grid>
@@ -334,7 +372,17 @@ const ListQuotesComponent = ({ setIsLoadingOperation }) => {
                       {tableData.length > 0 ? (
                         <CustomFilterComponent configCustomFilter={configCustomFilter} />
                       ) : (
-                        <CustomAlertComponent severity='warning' title='No quotes found' message='Proceed to create Quotes in the next button' sx={{ mb: 2 }} />
+                        <>
+                          {quotes.length > 0 && (
+                            <CustomFilterComponent configCustomFilter={configCustomFilter} />
+                          )}
+                          < CustomAlertComponent
+                            severity='warning'
+                            title='No quotes found'
+                            message={quotes.length === 0 ? 'Proceed to create Quotes in the next button' : ''}
+                            sx={{ mb: 2, ml: 5 }}
+                          />
+                        </>
                       )}
                     </Grid>
                     <Grid item xs={2} sm={2}>
@@ -347,7 +395,16 @@ const ListQuotesComponent = ({ setIsLoadingOperation }) => {
               </Grid>
             </Box>
             {tableData.length > 0 && (
-              <TableContainer sx={{ minWidth: '100%', bgcolor: 'white', borderRadius: '10px', mb: 2, maxHeight: 'calc(100vh - 180px)', overflowY: 'auto' }}>
+              <TableContainer sx={{
+                minWidth: isMobile ? '104%' : '100%',
+                bgcolor: 'white',
+                borderRadius: '10px',
+                mb: 0,
+                // mr: isMobile ? -4 : -3,
+                ml: isMobile ? -1 : 4,
+                maxHeight: 'calc(100vh - 180px)',
+                overflowY: 'auto'
+              }}>
                 <Table stickyHeader>
                   <TableHead sx={{ maxHeight: '20px', p: 0, border: '1px solid #ddd' }}>
                     <TableRow sx={{ border: '1px solid #ddd', p: 1 }}>
@@ -374,7 +431,7 @@ const ListQuotesComponent = ({ setIsLoadingOperation }) => {
                                 {row[column.field]}
                               </Badge>
                             ) : (
-                              row[column.field]
+                              !['created_at', 'updated_at'].includes(column.field) ? row[column.field] : <CustomDateComponent date={new Date(row[column.field])} />
                             )}
                           </TableCell>
                         ))}

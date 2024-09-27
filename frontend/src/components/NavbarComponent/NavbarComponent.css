@@ -13,6 +13,12 @@
   
   .small-confirm-button {
     font-size: 16px; /* Ajusta el tamaño del botón */
+    background-color:brown
+  }
+
+  .small-cancel-button {
+    font-size: 16px; /* Ajusta el tamaño del botón */
+    background-color:#928f8f
   }
 
   .custom-icon {

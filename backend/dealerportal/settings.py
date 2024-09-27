@@ -205,15 +205,35 @@ EMAIL_USE_SSL = False
 DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL_DEV') if ENVIRONMENT == 'DEV' else env('DEFAULT_FROM_EMAIL_QA') if ENVIRONMENT == 'QA' else env('DEFAULT_FROM_EMAIL_PROD')
 
 # Adding Celery config to schedule sync and tasks
-# CELERY_BROKER_URL = env("CELERY_BROKER_URL")
-# CELERY_ACCEPT_CONTENT = env("CELERY_ACCEPT_CONTENT")
-# CELERY_RESULT_SERIALIZER = env("CELERY_RESULT_SERIALIZER")
-# CELERY_TASK_SERIALIZER = env("CELERY_TASK_SERIALIZER")
-# CELERY_TIMEZONE = env("CELERY_TIMEZONE")
-# CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND")
+broker_url = env("CELERY_BROKER_URL")
+accept_content = env.list("CELERY_ACCEPT_CONTENT", default=["json"])
+result_serializer = env("CELERY_RESULT_SERIALIZER")
+task_serializer = env("CELERY_TASK_SERIALIZER")
+timezone = env("CELERY_TIMEZONE")
+result_backend = env("CELERY_RESULT_BACKEND_DEV") if ENVIRONMENT == 'DEV' else env("CELERY_RESULT_BACKEND_QA") if ENVIRONMENT == 'QA' else env("CELERY_RESULT_BACKEND_PROD")
+redis_max_conections = 100
 
-# Celery beat settings
-# CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
+CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
+
+CELERY_BROKER_TRANSPORT_OPTIONS = {
+       'visibility_timeout': 3600,  
+       'retry_policy': {
+           'max_retries': 5,
+           'interval_start': 0,  
+           'interval_step': 0.2,
+           'interval_max': 0.5, 
+       }
+   }
+
+redis_backend_use_ssl = {
+    'ssl_cert_reqs': None
+}
+
+broker_use_ssl = {
+    'ssl_cert_reqs': None
+}
+
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
 # AWS S3 config
 AWS_ACCESS_KEY_ID = env("AWS_ACCESS_KEY_ID")
@@ -231,6 +251,8 @@ STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 # Security settings
 CSRF_COOKIE_SECURE = True
+CSRF_COOKIE_HTTPONLY = True
+CSRF_USE_SESSIONS = True
 SESSION_COOKIE_SECURE = True
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True

@@ -25,6 +25,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
 import fractions
 import re
+import json
 
 from collections import Counter
 
@@ -420,14 +421,15 @@ def accept_invitation(request, code):
                 app_admins_and_managers, "system_Alert", message=message
             )
 
-        login(request, user)
-        messages.success(
-            request, "Welcome to New Window System Dealer Portal " + user.username
-        )
-        return redirect("base-login")
+        # login(request, user)
+        # messages.success(
+        #     request, "Welcome to New Window System Dealer Portal " + user.username
+        # )
+        return redirect("https://www.newwindowsystem.net")
 
     context = {"invitation": invitation, "form": form}
     return render(request, "utils/accept_invitation.html", context)
+
 
 
 def decode_sku(sku):
@@ -913,6 +915,43 @@ def api_dealerportal_quote_render_cost_pdf_view(request, pk):
     return JsonResponse({"error": "Invalid token."}, status=401)
 
 
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def api_dealerportal_quote_render_total_view(request, pk):
+    valid_token = validateJWTTokenRequest(request)  
+    if valid_token:
+        template_path = "utils/quote_pdf_total.html"
+        quote = Quote.objects.select_related("owner__dealer_account").get(pk=pk)
+        dealership = quote.owner.dealer_account  # remove parentheses
+
+        quote_products = quote.get_products()
+
+        context = {
+            "quote": quote,
+            "quote_products": quote_products,
+            "dealership": dealership,
+        }
+        # Create a Django response object, and specify content_type as pdf
+        response = HttpResponse(content_type="application/pdf")
+        # if download:
+        # response['Content-Disposition'] = 'attachment; filename="report.pdf"'
+        # if display
+        response["Content-Disposition"] = 'filename="report.pdf"'
+        # find the template and render it.
+        template = get_template(template_path)
+        html = template.render(context)
+
+        # create a pdf
+        pisa_status = pisa.CreatePDF(html, dest=response)
+        # if error then show some funny view
+        if pisa_status.err:
+            return HttpResponse("We had some errors <pre>" + html + "</pre>")
+        return response
+    return JsonResponse({"error": "Invalid token."}, status=401)
+
+
+
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def api_dealerportal_equalize_quote_view(request, quote_id):
@@ -922,6 +961,134 @@ def api_dealerportal_equalize_quote_view(request, quote_id):
         data = equalize_quote_analysis(quote)
         return JsonResponse(data, status=200)
     return JsonResponse({"error": "Invalid token."}, status=401)
+
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+@role_required(["AppAdmin", "AppManager", "DealerAdmin"])
+def api_dealerportal_send_invitation(request):
+    valid_token = validateJWTTokenRequest(request)
+    if valid_token:
+        data = json.loads(request.body)
+        email = data.get("email")
+        dealership_id = data.get("dealership_id")
+        role = data.get("role")
+        dealership = DealerAccount.objects.get(id=dealership_id) if dealership_id else None
+
+        # Check the number of users associated with the dealership
+        if dealership and dealership.users.count() >= 30:
+            message= "This dealership already has the maximum allowed number of users."
+            return JsonResponse({"error": message}, status=200)
+
+        try:
+            invitation = Invitation.objects.get(email=email)
+            if invitation.is_accepted:
+                message = "An account has already been created for this email."
+                return JsonResponse({"error": message}, status=200)
+            elif (
+                dealership
+                and invitation.dealership
+                and invitation.dealership.id != dealership.id
+            ):
+                message = "An invitation for this email already exists for a different dealership."
+                return JsonResponse({"error": message}, status=200)
+            else:
+                invitation.code = get_random_string(50)
+                invitation.dealership = dealership
+                invitation.role = role
+        except Invitation.DoesNotExist:
+            invitation = Invitation.objects.create(
+                email=email, dealership=dealership, role=role
+            )
+
+        invitation.save()
+
+        # Generate the invite link
+        invite_url = request.build_absolute_uri(
+            reverse("utils:utils-accept-invitation", kwargs={"code": invitation.code})
+        )
+
+        # Load and render the template for the email
+        email_html_message = render_to_string(
+            "utils/email_invitation.html",  # The name of your HTML template
+            {"invite_url": invite_url},  # Any variables you want to use in your template
+        )
+
+        email_msg = EmailMessage(
+            "Invitation to create an account",
+            email_html_message,
+            settings.EMAIL_HOST_USER,
+            [email],
+        )
+        email_msg.content_subtype = "html"  # It's an HTML email
+        email_msg.send(fail_silently=False)
+
+        message = "Invitation sent successfully."
+        return JsonResponse({"message": message}, status=200)
+    return JsonResponse({"error": "Invalid token."}, status=401)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+@role_required(["AppAdmin", "AppManager", "DealerAdmin"])
+def api_dealerportal_delete_invitation(request):
+    valid_token = validateJWTTokenRequest(request)
+    if valid_token:
+        data = json.loads(request.body)
+        invitation_id = data.get("invitation_id")
+
+        if not invitation_id or not str(invitation_id).isdigit():
+            message = "No valid invitation ID provided."
+            return JsonResponse({"error": 'Error', "message": message}, status=200)
+
+        try:
+            invitation = Invitation.objects.get(id=invitation_id)
+        except Invitation.DoesNotExist:
+            messages = "No invitation exists with the given ID."
+            return JsonResponse({"error": 'Error', "message": messages}, status=200)
+        
+        invitation.delete()
+
+        message = "Invitation deleted successfully."
+        return JsonResponse({"message": message}, status=200)
+    return JsonResponse({"error": "Invalid token."}, status=401)
+
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+@role_required(["AppAdmin", "AppManager", "DealerAdmin"])
+def api_dealerportal_resend_invitation(request, invitation_id):
+    valid_token = validateJWTTokenRequest(request)  
+    if valid_token:
+        try:
+            invitation = Invitation.objects.get(id=invitation_id)
+            if invitation.is_accepted:
+                message = "An account has already been created for this email."
+                return JsonResponse({"error": "Error", "message": message}, status=200)
+            invite_url = request.build_absolute_uri(
+                reverse("utils:utils-accept-invitation", kwargs={"code": invitation.code})
+            )
+            email_html_message = render_to_string(
+                "utils/email_invitation.html",
+                {"invite_url": invite_url},
+            )
+            email_msg = EmailMessage(
+                "Invitation to create an account",
+                email_html_message,
+                settings.EMAIL_HOST_USER,
+                [invitation.email],
+            )
+            email_msg.content_subtype = "html"
+            email_msg.send(fail_silently=False)
+            message = "Invitation re-sent successfully."
+            return JsonResponse({"message": message}, status=200)
+        except Invitation.DoesNotExist:
+            message = "The invitation does not exist."
+            return JsonResponse({"error": "Error", "message": message}, status=200)
+    return JsonResponse({"error": "Invalid token."}, status=401)
+
 
 
 def validateJWTTokenRequest(request):

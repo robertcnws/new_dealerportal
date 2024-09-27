@@ -15,6 +15,7 @@ const MainContentComponent = ({ onThemeChange }) => {
   const [error, setError] = useState(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
 
   useEffect(() => {
     document.title = 'Dealer Portal | Home';
@@ -29,7 +30,7 @@ const MainContentComponent = ({ onThemeChange }) => {
 
   const fetchStats = async (payload) => {
     try {
-      const response = await fetchWithToken(`${apiUrl}/api-dealerportal-home/`, 'GET', payload, {}, apiUrl);
+      const response = await fetchWithToken(`${apiUrl}/dealerportal-home/`, 'GET', payload, {}, apiUrl);
       if (response.status !== 200) {
         throw new Error(`Failed to fetch data`);
       }
@@ -47,31 +48,32 @@ const MainContentComponent = ({ onThemeChange }) => {
     <Box sx={{ display: 'flex', bgcolor: '#f1f1f1', width: '100%', minHeight: '100%' }}>
       {userLogged && contextDashboard && (
         <>
-          {!isMobile && (
-            <SidebarComponent activePage={contextDashboard.active_page} user={userLogged} />
-          )}
           <Box
             component="main"
             sx={{
-              flexGrow: 1,
+              flexGrow: 0,
               p: isMobile ? 2 : 3,
               display: 'flex',
               flexDirection: 'column',
               width: '100%',
               bgcolor: '#f1f1f1',
               mt: isMobile ? -4 : 0, // Adjust margin for mobile view
-              ml: isMobile ? 0 : 'auto', // Adjust margin for mobile view
-              maxWidth: isMobile ? '100%' : 'calc(100% - 250px)', // Adjust max width for mobile view
+              ml: isMobile  ? 0 : 'auto', // Adjust margin for mobile view
+              maxWidth: isMobile || isTablet ? '100%' : 'calc(100% - 200px)', // Adjust max width for mobile view
             }}
           >
+            {!isMobile && !isTablet && (
+              <SidebarComponent activePage={contextDashboard.active_page} user={userLogged} />
+            )}
             <NavbarComponent activePage={contextDashboard.active_page} user={userLogged} onThemeChange={onThemeChange} />
             <Box sx={{
-              mt: isMobile ? 1 : 5,
-              ml: isMobile ? 0 : -1, // Adjust margin for mobile view
+              mt: isMobile || isTablet ? 0 : 5,
+              ml: isMobile || isTablet ? 0 : -1, // Adjust margin for mobile view
               width: '100%', // Adjust width for mobile view
               display: 'flex',
               bgcolor: '#f1f1f1',
-              minHeight: isMobile ? 'calc(100vh - 80px)' : 'calc(100vh - 100px)',
+              minHeight: isMobile || isTablet ? 'calc(100vh - 80px)' : 'calc(100vh - 150px)',
+
             }}>
               <Outlet />
             </Box>

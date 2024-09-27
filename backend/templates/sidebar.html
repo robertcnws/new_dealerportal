@@ -63,6 +63,7 @@
               <span>Settings</span>
             </a>
           </li>
+          
           {% endif %}
           {% if request.user|has_role:'DealerAdmin' %}
           <li  {% if active_page == 'dealerships' %} class="active"{% endif %}>

@@ -16,7 +16,8 @@ const PasswordResetRequestComponent = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  // const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isMobile = useMediaQuery('(max-width:999px)');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,7 +27,7 @@ const PasswordResetRequestComponent = () => {
       return;
     }
     try {
-      await axios.post(`${apiUrl}/api-dealerportal/password-reset/`, { email });
+      await axios.post(`${apiUrl}/dealerportal/password-reset/`, { email });
       setMessage('If an account with that email exists, a password reset link has been sent.');
       setError('');
     } catch (err) {

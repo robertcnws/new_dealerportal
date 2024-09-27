@@ -109,10 +109,11 @@ const refreshToken = async (apiUrl) => {
   }
 };
 
+
 export const fetchWithToken = async (url, method = 'GET', data = null, headers = {}, apiUrl) => {
   let accessToken = getAccessToken();
-  
   const makeRequest = async (token) => {
+      const isFormData = data instanceof FormData;
       const config = {
           method: method,
           url: url,
@@ -120,14 +121,13 @@ export const fetchWithToken = async (url, method = 'GET', data = null, headers =
           headers: {
               ...headers,
               'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json',
-              'Accept': 'application/json'
+              'Accept': 'application/json',
+              ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
           },
-          ...(method === 'GET' ? { params: data } : { data: data })
+          ...(method === 'GET' ? { params: data } : { data: data }),
       };
       return axios(config);
   };
-
   try {
       return await makeRequest(accessToken);
   } catch (error) {
@@ -140,6 +140,7 @@ export const fetchWithToken = async (url, method = 'GET', data = null, headers =
       throw error;
   }
 };
+
 
 export const formatDate = (isoString) => {
   const date = new Date(isoString);

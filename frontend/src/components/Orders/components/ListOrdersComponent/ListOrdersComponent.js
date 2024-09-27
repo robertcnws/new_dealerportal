@@ -49,6 +49,7 @@ const ListOrdersComponent = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  // const isMobile = useMediaQuery('(max-width:999px)');
 
   const columns = [
     { field: 'created_at', headerName: 'Date', width: isMobile ? 100 : 20 },
@@ -106,7 +107,7 @@ const ListOrdersComponent = () => {
 
   const fetchOrders = async (payload) => {
     try {
-      const response = await fetchWithToken(`${apiUrl}/api-dealerportal-orders/`, 'GET', payload, {}, apiUrl);
+      const response = await fetchWithToken(`${apiUrl}/dealerportal-orders/`, 'GET', payload, {}, apiUrl);
       if (response.status === 200) {
         setOrders(response.data.data);
         setFilteredOrders(response.data.data);
@@ -185,7 +186,7 @@ const ListOrdersComponent = () => {
           const payload = {
             user_id: user.data.id
           };
-          const response = await fetchWithToken(`${apiUrl}/api-dealerportal/orders/delete/${order.id}/`, 'POST', payload, {}, apiUrl);
+          const response = await fetchWithToken(`${apiUrl}/dealerportal/orders/delete/${order.id}/`, 'POST', payload, {}, apiUrl);
           if (response.status === 200) {
             Swal.fire({
               title: `${response.data.data.info}`,
@@ -230,23 +231,31 @@ const ListOrdersComponent = () => {
     { label: 'Delete', icon: <Delete sx={{ marginRight: 1 }} />, onClick: handleDeleteOrder, visibility: true, noBorder: true }
   ];
 
-  if (loading) return <Box sx={{ mt: 3, minWidth: '100%', bgcolor: '#f1f1f1' }}>Loading...</Box>;
-  if (error) return <Box sx={{ mt: 3, minWidth: '100%', bgcolor: '#f1f1f1' }}>Error: {error}</Box>;
+  if (loading) return <Box sx={{ mt: isMobile ? 1 : -3, ml: isMobile ? 0 : 4, minWidth: '100%', bgcolor: '#f1f1f1' }}>Loading...</Box>;
+  if (error) return <Box sx={{ mt: isMobile ? 1 : -3, ml: isMobile ? 0 : 4, minWidth: '100%', bgcolor: '#f1f1f1' }}>Error: {error}</Box>;
 
   return (
     <>
-      <Box sx={{ mt: 3, minWidth: '100%', bgcolor: '#f1f1f1' }}>
+      <Box sx={{ mt: isMobile ? 1 : -3, minWidth: '100%', bgcolor: '#f1f1f1' }}>
         {tableData.length > 0 ? (
           <Grid container spacing={2}>
             <Grid item xs={12}>
               <Box>
                 <Grid container spacing={2}>
                   <Grid item xs={8}>
-                    <CustomFilterComponent configCustomFilter={configCustomFilter} />
+                    <CustomFilterComponent configCustomFilter={configCustomFilter} sx={{ ml: isMobile ? 0 : 4 }} />
                   </Grid>
                 </Grid>
               </Box>
-              <TableContainer sx={{ minWidth: '100%', bgcolor: 'white', borderRadius: '10px', mb: 2, maxHeight: 'calc(100vh - 180px)', overflowY: 'auto' }}>
+              <TableContainer sx={{ 
+                minWidth: isMobile ? '104%' : '100%',
+                bgcolor: 'white', 
+                borderRadius: '10px', 
+                mb: 0, 
+                ml: isMobile ? -1 : 4,
+                maxHeight: 'calc(100vh - 180px)', 
+                overflowY: 'auto' 
+                }}>
                 <Table stickyHeader>
                   <TableHead sx={{ maxHeight: '20px', p: 0, border: '1px solid #ddd' }}>
                     <TableRow sx={{ border: '1px solid #ddd', p: 1 }}>
@@ -267,9 +276,9 @@ const ListOrdersComponent = () => {
                         {columns.map((column) => (
                           <TableCell key={column.field} onClick={() => handleOpenOrderDetails(row)} sx={{ p: 1 }}>
                             {column.field.includes('status') ? (
-                              <Badge bg={row[column.field] === 'accepted' || row[column.field] === 'completed' ? 'success' :
+                              <Badge bg={row[column.field] === 'accepted' || row[column.field] === 'completed' || row[column.field] === 'paid' ? 'success' :
                                 (row[column.field] === 'pending' ? 'info' :
-                                  (row[column.field] === 'cancelled' ? 'error' : 'primary'))}
+                                  (row[column.field] === 'canceled' ? 'danger' : 'primary'))}
                                 style={{ marginTop: 0, marginBottom: 10, fontSize: '0.75rem' }}>
                                 {row[column.field]}
                               </Badge>
@@ -297,7 +306,8 @@ const ListOrdersComponent = () => {
             </Grid>
           </Grid>
         ) : (
-          <CustomAlertComponent severity='warning' title='No orders found' message='No orders found, proceed to create Quotes and place orders' sx={{ width: '100%'}}/>
+          <CustomAlertComponent severity='warning' title='No orders found' message='No orders found, proceed to create Quotes and place orders' 
+          sx={{ ml: isMobile ? 0 : 4, width: '100%'}}/>
         )}
       </Box>
     </>

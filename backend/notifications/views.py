@@ -2,7 +2,6 @@ from .models import Notification
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 
-
 def create_notification(users, notification_type, message):
     # Save the notification in the database
     notification = Notification.objects.create(

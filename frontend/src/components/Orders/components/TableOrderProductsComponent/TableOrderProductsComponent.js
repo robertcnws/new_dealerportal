@@ -17,6 +17,7 @@ const TableOrderProductsComponent = ({ order }) => {
   const [products, setProducts] = useState([]);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  // const isMobile = useMediaQuery('(max-width:999px)');
 
   const columns = [
     { field: 'id', headerName: 'ID', width: 0 },
@@ -108,8 +109,8 @@ const TableOrderProductsComponent = ({ order }) => {
     );
   }
   return (
-    <Box sx={{ width: '100%', mt: 1 }}>
-      <TableContainer style={{ height: '500px' }}>
+    <Box sx={{ width: '100%', mt: 1, mb: 4 }}>
+      <TableContainer style={{ height: '100%' }}>
         <Table stickyHeader>
           <TableHead>
             <TableRow>

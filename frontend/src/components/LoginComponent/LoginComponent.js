@@ -29,6 +29,7 @@ const LoginComponent = () => {
   const [loading, setLoading] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  // const isMobile = useMediaQuery('(max-width:999px)');
 
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -67,7 +68,7 @@ const LoginComponent = () => {
         localStorage.setItem('refreshToken', jwtResponse.data.refresh);
 
         const body = JSON.stringify({ username, password });
-        const loginResponse = await axios.post(`${apiUrl}/api-dealerportal-login/`, body, {
+        const loginResponse = await axios.post(`${apiUrl}/dealerportal-login/`, body, {
           headers: {
             'Content-Type': 'application/json',
             'X-CSRFToken': getCookie('csrftoken'),
@@ -121,6 +122,9 @@ const LoginComponent = () => {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             required
+            InputLabelProps={{
+              shrink: true,
+            }}
             error={!username.trim() && Boolean(error)}
             helperText={!username.trim() && error ? 'Username is required' : ''}
           />
@@ -138,6 +142,9 @@ const LoginComponent = () => {
               required
               error={!password.trim() && Boolean(error)}
               helperText={!password.trim() && error ? 'Password is required' : ''}
+              InputLabelProps={{
+                shrink: true,
+              }}
               InputProps={{
                 endAdornment: (
                   <IconButton

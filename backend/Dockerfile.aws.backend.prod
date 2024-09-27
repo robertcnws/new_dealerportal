@@ -20,8 +20,14 @@ RUN apt-get update && apt-get install -y wget gnupg2 lsb-release \
 # Copiar el código fuente de la aplicación
 COPY . /app/
 
+# Ejecutar la actualización de configuración de Celery
+# RUN celery upgrade settings /app/dealerportal/settings.py
+
 # Exponer el puerto
 EXPOSE 8005
 
 # Comando para iniciar la aplicación Django
-CMD ["sh", "-c", "python manage.py makemigrations && python manage.py migrate && gunicorn --bind 0.0.0.0:8005 dealerportal.wsgi:application"]
+CMD sh -c "python manage.py makemigrations && python manage.py migrate && \
+           celery -A dealerportal worker --loglevel=info --concurrency=4 & \
+           celery -A dealerportal beat --loglevel=info & \
+           gunicorn --bind 0.0.0.0:8005 dealerportal.wsgi:application"

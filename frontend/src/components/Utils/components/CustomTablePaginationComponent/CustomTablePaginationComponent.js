@@ -20,22 +20,22 @@ const CustomTablePaginationComponent = ({ columnsLength, data, page, rowsPerPage
     };
 
     return (
-        <TableRow sx={{ marginTop: '20px'}}>
+        <TableRow sx={{ marginTop: '20px' }}>
             <TableCell colSpan={columnsLength} align="right" sx={{ borderBottom: 'none', paddingTop: 2 }}>
                 <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '10px' }}>
                     {/* Contenedor para Typography e IconButton */}
-                    <div style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        border: '1px solid #dcdcdc', 
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        border: '1px solid #dcdcdc',
                         borderTopLeftRadius: '10px',
                         borderBottomLeftRadius: '10px',
-                        padding: '0px', 
+                        padding: '0px',
                         height: '48px',
                         marginTop: '10px',
-                        marginBottom: '15px', 
+                        marginBottom: '15px',
                         backgroundColor: '#f7f7fe'
-                        }}>
+                    }}>
                         <IconButton
                             onClick={handleMenuOpen}
                             sx={{ color: 'gray', height: '100%' }}
@@ -54,18 +54,19 @@ const CustomTablePaginationComponent = ({ columnsLength, data, page, rowsPerPage
                             <MenuItem onClick={() => handleItemsPerPageChange(50)}>50 Per page</MenuItem>
                         </Menu>
                     </div>
-                    
-                    <div style={{ 
-                        border: '1px solid #dcdcdc', 
+
+                    <div style={{
+                        border: '1px solid #dcdcdc',
                         borderTopRightRadius: '10px',
                         borderBottomRightRadius: '10px',
-                        padding: '0px', 
-                        height: '48px', 
+                        padding: '0px',
+                        height: '48px',
                         marginLeft: '-10px',
                         marginTop: '10px',
-                        marginBottom: '15px',  
-                        }}>
+                        marginBottom: '15px',
+                    }}>
                         <TablePagination
+                            sx={{ mt: 0.6 }}
                             rowsPerPageOptions={[]}
                             component="div"
                             count={data.length}

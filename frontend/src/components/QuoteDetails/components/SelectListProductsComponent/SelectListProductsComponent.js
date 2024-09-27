@@ -33,7 +33,7 @@ const SelectListProductsComponent = ({ quote, handleSelectProduct }) => {
       const payload = {
         status: quote.status,
       };
-      const url = `${apiUrl}/api-dealerportal-get-products/`;
+      const url = `${apiUrl}/dealerportal-get-products/`;
       const response = await fetchWithToken(url, 'GET', payload, {}, apiUrl);
       setProducts(response.data.data);
       setFilteredProducts(response.data.data);
