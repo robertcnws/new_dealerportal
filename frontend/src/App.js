@@ -21,6 +21,7 @@ import ListManageDealershipComponent from './components/ManageDealership/compone
 import MainDealershipAccountComponent from './components/ManageDealership/components/MainDealershipAccountComponent/MainDealershipAccountComponent';
 import MainSettingsComponent from './components/Settings/components/MainSettingsComponent/MainSettingsComponent';
 import IntegrationComponent from './components/Settings/components/IntegrationComponent/IntegrationComponent';
+import AuthorizedUsersComponent from './components/Settings/components/AuthorizedUsersComponent/AuthorizedUsersComponent';
 
 const HomeRedirect = () => {
   const { isAuthenticated } = useAuth();
@@ -80,7 +81,7 @@ const App = () => {
     <>
       <SearchProvider>
         <ThemeProvider theme={theme === 'light' ? lightTheme : darkTheme}>
-          <CssBaseline /> {/* Normaliza los estilos */}
+          <CssBaseline /> 
           {isAuthenticated && <ToastContainer />}
           <Routes>
             <Route path="/" element={<HomeRedirect />} />
@@ -96,6 +97,7 @@ const App = () => {
               <Route path="dealership-details" element={<MainDealershipAccountComponent />} />
               <Route path="settings" element={<MainSettingsComponent />} />
               <Route path="z-integration" element={<IntegrationComponent />} />
+              <Route path="users" element={<AuthorizedUsersComponent />} />
             </Route>
           </Routes>
         </ThemeProvider>

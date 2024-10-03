@@ -28,8 +28,6 @@ import ModalAddSmartQuoteComponent from '../ModalSmartQuoteComponent/ModalSmartQ
 import CustomAlertComponent from '../../../Utils/components/CustomAlertComponent/CustomAlertComponent';
 import CustomDateComponent from '../../../Utils/components/CustomDateComponent/CustomDateComponent';
 
-
-
 const useStyles = makeStyles({
   row: {
     '&:hover': {
@@ -64,10 +62,10 @@ const ListQuotesComponent = () => {
   // const isMobile = useMediaQuery('(max-width:999px)');
 
   const columns = [
-    { field: 'id', headerName: 'Quote #', width: 80 },
-    { field: 'created_at', headerName: 'Date', width: isMobile ? 80 : 100 },
+    { field: 'id', headerName: isMobile ? '#' : 'Quote #', width: 80 },
+    { field: 'created_at', headerName: 'Date', width: isMobile ? 100 : 100 },
     { field: 'status', headerName: 'Status', width: isMobile ? 60 : 80 },
-    { field: 'job_name', headerName: 'Job Name', width: 120 },
+    { field: 'job_name', headerName: 'Job Name', width: 80 },
     ...(!isMobile ? [
       { field: 'dealer_account', headerName: 'Dealer Account', width: 120 },
       { field: 'owner', headerName: 'Created By', width: 120 },
@@ -115,6 +113,7 @@ const ListQuotesComponent = () => {
       job_name: quote.name,
       dealer_account: quote.owner.dealer_account?.name,
       owner: `${quote.owner.first_name} ${quote.owner.last_name}`,
+      owner_name: `${quote.owner.first_name} ${quote.owner.last_name}`,
       total_sell: quote.total_sell,
       total_cost: quote.total_cost,
       updated_at: quote.updated_at,
@@ -130,7 +129,6 @@ const ListQuotesComponent = () => {
 
       if (response.status === 200) {
         const newQuotes = response.data.data;
-        // Compare new data with existing quotes
         if (JSON.stringify(newQuotes) !== JSON.stringify(quotes)) {
           setQuotes(newQuotes);
           setFilteredQuotes(newQuotes);
@@ -336,7 +334,7 @@ const ListQuotesComponent = () => {
 
   return (
     <>
-      <Box sx={{ mt: isMobile ? 1 : -3, minWidth: '100%', bgcolor: '#f1f1f1' }}>
+      <Box sx={{ mt: isMobile ? 1 : -3, ml: isMobile ? 0 : -1, minWidth: '100%', bgcolor: '#f1f1f1' }}>
         <Grid container spacing={2}>
           <Grid item xs={12}>
             <Box sm={{ display: 'flex', minWidth: '100%' }}>
@@ -431,7 +429,8 @@ const ListQuotesComponent = () => {
                                 {row[column.field]}
                               </Badge>
                             ) : (
-                              !['created_at', 'updated_at'].includes(column.field) ? row[column.field] : <CustomDateComponent date={new Date(row[column.field])} />
+                              !['created_at', 'updated_at'].includes(column.field) ? row[column.field] : 
+                              <CustomDateComponent date={new Date(row[column.field])} formatType={isMobile ? 'short' : null} />
                             )}
                           </TableCell>
                         ))}

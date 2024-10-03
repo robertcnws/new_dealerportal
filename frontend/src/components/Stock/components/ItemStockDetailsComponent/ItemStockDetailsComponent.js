@@ -75,8 +75,8 @@ const ItemStockDetailsComponent = ({ item, stock, onClose }) => {
   if (!isMobile) {
 
     return (
-      <Box sx={{ padding: 1, overflowY: 'auto', ml: -1, minWidth: '100%', mt: 5 }}>
-        <Paper elevation={3} sx={{ padding: 2, boxShadow: 'none', borderRadius: '10px', minHeight: 'calc(100vh - 175px)' }}>
+      <Box sx={{ padding: 1, overflowY: 'auto', ml: -1, minWidth: '100%', mt: 5.5 }}>
+        <Paper elevation={3} sx={{ padding: 2, boxShadow: 'none', minHeight: 'calc(100vh - 170px)', border: '1px solid #ddd' }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Typography variant="h5">{stock.group_name}</Typography>
             <IconButton onClick={handleClose}>

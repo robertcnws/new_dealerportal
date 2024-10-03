@@ -3,6 +3,7 @@ import { Box, Typography, Grid, IconButton, Button } from '@mui/material';
 import { Badge } from 'react-bootstrap';
 import PercentIcon from '@mui/icons-material/Percent'; 
 import { ExpandLessOutlined, ExpandMoreOutlined, ListAltOutlined } from '@mui/icons-material';
+import CustomDateComponent from '../../../Utils/components/CustomDateComponent/CustomDateComponent';
 
 const StickyBoxComponent = ({ quote }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -59,7 +60,7 @@ const StickyBoxComponent = ({ quote }) => {
           </Button>
         </Box>
         {isExpanded && (
-          <Box sx={{ width: '100%', mt: 1 }}>
+          <Box sx={{ width: '100%', mt: 0 }}>
             <Grid
               container
               spacing={1}
@@ -78,8 +79,8 @@ const StickyBoxComponent = ({ quote }) => {
                   p: 1,
                 }}
               >
-                <Box sx={{ mb: 1, p: 1 }}>
-                  <Typography variant="body1">
+                <Box sx={{ mb: 1, p: 0 }}>
+                  {/* <Typography variant="body1">
                     Status:{' '}
                     <Badge bg={quote.status === 'Pending' ? 'warning' : 'success'}>
                       {quote.status}
@@ -87,16 +88,16 @@ const StickyBoxComponent = ({ quote }) => {
                   </Typography>
                   <Typography variant="body1">
                     <b>Job Name</b>: {quote.job_name}
+                  </Typography> */}
+                  <Typography variant="body1">
+                    <b>Created By</b>: {quote.owner_name}
                   </Typography>
                   <Typography variant="body1">
-                    <b>Created By</b>: {quote.created_by}
+                    <b>Created At</b>: <CustomDateComponent date={new Date(quote.created_at)}/>
                   </Typography>
-                  <Typography variant="body1">
-                    <b>Created At</b>: {quote.created_at}
-                  </Typography>
-                  <Typography variant="body1">
+                  {/* <Typography variant="body1">
                     <b>Mark Up</b>: {quote.mark_up}
-                  </Typography>
+                  </Typography> */}
                 </Box>
               </Grid>
             </Grid>
@@ -104,7 +105,7 @@ const StickyBoxComponent = ({ quote }) => {
         )}
       </Box>
       {/* Espacio adicional para evitar que el contenido quede oculto detrás del sticky */}
-      <Box sx={{ height: isExpanded ? '250px' : '80px' }}></Box>
+      <Box sx={{ height: isExpanded ? '150px' : '70px' }}></Box>
     </>
   );
 };

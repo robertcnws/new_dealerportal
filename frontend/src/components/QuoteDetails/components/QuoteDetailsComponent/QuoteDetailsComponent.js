@@ -51,7 +51,7 @@ const QuoteDetailsComponent = ({ quote, quoteProducts, onSyncCompleted, setIsLoa
 
     return (
       <Box sx={{ padding: 1, overflowY: 'auto', ml: -1, minWidth: '100%' }}>
-        <Paper elevation={3} sx={{ padding: 2, boxShadow: 'none', borderRadius: '10px', minHeight: 'calc(100vh - 175px)' }}>
+        <Paper elevation={3} sx={{ padding: 2, boxShadow: 'none', minHeight: 'calc(100vh - 170px)', border: '1px solid #ddd' }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'right', mb: 2 }}>
             <Grid container spacing={1} sx={{ p: 1, display: 'flex', justifyContent: 'space-between' }}>
               <Grid item xs={4} sx={{ border: '1px solid whitesmoke', borderRadius: '10px', p: 1 }}>
@@ -64,7 +64,7 @@ const QuoteDetailsComponent = ({ quote, quoteProducts, onSyncCompleted, setIsLoa
                       <b>Job Name</b>: {quote.job_name}
                     </Typography>
                     <Typography variant="body1">
-                      <b>Created By</b>: {quote.created_by}
+                      <b>Created By</b>: {quote.owner_name}
                     </Typography>
                     <Typography variant="body1">
                       <b>Created At</b>: <CustomDateComponent date={new Date(quote.created_at)} />

@@ -23,7 +23,7 @@ const MainDealershipAccountComponent = () => {
     return (
       <>
         {dealership && (
-          <Box sx={{ mt: isMobile ? 1 : -3, minWidth: '100%', bgcolor: '#f1f1f1' }}>
+          <Box sx={{ mt: isMobile ? 1 : -3, ml: isMobile ? 0 : -1, minWidth: isMobile ? '100%' : '101.5%', bgcolor: '#f1f1f1' }}>
             <Grid container spacing={1}>
               <Grid item xs={12}>
                 <Box sm={{ display: 'flex', minWidth: '100%', p: 0 }}>
@@ -34,7 +34,7 @@ const MainDealershipAccountComponent = () => {
                         display: 'flex',
                         justifyContent: 'flex-start',
                         bgcolor: '#f1f1f1',
-                        ml: isMobile ? 0 : 5,
+                        ml: isMobile ? 0 : 6,
                       }}>
                         <h5>Dealership Account: <b>{dealership.account_name}</b></h5>
                       </Box>

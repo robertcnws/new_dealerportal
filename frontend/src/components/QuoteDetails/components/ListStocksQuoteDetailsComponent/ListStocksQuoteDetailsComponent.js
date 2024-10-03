@@ -124,6 +124,7 @@ const ListStocksQuoteDetailsComponent = ({ setIsLoadingOperation, isLoadingOpera
       quote.mark_up = response.data.data.quote.markup;
       quote.id = response.data.data.quote.id;
       quote.owner = response.data.data.quote.owner;
+      quote.owner_name = response.data.data.quote.owner.first_name + ' ' + response.data.data.quote.owner.last_name;
     }
     return quote;
   }
@@ -242,11 +243,11 @@ const ListStocksQuoteDetailsComponent = ({ setIsLoadingOperation, isLoadingOpera
                   <TableContainer sx={{
                     minWidth: '100%',
                     bgcolor: 'white',
-                    borderRadius: '10px',
+                    // borderRadius: '10px',
                     borderTop: '1px solid #ddd',
                     mb: 0,
                     ml: 3,
-                    maxHeight: 'calc(100vh - 180px)',
+                    maxHeight: 'calc(100vh - 170px)',
                     overflowY: 'auto'
                   }}>
                     <Table>
@@ -281,7 +282,7 @@ const ListStocksQuoteDetailsComponent = ({ setIsLoadingOperation, isLoadingOpera
                   </Box>
                 </Grid>
                 <Grid item container spacing={2}>
-                  <Box sx={{ ml: 4, minWidth: '100%' }}>
+                  <Box sx={{ ml: 3, minWidth: '100.5%' }}>
                     <QuoteDetailsComponent
                       quote={quote}
                       quoteProducts={quoteProducts}

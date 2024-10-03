@@ -14,6 +14,7 @@ import { Badge } from 'react-bootstrap';
 import ButtonsbarComponent from '../../../QuoteDetails/components/ButtonsbarComponent/ButtonsbarComponent';
 import { apiFrontendRoot } from '../../../../config';
 import TableOrderProductsComponent from '../TableOrderProductsComponent/TableOrderProductsComponent';
+import CustomDateComponent from '../../../Utils/components/CustomDateComponent/CustomDateComponent';
 
 const OrderDetailsComponent = () => {
 
@@ -39,12 +40,12 @@ const OrderDetailsComponent = () => {
     return (
       <>
         {order && (
-          <Box sx={{ padding: 1, overflowY: 'auto', ml: 3, mt: -7, minWidth: '100%' }}>
+          <Box sx={{ padding: 1, overflowY: 'auto', ml: 2, mt: -7, minWidth: '100.7%' }}>
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mt: 2, mb: 1 }}>
 
               <ButtonsbarComponent quote={order?.quote} onClose={handleClose} isOrder={true} order={order} />
             </Box>
-            <Paper elevation={3} sx={{ padding: 2, boxShadow: 'none', borderRadius: '10px', minHeight: 'calc(100vh - 175px)' }}>
+            <Paper elevation={3} sx={{ padding: 2, boxShadow: 'none', minHeight: 'calc(100vh - 170px)' }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'right', mb: 2 }}>
                 <Grid container spacing={1} sx={{ p: 1, display: 'flex', justifyContent: 'space-between' }}>
                   <Grid item xs={4} sx={{ border: '1px solid whitesmoke', borderRadius: '10px', p: 1 }}>
@@ -63,10 +64,10 @@ const OrderDetailsComponent = () => {
                             <b>Created By</b>: {order?.ordered_by}
                           </Typography>
                           <Typography variant="body1">
-                            <b>Created At</b>: {order?.created_at}
+                            <b>Created At</b>: <CustomDateComponent date={new Date(order?.created_at)}  /> 
                           </Typography>
                           <Typography variant="body1">
-                            <b>Last Modified</b>: {order?.updated_at}
+                            <b>Last Modified</b>: <CustomDateComponent date={new Date(order?.updated_at)}  /> 
                           </Typography>
                           <Typography variant="body1">
                             <b>Mark Up</b>: % {order?.mark_up}
@@ -159,10 +160,10 @@ const OrderDetailsComponent = () => {
                           <b>Created By</b>: {order?.ordered_by}
                         </Typography>
                         <Typography variant="body1">
-                          <b>Created At</b>: {order?.created_at}
+                          <b>Created At</b>: <CustomDateComponent date={new Date(order?.created_at)}  /> 
                         </Typography>
                         <Typography variant="body1">
-                          <b>Last Modified</b>: {order?.updated_at}
+                          <b>Last Modified</b>: <CustomDateComponent date={new Date(order?.updated_at)}  />
                         </Typography>
                         <Typography variant="body1">
                           <b>Mark Up</b>: % {order?.mark_up}

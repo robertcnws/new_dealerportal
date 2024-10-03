@@ -23,6 +23,7 @@ import CustomFilterComponent from '../../../Utils/components/CustomFilterCompone
 import { SearchContext } from '../../../SearchContextComponent/SearchContextComponent';
 import CustomTablePaginationComponent from '../../../Utils/components/CustomTablePaginationComponent/CustomTablePaginationComponent';
 import CustomAlertComponent from '../../../Utils/components/CustomAlertComponent/CustomAlertComponent';
+import CustomDateComponent from '../../../Utils/components/CustomDateComponent/CustomDateComponent';
 
 
 const useStyles = makeStyles({
@@ -236,7 +237,7 @@ const ListOrdersComponent = () => {
 
   return (
     <>
-      <Box sx={{ mt: isMobile ? 1 : -3, minWidth: '100%', bgcolor: '#f1f1f1' }}>
+      <Box sx={{ mt: isMobile ? 1 : -3, ml: isMobile ? 0 : -1, minWidth: '100%', bgcolor: '#f1f1f1', p : 0 }}>
         {tableData.length > 0 ? (
           <Grid container spacing={2}>
             <Grid item xs={12}>
@@ -283,7 +284,8 @@ const ListOrdersComponent = () => {
                                 {row[column.field]}
                               </Badge>
                             ) : (
-                              row[column.field]
+                              !['created_at', 'updated_at'].includes(column.field) ? row[column.field] : 
+                              <CustomDateComponent date={new Date(row[column.field])} formatType={isMobile ? 'short' : null} />
                             )}
                           </TableCell>
                         ))}

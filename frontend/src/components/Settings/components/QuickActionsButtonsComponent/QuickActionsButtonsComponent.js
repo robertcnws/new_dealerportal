@@ -141,6 +141,8 @@ const QuickActionsButtonsComponent = () => {
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
+                component={Link}
+                to={`${apiFrontendRoot}/users`}
 
               >
                 <i className="bi bi-person"></i>

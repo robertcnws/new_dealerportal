@@ -235,5 +235,20 @@ def api_dealerportal_change_auth_user_role(request, pk):
         return JsonResponse({"error": "Unauthorized"}, status=401)
     
     
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+@role_required(["AppAdmin"])
+def api_dealerportal_authorized_users(request):
+    valid_token = validateJWTTokenRequest(request)
+    if valid_token:
+        app_admins = User.objects.filter(role="AppAdmin")
+        app_managers = User.objects.filter(role="AppManager")
+        
+        list_admins = [ model_to_dict(admin, exclude=['logo', 'profile_pic']) for admin in app_admins ]
+        list_managers = [ model_to_dict(manager, exclude=['logo', 'profile_pic']) for manager in app_managers ]
+        return JsonResponse({"app_admins": list_admins, "app_managers": list_managers}, status=200)
+    return JsonResponse({"error": "Unauthorized"}, status=401)
+    
+    
     
     

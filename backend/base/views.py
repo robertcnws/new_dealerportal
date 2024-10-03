@@ -52,6 +52,7 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.forms import AuthenticationForm
+from django.db.models import Q
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework.decorators import api_view, permission_classes
@@ -1980,4 +1981,21 @@ def api_dealerportal_order_status_update(request):
             finally:
                 return JsonResponse({'message': message, 'error': error}, status=200)
         return JsonResponse({'error': 'Method not allowed', 'description': 'Method not allowed'}, status=405)
+    return JsonResponse({'error': 'Invalid token', 'description': 'Invalid Token for this request'}, status=401)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+@role_required(["AppAdmin", "AppManager"])
+def api_dealerportal_all_invitations(request):
+    valid_token = validateJWTTokenRequest(request)
+    if valid_token:
+        pending_invitations = Invitation.objects.filter(
+            Q(role="K54Rl"), is_accepted=False
+        ).select_related('dealership').values('id', 'email', 'is_accepted', 'created_at', 'user_id', 'dealership__name')
+                
+        data = {
+            'pending_invitations': list(pending_invitations)
+        }    
+        return JsonResponse({'data': data}, status=200)
     return JsonResponse({'error': 'Invalid token', 'description': 'Invalid Token for this request'}, status=401)

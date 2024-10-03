@@ -3,12 +3,13 @@ import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead
 import { DisabledByDefaultTwoTone, EditAttributesOutlined, FlashOnOutlined, Logout, PowerSettingsNewOutlined } from '@mui/icons-material';
 import CustomAlertComponent from '../../../../../Utils/components/CustomAlertComponent/CustomAlertComponent';
 import { fetchWithToken } from '../../../../../../utils';
-import { apiUrl } from '../../../../../../config';
+import { apiUrl, numberRows } from '../../../../../../config';
 import { Badge } from 'react-bootstrap';
 import Swal from 'sweetalert2';
 import DateDifferenceComponent from '../../../../../Utils/components/DateDifferenceComponent/DateDifferenceComponent';
 import NavigationButtonComponent from '../../../../../Utils/components/NavigationButtonComponent/NavigationButtonComponent';
 import ModalManageUserComponent from '../ModalManageUserComponent/ModalManageUserComponent';
+import CustomTablePaginationComponent from '../../../../../Utils/components/CustomTablePaginationComponent/CustomTablePaginationComponent';
 
 const TablesDealershipAccountComponent = ({ dealership }) => {
 
@@ -20,6 +21,12 @@ const TablesDealershipAccountComponent = ({ dealership }) => {
   const user = JSON.parse(localStorage.getItem('userLogged') || '{}');
   const [openModal, setOpenModal] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
+  const [pageDealerAdmin, setPageDealerAdmin] = useState(0);
+  const [pageEstimator, setPageEstimator] = useState(0);
+  const [pagePendingInvitation, setPagePendingInvitation] = useState(0);
+  const [rowsPerPageDealerAdmin, setRowsPerPageDealerAdmin] = useState(numberRows);
+  const [rowsPerPageEstimator, setRowsPerPageEstimator] = useState(numberRows);
+  const [rowsPerPagePendingInvitation, setRowsPerPagePendingInvitation] = useState(numberRows);
 
   const handleOpenModal = (row) => {
     setSelectedRow(row);
@@ -29,6 +36,36 @@ const TablesDealershipAccountComponent = ({ dealership }) => {
   const handleCloseModal = () => {
     setSelectedRow(null);
     setOpenModal(false);
+  };
+
+  const handleChangePageDealerAdmin = (event, newPage) => {
+    setPageDealerAdmin(newPage);
+  };
+
+  const handleChangeRowsPerPageDealerAdmin = (event) => {
+    const rows = parseInt(event.target.value, 10);
+    setRowsPerPageDealerAdmin(rows);
+    setPageDealerAdmin(0);
+  };
+
+  const handleChangePageEstimator = (event, newPage) => {
+    setPageEstimator(newPage);
+  };
+
+  const handleChangeRowsPerPageEstimator = (event) => {
+    const rows = parseInt(event.target.value, 10);
+    setRowsPerPageEstimator(rows);
+    setPageEstimator(0);
+  };
+
+  const handleChangePendingInvitation = (event, newPage) => {
+    setPagePendingInvitation(newPage);
+  };
+
+  const handleChangeRowsPerPagePendingInvitation = (event) => {
+    const rows = parseInt(event.target.value, 10);
+    setRowsPerPagePendingInvitation(rows);
+    setPagePendingInvitation(0);
   };
 
   const columnsDealerAdmin = [
@@ -57,10 +94,6 @@ const TablesDealershipAccountComponent = ({ dealership }) => {
     { field: 'email', headerName: 'Email', width: 150 },
     { field: 'created', headerName: 'Created', width: 150 },
   ];
-
-  const handleManageDealerAdmin = () => {
-    console.log('handleManageDealerAdmin');
-  };
 
   const handleDeactivateDealerAdmin = async (row) => {
     const customClassSwal = {
@@ -377,7 +410,7 @@ const TablesDealershipAccountComponent = ({ dealership }) => {
           display: 'flex',
           flexDirection: 'column',
           flexGrow: 1,
-          mb: 3,
+          mb: 1,
         }}>
           <Typography variant="body1">
             <b>Dealer Admin</b>
@@ -396,7 +429,10 @@ const TablesDealershipAccountComponent = ({ dealership }) => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {listDealershipAdmin.length > 0 ? listDealershipAdmin.map((row, index) => {
+                  {listDealershipAdmin.length > 0 ? (rowsPerPageDealerAdmin > 0
+                    ? listDealershipAdmin.slice(pageDealerAdmin * rowsPerPageDealerAdmin, pageDealerAdmin * rowsPerPageDealerAdmin + rowsPerPageDealerAdmin)
+                    : listDealershipAdmin
+                  ).map((row, index) => {
 
                     const childrenNavigationDealerAdmin = [
                       {
@@ -431,16 +467,24 @@ const TablesDealershipAccountComponent = ({ dealership }) => {
                     return (
 
                       <TableRow key={row?.id}>
-                        <TableCell key={`${row?.id}-${row?.is_active}${row?.index}`} align="center" sx={{ p: 0 }}>
+                        <TableCell key={`${row?.id}-${row?.is_active}${row?.index}`} align="center" sx={{ p: 0, cursor: 'pointer' }} onClick={() => handleOpenModal(row)}>
                           <Badge bg={row?.is_active ? 'success' : 'danger'}>{row?.is_active ? 'active' : 'inactive'}</Badge>
                         </TableCell>
-                        <TableCell key={`${row?.id}-${row?.username}${row?.index}`} align="center" sx={{ p: 0 }}>{row?.username}</TableCell>
-                        <TableCell key={`${row?.id}-${row?.first_name}${row?.index}`} align="center" sx={{ p: 0 }}>{row?.first_name} {row?.last_name}</TableCell>
+                        <TableCell key={`${row?.id}-${row?.username}${row?.index}`} align="center" sx={{ p: 0, cursor: 'pointer' }} onClick={() => handleOpenModal(row)}>
+                          {row?.username}
+                        </TableCell>
+                        <TableCell key={`${row?.id}-${row?.first_name}${row?.index}`} align="center" sx={{ p: 0, cursor: 'pointer' }} onClick={() => handleOpenModal(row)}>
+                          {row?.first_name} {row?.last_name}
+                        </TableCell>
                         {!isMobile && (
                           <>
-                            <TableCell key={`${row?.id}-${row?.email}${row?.index}`} align="center" sx={{ p: 0 }}>{row?.email}</TableCell>
-                            <TableCell key={`${row?.id}-${row?.role}${row?.index}`} align="center" sx={{ p: 0 }}>{row?.role}</TableCell>
-                            <TableCell key={`${row?.id}-${row?.last_login}${row?.index}`} align="center" sx={{ p: 0 }}>
+                            <TableCell key={`${row?.id}-${row?.email}${row?.index}`} align="center" sx={{ p: 0, cursor: 'pointer' }} onClick={() => handleOpenModal(row)}>
+                              {row?.email}
+                            </TableCell>
+                            <TableCell key={`${row?.id}-${row?.role}${row?.index}`} align="center" sx={{ p: 0, cursor: 'pointer' }} onClick={() => handleOpenModal(row)}>
+                              {row?.role}
+                            </TableCell>
+                            <TableCell key={`${row?.id}-${row?.last_login}${row?.index}`} align="center" sx={{ p: 0, cursor: 'pointer' }} onClick={() => handleOpenModal(row)}>
                               <DateDifferenceComponent dateString={row?.last_login} />
                             </TableCell>
                           </>
@@ -457,6 +501,14 @@ const TablesDealershipAccountComponent = ({ dealership }) => {
                       </TableCell>
                     </TableRow>
                   )}
+                  <CustomTablePaginationComponent
+                    columnsLength={columnsDealerAdmin.length + 1}
+                    data={listDealershipAdmin}
+                    page={pageDealerAdmin}
+                    rowsPerPage={rowsPerPageDealerAdmin}
+                    handleChangePage={handleChangePageDealerAdmin}
+                    handleChangeRowsPerPage={handleChangeRowsPerPageDealerAdmin}
+                  />
                 </TableBody>
               </Table>
             </TableContainer>
@@ -467,7 +519,7 @@ const TablesDealershipAccountComponent = ({ dealership }) => {
           display: 'flex',
           flexDirection: 'column',
           flexGrow: 1,
-          mb: 3,
+          mb: 1,
         }}>
           <Typography variant="body1">
             <b>Estimators Accounts</b>
@@ -486,7 +538,10 @@ const TablesDealershipAccountComponent = ({ dealership }) => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {listEstimatorsAccounts.length > 0 ? listEstimatorsAccounts.map((row, index) => {
+                  {listEstimatorsAccounts.length > 0 ? (rowsPerPageEstimator > 0
+                    ? listEstimatorsAccounts.slice(pageEstimator * rowsPerPageEstimator, pageEstimator * rowsPerPageEstimator + rowsPerPageEstimator)
+                    : listEstimatorsAccounts
+                  ).map((row, index) => {
 
                     const childrenNavigationEstimator = [
                       {
@@ -520,15 +575,21 @@ const TablesDealershipAccountComponent = ({ dealership }) => {
 
                     return (
                       <TableRow key={row?.id}>
-                        <TableCell key={`${row?.id}-${row?.is_active}${row?.index}`} align="center" sx={{ p: 0 }}>
+                        <TableCell key={`${row?.id}-${row?.is_active}${row?.index}`} align="center" sx={{ p: 0, cursor: 'pointer' }} onClick={() => handleOpenModal(row)}>
                           <Badge bg={row?.is_active ? 'success' : 'danger'}>{row?.is_active ? 'active' : 'inactive'}</Badge>
                         </TableCell>
-                        <TableCell key={`${row?.id}-${row?.username}${row?.index}`} align="center" sx={{ p: 0 }}>{row?.username}</TableCell>
-                        <TableCell key={`${row?.id}-${row?.first_name}${row?.index}`} align="center" sx={{ p: 0 }}>{row?.first_name} {row?.last_name}</TableCell>
+                        <TableCell key={`${row?.id}-${row?.username}${row?.index}`} align="center" sx={{ p: 0, cursor: 'pointer' }} onClick={() => handleOpenModal(row)}>
+                          {row?.username}
+                        </TableCell>
+                        <TableCell key={`${row?.id}-${row?.first_name}${row?.index}`} align="center" sx={{ p: 0, cursor: 'pointer' }} onClick={() => handleOpenModal(row)}>
+                          {row?.first_name} {row?.last_name}
+                        </TableCell>
                         {!isMobile && (
                           <>
-                            <TableCell key={`${row?.id}-${row?.email}${row?.index}`} align="center" sx={{ p: 0 }}>{row?.email}</TableCell>
-                            <TableCell key={`${row?.id}-${row?.last_login}${row?.index}`} align="center" sx={{ p: 0 }}>
+                            <TableCell key={`${row?.id}-${row?.email}${row?.index}`} align="center" sx={{ p: 0, cursor: 'pointer' }} onClick={() => handleOpenModal(row)}>
+                              {row?.email}
+                            </TableCell>
+                            <TableCell key={`${row?.id}-${row?.last_login}${row?.index}`} align="center" sx={{ p: 0, cursor: 'pointer' }} onClick={() => handleOpenModal(row)}>
                               <DateDifferenceComponent dateString={row?.last_login} />
                             </TableCell>
                           </>
@@ -545,6 +606,14 @@ const TablesDealershipAccountComponent = ({ dealership }) => {
                       </TableCell>
                     </TableRow>
                   )}
+                  <CustomTablePaginationComponent
+                    columnsLength={columnsEstimatorsAccounts.length + 1}
+                    data={listEstimatorsAccounts}
+                    page={pageEstimator}
+                    rowsPerPage={rowsPerPageEstimator}
+                    handleChangePage={handleChangePageEstimator}
+                    handleChangeRowsPerPage={handleChangeRowsPerPageEstimator}
+                  />
                 </TableBody>
               </Table>
             </TableContainer>
@@ -573,13 +642,20 @@ const TablesDealershipAccountComponent = ({ dealership }) => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {listPendingInvitations.length > 0 ? listPendingInvitations.map((row) => (
+                  {listPendingInvitations.length > 0 ? (rowsPerPagePendingInvitation > 0
+                    ? listPendingInvitations.slice(
+                      pagePendingInvitation * rowsPerPagePendingInvitation, pagePendingInvitation * rowsPerPagePendingInvitation + rowsPerPagePendingInvitation
+                    )
+                    : listPendingInvitations
+                  ).map((row) => (
                     <TableRow key={row?.id}>
-                      <TableCell key={`${row?.id}-${row?.is_accepted}${row?.index}`} align="center" sx={{ p: 0 }}>
+                      <TableCell key={`${row?.id}-${row?.is_accepted}${row?.index}`} align="center" sx={{ p: 0, cursor: 'pointer' }} onClick={() => handleResendInvitation(row)}>
                         <Badge bg={row?.is_accepted ? 'success' : 'warning'}>{row?.is_accepted ? 'accepted' : 'pending'}</Badge>
                       </TableCell>
-                      <TableCell key={`${row?.id}-${row?.email}${row?.index}`} align="center" sx={{ p: 0 }}>{row?.email}</TableCell>
-                      <TableCell key={`${row?.id}-${row?.created_at}${row?.index}`} align="center" sx={{ p: 0 }}>
+                      <TableCell key={`${row?.id}-${row?.email}${row?.index}`} align="center" sx={{ p: 0, cursor: 'pointer' }} onClick={() => handleResendInvitation(row)}>
+                        {row?.email}
+                      </TableCell>
+                      <TableCell key={`${row?.id}-${row?.created_at}${row?.index}`} align="center" sx={{ p: 0, cursor: 'pointer' }} onClick={() => handleResendInvitation(row)}>
                         <DateDifferenceComponent dateString={row?.created_at} />
                       </TableCell>
                       <TableCell key={`${row?.id}-buttonsPendingInvitations`} align="center" sx={{ p: 0 }}>
@@ -593,6 +669,14 @@ const TablesDealershipAccountComponent = ({ dealership }) => {
                       </TableCell>
                     </TableRow>
                   )}
+                  <CustomTablePaginationComponent
+                    columnsLength={columnsPendingInvitations.length + 1}
+                    data={listPendingInvitations}
+                    page={pagePendingInvitation}
+                    rowsPerPage={rowsPerPagePendingInvitation}
+                    handleChangePage={handleChangePendingInvitation}
+                    handleChangeRowsPerPage={handleChangeRowsPerPagePendingInvitation}
+                  />
                 </TableBody>
               </Table>
             </TableContainer>

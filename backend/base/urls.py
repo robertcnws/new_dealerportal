@@ -33,6 +33,7 @@ urlpatterns = [
     path("dealerportal/manage-dealership/users/manage-status/<int:pk>/", views.api_dealerportal_manage_dealership_user_status, name="dealerportal-manage-dealership-user-status"),
     path("dealerportal/manage-dealership/users/manage-admin/<int:pk>/", views.api_dealerportal_manage_dealer_admin_user, name="dealerportal-manage-dealer-admin-user"),
     path("dealerportal/update_order_status/", views.api_dealerportal_order_status_update, name="api_dealerportal_order_status_update"),
+    path("dealerportal/pending_invitations/", views.api_dealerportal_all_invitations, name="dealerportal-all-invitations"),
     # BACKEND URLS
     path('health/', views.health_check, name='health_check'),
     path("login/", views.loginPage, name="base-login"),

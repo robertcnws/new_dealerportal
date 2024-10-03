@@ -155,11 +155,11 @@ const ListStocksComponent = ({ setIsLoadingOperation }) => {
     return (
       <Box sx={{
         mt: -3,
-        minWidth: '100%',
+        minWidth: '100.5%',
         bgcolor: '#f1f1f1',
       }}>
         {stocks && (
-          <Grid container spacing={2}>
+          <Grid container spacing={1}>
             <Grid item xs={expandedItem ? 4 : 12}>
               <Box>
                 <CustomFilterComponent configCustomFilter={configCustomFilter} sx={{ ml: 4 }} />
@@ -167,12 +167,12 @@ const ListStocksComponent = ({ setIsLoadingOperation }) => {
               <TableContainer sx={{
                 minWidth: '100%',
                 bgcolor: 'white',
-                borderRadius: '10px',
+                // borderRadius: '10px',
                 borderTop: '1px solid #ddd',
                 mb: 0,
                 mr: 0,
                 ml: 3,
-                maxHeight: 'calc(100vh - 180px)',
+                maxHeight: 'calc(100vh - 170px)',
                 overflowY: 'auto'
               }}>
                 <Table>

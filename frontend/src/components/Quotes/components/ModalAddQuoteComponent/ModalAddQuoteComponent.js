@@ -23,7 +23,6 @@ const ModalAddQuoteComponent = ({ open, handleClose, onSyncComplete, dataEdit, o
     const response = await fetchWithToken(url, 'POST', payload, {}, apiUrl);
     if (response.status === 200) {
       const quote = response.data.data.quote;
-      console.log(quote);
       dataEdit.job_name = quote.name;
       dataEdit.total_sell = quote.total_sell;
       dataEdit.total_cost = quote.total_cost;

@@ -44,13 +44,15 @@ const HomeComponent = () => {
 
   const fetchStats = async (payload) => {
     try {
-      const response = await fetchWithToken(`${apiUrl}/dealerportal-home/`, 'GET', payload);
+      const response = await fetchWithToken(`${apiUrl}/dealerportal-home/`, 'GET', payload, {}, apiUrl);
       if (response.status !== 200) {
         throw new Error(`Failed to fetch data`);
       }
       setContextDashboard(response.data.data);
     } catch (err) {
-      setError(err.message);
+        if (error.response && error.response.status !== 401) {
+          setError(err.message);
+        } 
     } finally {
       setLoading(false);
     }

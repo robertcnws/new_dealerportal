@@ -72,6 +72,7 @@ const LoginComponent = () => {
           headers: {
             'Content-Type': 'application/json',
             'X-CSRFToken': getCookie('csrftoken'),
+            'Authorization': `Bearer ${jwtResponse.data.access}`,
           },
         });
 

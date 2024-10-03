@@ -28,7 +28,6 @@ const ModalUpdateUserComponent = ({ dealership, open, handleClose, setDealership
   const [previewLogo, setPreviewLogo] = useState('');
 
   useEffect(() => {
-    console.log(dealership);
     reset({
       name: dealership.account_name,
       company_address: dealership.address,

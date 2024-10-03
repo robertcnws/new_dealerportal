@@ -1,5 +1,5 @@
 import axios from 'axios';
-// import { apiUrl } from './config';
+import { apiUrl } from './config';
 
 
 export const clearLocalStorage = () => {
@@ -79,7 +79,7 @@ function descendingComparatorUndefined(a, b, orderBy) {
   return 0;
 }
 
-// JWT TOKENS
+// Funciones de manejo de tokens
 
 export const getAccessToken = () => {
   return localStorage.getItem('accessToken');
@@ -94,50 +94,82 @@ const setTokens = (accessToken, refreshToken) => {
   localStorage.setItem('refreshToken', refreshToken);
 };
 
+const axiosInstance = axios.create({
+  baseURL: apiUrl, 
+  withCredentials: true, 
+});
+
+const refreshAxios = axios.create({
+  baseURL: apiUrl, 
+  withCredentials: true,
+});
+
 const refreshToken = async (apiUrl) => {
-  const refreshToken = getRefreshToken();
+  const currentRefreshToken = getRefreshToken();
+  if (!currentRefreshToken) {
+    console.error('No refresh token available.');
+    return null;
+  }
+
   try {
-      const response = await axios.post(`${apiUrl}/api/token/refresh/`, {
-          refresh: refreshToken
-      });
-      const { access } = response.data;
-      setTokens(access, refreshToken);
-      return access;
+    const response = await refreshAxios.post('/api/token/refresh/', {
+      refresh: currentRefreshToken,
+    });
+    const { access } = response.data;
+    setTokens(access, currentRefreshToken);
+    return access;
   } catch (error) {
-      console.error('Error refreshing token:', error);
-      return null;
+    console.error('Error refreshing token:', error.response?.data || error.message);
+    return null;
   }
 };
 
-
+// Función para realizar solicitudes con token
 export const fetchWithToken = async (url, method = 'GET', data = null, headers = {}, apiUrl) => {
   let accessToken = getAccessToken();
   const makeRequest = async (token) => {
-      const isFormData = data instanceof FormData;
-      const config = {
-          method: method,
-          url: url,
-          withCredentials: true,
-          headers: {
-              ...headers,
-              'Authorization': `Bearer ${token}`,
-              'Accept': 'application/json',
-              ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
-          },
-          ...(method === 'GET' ? { params: data } : { data: data }),
-      };
-      return axios(config);
+    const isFormData = data instanceof FormData;
+    const config = {
+      method: method,
+      url: url, // Asegúrate de que la URL esté correctamente construida
+      withCredentials: true,
+      headers: {
+        ...headers,
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json',
+        ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
+      },
+      ...(method === 'GET' ? { params: data } : { data: data }),
+    };
+    return axiosInstance(config);
   };
+
   try {
-      return await makeRequest(accessToken);
+    // Intentar la solicitud inicial
+    const response = await makeRequest(accessToken);
+    return response;
   } catch (error) {
-      if (error.response && error.response.status === 401) {
-          const newAccessToken = await refreshToken(apiUrl);
-          if (newAccessToken) {
-              return await makeRequest(newAccessToken);
+    if (error.response && error.response.status === 401) {
+      const newAccessToken = await refreshToken(apiUrl);
+      if (newAccessToken) {
+        try {
+          const retryResponse = await makeRequest(newAccessToken);
+          return retryResponse;
+        } catch (retryError) {
+          if (retryError.response && retryError.response.status === 401) {
+            console.error('Unauthorized: Token refresh succeeded but request failed.');
+          } else {
+            console.error('Request error after token refresh');
           }
+          throw retryError;
+        }
+      } else {
+        console.error('Unauthorized: Token refresh failed.');
       }
-      throw error;
+    } else {
+      console.error('Request error');
+    }
+    throw error;
   }
 };
 
@@ -159,4 +191,28 @@ export const formatDate = (isoString) => {
   const timezoneString = `UTC${timezoneOffset >= 0 ? '+' : ''}${timezoneOffset}`;
 
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds} ${timezoneString}`;
+};
+
+export const calculateDateDifference = (date) => {
+  const notificationDate = new Date(date);
+  const now = new Date();
+  const diffInSeconds = Math.floor((now - notificationDate) / 1000);
+
+  const intervals = [
+    { label: 'YEAR', seconds: 31536000 },
+    { label: 'MONTH', seconds: 2592000 },
+    { label: 'DAY', seconds: 86400 },
+    { label: 'HOUR', seconds: 3600 },
+    { label: 'MINUTE', seconds: 60 },
+    { label: 'SECOND', seconds: 1 },
+  ];
+
+  for (const interval of intervals) {
+    const count = Math.floor(diffInSeconds / interval.seconds);
+    if (count >= 1) {
+      return `${count} ${interval.label}${count > 1 ? 'S' : ''} AGO`;
+    }
+  }
+
+  return 'JUST NOW';
 };
