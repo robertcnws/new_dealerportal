@@ -6,8 +6,6 @@ import {
   IconButton,
   Typography,
   CircularProgress,
-  useTheme,
-  useMediaQuery,
 } from '@mui/material';
 import { VisibilityOff, Visibility } from '@mui/icons-material';
 import { Link, useNavigate } from 'react-router-dom';
@@ -27,9 +25,6 @@ const LoginComponent = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  // const isMobile = useMediaQuery('(max-width:999px)');
 
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -39,43 +34,35 @@ const LoginComponent = () => {
     setLoading(true);
     setError('');
     setSuccess('');
-
-    // Validación básica del formulario
+    
     if (!username.trim() || !password.trim()) {
       setError('Username and password are required');
       setLoading(false);
       return;
     }
-
-    let jwtResponse = null;
-
+  
     try {
-      const body_jwt = JSON.stringify({ username, password });
-      jwtResponse = await axios.post(`${apiUrl}/api/token/`, body_jwt, {
+      const body_jwt = { username, password };
+      const jwtResponse = await axios.post(`${apiUrl}/api/token/`, body_jwt, {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
       });
-
-      if (jwtResponse.status !== 200) {
-        setError(`Invalid Credentials : No active account found with the given credentials`);
-        throw new Error(`${error}`);
-      }
-
-      else {
+      if (jwtResponse.status === 200) {
         localStorage.setItem('accessToken', jwtResponse.data.access);
         localStorage.setItem('refreshToken', jwtResponse.data.refresh);
-
-        const body = JSON.stringify({ username, password });
+        
+        const body = { username, password };
+        
         const loginResponse = await axios.post(`${apiUrl}/dealerportal-login/`, body, {
           headers: {
             'Content-Type': 'application/json',
-            'X-CSRFToken': getCookie('csrftoken'),
+            // 'X-CSRFToken': getCookie('csrftoken'),
             'Authorization': `Bearer ${jwtResponse.data.access}`,
           },
         });
-
+  
         if (loginResponse.status === 200) {
           setSuccess('Login successful');
           delete loginResponse.data.data.password;
@@ -84,15 +71,20 @@ const LoginComponent = () => {
           navigate(apiFrontendRoot);
         } else {
           setError(`${loginResponse.data.error} : ${loginResponse.data.description}`);
-          throw new Error(`${error}`);
+          throw new Error(`${loginResponse.data.error} : ${loginResponse.data.description}`);
         }
+      } else {
+        setError(`Invalid Credentials: No active account found with the given credentials`);
+        throw new Error(`Invalid Credentials`);
       }
     } catch (error) {
-      setError(`Invalid Credentials : No active account found with the given credentials`);
+      setError(`Invalid Credentials: No active account found with the given credentials`);
+      console.error('Error during login:', error.response?.data || error.message);
     } finally {
       setLoading(false);
     }
   };
+  
 
   return (
     <MainLoginComponent>

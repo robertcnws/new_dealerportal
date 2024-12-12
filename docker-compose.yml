@@ -3,10 +3,14 @@ services:
     build:
       context: ./backend
     container_name: backend_app
+    cap_add:
+      - SYS_TIME
     volumes:
       - ./backend:/app
       - ./backend/nginx/gunicorn.conf.py:/etc/nginx/gunicorn.conf.py
       - ./backend/local_backup:/app/backup
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
     ports:
       - "8005:8005"
     env_file:

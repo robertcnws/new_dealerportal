@@ -3,7 +3,7 @@ from base.models import User
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from .constants import NOTIFICATION_ICON_CLASSES
@@ -61,8 +61,8 @@ def validateJWTTokenRequest(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def api_dealerportal_get_all_notifications(request):
-    valid_token = validateJWTTokenRequest(request)
-    if valid_token:
+    # valid_token = validateJWTTokenRequest(request)
+    # if valid_token:
         user_id = request.GET.get("user_id", None)
         user = User.objects.get(id=user_id)
         notifications = Notification.objects.filter(
@@ -73,14 +73,14 @@ def api_dealerportal_get_all_notifications(request):
             "notifications": list(notifications.values()),
             "NOTIFICATION_ICON_CLASSES": NOTIFICATION_ICON_CLASSES,
         }, status=200)
-    return JsonResponse({"error": "Invalid token"}, status=401)
+    # return JsonResponse({"error": "Invalid token"}, status=401)
 
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def api_dealerportal_read_notification(request):
-    valid_token = validateJWTTokenRequest(request)
-    if valid_token:
+    # valid_token = validateJWTTokenRequest(request)
+    # if valid_token:
         data = json.loads(request.body)
         notification_id = data.get("notification_id", None)
         notification = Notification.objects.filter(id=notification_id).first()
@@ -89,7 +89,7 @@ def api_dealerportal_read_notification(request):
             notification.save()
             return JsonResponse({"success": True}, status=200)
         return JsonResponse({"error": "Notification not found"}, status=404)
-    return JsonResponse({"error": "Invalid token"}, status=401)
+    # return JsonResponse({"error": "Invalid token"}, status=401)
     
 
 

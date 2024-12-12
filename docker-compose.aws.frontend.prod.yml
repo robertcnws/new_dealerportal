@@ -6,6 +6,9 @@ services:
     container_name: aws_frontend_app
     environment:
       - NODE_ENV=production
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
     ports:
       - "3005:3005"
     networks:

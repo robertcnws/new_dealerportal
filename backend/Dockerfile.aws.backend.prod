@@ -2,6 +2,10 @@ FROM python:3.11
 
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONPATH=/app
+ENV TZ=America/New_York
+
+RUN ln -fs /usr/share/zoneinfo/$TZ /etc/localtime && \
+    dpkg-reconfigure -f noninteractive tzdata
 
 WORKDIR /app
 

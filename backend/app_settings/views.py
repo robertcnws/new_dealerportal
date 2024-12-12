@@ -10,7 +10,7 @@ from utils.models import Invitation
 from django.db.models import Q
 
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 
@@ -152,12 +152,12 @@ def validateJWTTokenRequest(request):
 @permission_classes([IsAuthenticated])
 @role_required(["AppAdmin"])
 def api_dealerportal_settings(request):
-    valid_token = validateJWTTokenRequest(request)
-    if valid_token:
+    # valid_token = validateJWTTokenRequest(request)
+    # if valid_token:
         managers = User.objects.filter(role="AppManager")
         list_managers = [ model_to_dict(manager, exclude=['logo', 'profile_pic']) for manager in managers ]
         return JsonResponse({"managers": list_managers}, status=200)
-    return JsonResponse({"error": "Unauthorized"}, status=401) 
+    # return JsonResponse({"error": "Unauthorized"}, status=401) 
 
 
 
@@ -165,8 +165,8 @@ def api_dealerportal_settings(request):
 @permission_classes([IsAuthenticated])
 @role_required(["AppAdmin"])
 def api_dealerportal_change_auth_user_status(request, pk):
-    valid_token = validateJWTTokenRequest(request)
-    if valid_token:
+    # valid_token = validateJWTTokenRequest(request)
+    # if valid_token:
         try:
             user_to_manage = User.objects.get(id=pk)
         except User.DoesNotExist:
@@ -193,7 +193,7 @@ def api_dealerportal_change_auth_user_status(request, pk):
         action = "activated" if user_to_manage.is_active else "deactivated"
         message = f"App User has been {action}."
         return JsonResponse({"message": message}, status=200)
-    return JsonResponse({"error": "Unauthorized"}, status=401)
+    # return JsonResponse({"error": "Unauthorized"}, status=401)
 
 
 
@@ -201,8 +201,8 @@ def api_dealerportal_change_auth_user_status(request, pk):
 @permission_classes([IsAuthenticated])
 @role_required(["AppAdmin"])
 def api_dealerportal_change_auth_user_role(request, pk):
-    valid_token = validateJWTTokenRequest(request)
-    if valid_token:
+    # valid_token = validateJWTTokenRequest(request)
+    # if valid_token:
         try:
             user_to_manage = User.objects.get(id=pk)
         except User.DoesNotExist:
@@ -232,22 +232,22 @@ def api_dealerportal_change_auth_user_role(request, pk):
 
             user_to_manage.save()
             return JsonResponse({"message": message}, status=200)
-        return JsonResponse({"error": "Unauthorized"}, status=401)
+        # return JsonResponse({"error": "Unauthorized"}, status=401)
     
     
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 @role_required(["AppAdmin"])
 def api_dealerportal_authorized_users(request):
-    valid_token = validateJWTTokenRequest(request)
-    if valid_token:
+    # valid_token = validateJWTTokenRequest(request)
+    # if valid_token:
         app_admins = User.objects.filter(role="AppAdmin")
         app_managers = User.objects.filter(role="AppManager")
         
         list_admins = [ model_to_dict(admin, exclude=['logo', 'profile_pic']) for admin in app_admins ]
         list_managers = [ model_to_dict(manager, exclude=['logo', 'profile_pic']) for manager in app_managers ]
         return JsonResponse({"app_admins": list_admins, "app_managers": list_managers}, status=200)
-    return JsonResponse({"error": "Unauthorized"}, status=401)
+    # return JsonResponse({"error": "Unauthorized"}, status=401)
     
     
     

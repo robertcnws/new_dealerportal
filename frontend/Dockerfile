@@ -1,6 +1,11 @@
 # Etapa 1: Construcción
 FROM node:20 AS build
 
+ENV TZ=America/New_York
+
+RUN ln -fs /usr/share/zoneinfo/$TZ /etc/localtime && \
+    dpkg-reconfigure -f noninteractive tzdata
+
 # Establece el directorio de trabajo
 WORKDIR /app
 

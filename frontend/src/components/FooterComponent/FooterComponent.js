@@ -25,7 +25,7 @@ const FooterComponent = () => {
         color="text.secondary"
         sx={{ fontSize: '12px', fontWeight: 'bold' }}
       >
-        © {currentYear} API Dealerportal. All rights reserved.
+        © {currentYear} API Dealerportal. New Window System. All rights reserved.
       </Typography>
     </Box>
   )

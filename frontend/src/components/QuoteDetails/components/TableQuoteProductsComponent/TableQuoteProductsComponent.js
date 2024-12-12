@@ -98,13 +98,16 @@ const TableQuoteProductsComponent = ({ quote, setIsLoadingOperation }) => {
   }
 
   const onChangeQuantity = async (e, row) => {
-    const newQuantity = parseInt(e.target.value);
+    const value = e.target.value.toString();
+    const newQuantity = parseInt(value);
+
+    const quantityToStore = isNaN(newQuantity) ? 0 : newQuantity;
 
     setModifiedQuantities({
       ...modifiedQuantities,
-      [row.id]: newQuantity,
+      [row.id]: quantityToStore,
     });
-    if (!isNaN(newQuantity) && newQuantity > 0) {
+    if (!isNaN(quantityToStore) && quantityToStore > 0) {
       // setIsLoadingOperation(true);
       try {
         const user = JSON.parse(localStorage.getItem('userLogged'));
@@ -113,7 +116,7 @@ const TableQuoteProductsComponent = ({ quote, setIsLoadingOperation }) => {
           quote_product_id: row.id_quote_product,
           product_id: row.id,
           user_id: user.data.id,
-          quantity: newQuantity,
+          quantity: quantityToStore,
         };
         const response = await fetchWithToken(`${apiUrl}/dealerportal-manage-product-to-quote/`, 'POST', payload, {}, apiUrl);
         if (response.status !== 200) {
@@ -231,7 +234,7 @@ const TableQuoteProductsComponent = ({ quote, setIsLoadingOperation }) => {
                                 },
                               }}
                               type="number"
-                              value={row[column.field]}
+                              value={row[column.field] || ''}
                               onChange={(e) => onChangeQuantity(e, row)}
                               variant="outlined"
                               inputProps={{ min: 1 }}
@@ -423,14 +426,14 @@ const TableQuoteProductsComponent = ({ quote, setIsLoadingOperation }) => {
                         },
                       }}
                       type="number"
-                      value={row.quantity}
+                      value={row.quantity || ''}
                       onChange={(e) => onChangeQuantity(e, row)}
                       variant="outlined"
                       inputProps={{ min: 1 }}
                     />
                   ) : (
                     <Typography sx={{ fontSize: '12px' }}>
-                      {row.quantity}
+                      {row.quantity || ''}
                     </Typography>
                   )}
                 </TableCell>

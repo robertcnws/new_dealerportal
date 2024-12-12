@@ -2,6 +2,12 @@ FROM python:3.11
 
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONPATH=/app
+# Instalar tzdata y ntp
+RUN apt-get update && apt-get install -y tzdata ntp
+
+# Establecer la zona horaria
+ENV TZ=America/New_York
+RUN ln -fs /usr/share/zoneinfo/$TZ /etc/localtime && dpkg-reconfigure -f noninteractive tzdata
 
 WORKDIR /app
 
@@ -30,4 +36,5 @@ EXPOSE 8005
 CMD sh -c "python manage.py makemigrations && python manage.py migrate && \
            celery -A dealerportal worker --loglevel=info & \
            celery -A dealerportal beat --loglevel=info & \
+           service ntp start & \
            gunicorn --bind 0.0.0.0:8005 dealerportal.wsgi:application"

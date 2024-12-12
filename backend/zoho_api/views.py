@@ -20,7 +20,7 @@ from django.db.models import Q
 from django.db import transaction
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from django.http import JsonResponse
@@ -659,8 +659,8 @@ def validateJWTTokenRequest(request):
 @permission_classes([IsAuthenticated])
 @role_required(["AppAdmin"])
 def api_dealerportal_zoho_api_settings(request):
-    valid_token = validateJWTTokenRequest(request)
-    if valid_token:
+    # valid_token = validateJWTTokenRequest(request)
+    # if valid_token:
         app_config = AppConfig.objects.first()
         if not app_config:
             app_config = AppConfig.objects.create()
@@ -696,15 +696,15 @@ def api_dealerportal_zoho_api_settings(request):
             "active_page": "settings",
         }
         return JsonResponse(context, status=200)
-    return JsonResponse({"error": "Unauthorized"}, status=401)
+    # return JsonResponse({"error": "Unauthorized"}, status=401)
 
 
 @api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
 @role_required(["AppAdmin"])
 def api_dealerportal_sync_zoho_items_view(request):
-    valid_token = validateJWTTokenRequest(request)
-    if valid_token:
+    # valid_token = validateJWTTokenRequest(request)
+    # if valid_token:
         app_config = AppConfig.objects.first()
         if not app_config.zoho_connection_configured:
             message = "Zoho API connection is not configured."
@@ -721,15 +721,15 @@ def api_dealerportal_sync_zoho_items_view(request):
         except Exception as e:
             message = f"Error syncing items: {str(e)}"
             return JsonResponse({"error": message, "message": message}, status=200)
-    return JsonResponse({"error": "Unauthorized"}, status=401)
+    # return JsonResponse({"error": "Unauthorized"}, status=401)
 
 
 @api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
 @role_required(["AppAdmin"])
 def api_dealerportal_sync_zoho_customers_view(request):
-    valid_token = validateJWTTokenRequest(request)
-    if valid_token:
+    # valid_token = validateJWTTokenRequest(request)
+    # if valid_token:
         app_config = AppConfig.objects.first()
         access_token = get_access_token(
             app_config.zoho_client_id,
@@ -748,7 +748,7 @@ def api_dealerportal_sync_zoho_customers_view(request):
             error = str(e)
         create_notification(app_admins_and_managers, "system_Alert", message=message)
         return JsonResponse({"message": message, "error": error}, status=200)
-    return JsonResponse({"error": "Unauthorized"}, status=401)
+    # return JsonResponse({"error": "Unauthorized"}, status=401)
 
 
 

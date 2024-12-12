@@ -74,6 +74,15 @@ REST_FRAMEWORK = {
     ),
 }
 
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY, 
+    'TIME_ZONE': 'America/New_York', 
+    'LEEWAY': 60,
+}
+
 AUTH_USER_MODEL = "base.User"
 
 MIDDLEWARE = [
@@ -141,7 +150,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 LANGUAGE_CODE = "en-us"
-TIME_ZONE = "US/Eastern"
+TIME_ZONE = 'America/New_York'
 USE_I18N = True
 USE_TZ = True
 

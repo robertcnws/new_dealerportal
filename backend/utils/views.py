@@ -13,7 +13,7 @@ from django.utils.crypto import get_random_string
 from django.db import transaction
 from django.core.mail import EmailMessage
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 
@@ -847,8 +847,8 @@ def encode_sku(manufacturer, frame_color, budget, item):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def api_dealerportal_quote_render_pdf_view(request, pk):
-    valid_token = validateJWTTokenRequest(request)
-    if valid_token:
+    # valid_token = validateJWTTokenRequest(request)
+    # if valid_token:
         template_path = "utils/quote_pdf.html"
         quote = Quote.objects.select_related("owner__dealer_account").get(pk=pk)
         dealership = quote.owner.dealer_account  # remove parentheses
@@ -876,15 +876,15 @@ def api_dealerportal_quote_render_pdf_view(request, pk):
         if pisa_status.err:
             return HttpResponse("We had some errors <pre>" + html + "</pre>")
         return response
-    else:
-        return JsonResponse({"error": "Invalid token."}, status=401)
+    # else:
+    #     return JsonResponse({"error": "Invalid token."}, status=401)
     
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def api_dealerportal_quote_render_cost_pdf_view(request, pk):
-    valid_token = validateJWTTokenRequest(request)  
-    if valid_token:
+    # valid_token = validateJWTTokenRequest(request)  
+    # if valid_token:
         template_path = "utils/quote_pdf_cost_sell.html"
         quote = Quote.objects.select_related("owner__dealer_account").get(pk=pk)
         dealership = quote.owner.dealer_account  # remove parentheses
@@ -912,15 +912,15 @@ def api_dealerportal_quote_render_cost_pdf_view(request, pk):
         if pisa_status.err:
             return HttpResponse("We had some errors <pre>" + html + "</pre>")
         return response
-    return JsonResponse({"error": "Invalid token."}, status=401)
+    # return JsonResponse({"error": "Invalid token."}, status=401)
 
 
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def api_dealerportal_quote_render_total_view(request, pk):
-    valid_token = validateJWTTokenRequest(request)  
-    if valid_token:
+    # valid_token = validateJWTTokenRequest(request)  
+    # if valid_token:
         template_path = "utils/quote_pdf_total.html"
         quote = Quote.objects.select_related("owner__dealer_account").get(pk=pk)
         dealership = quote.owner.dealer_account  # remove parentheses
@@ -948,19 +948,19 @@ def api_dealerportal_quote_render_total_view(request, pk):
         if pisa_status.err:
             return HttpResponse("We had some errors <pre>" + html + "</pre>")
         return response
-    return JsonResponse({"error": "Invalid token."}, status=401)
+    # return JsonResponse({"error": "Invalid token."}, status=401)
 
 
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def api_dealerportal_equalize_quote_view(request, quote_id):
-    valid_token = validateJWTTokenRequest(request)
-    if valid_token:
+    # valid_token = validateJWTTokenRequest(request)
+    # if valid_token:
         quote = get_object_or_404(Quote, pk=quote_id)
         data = equalize_quote_analysis(quote)
         return JsonResponse(data, status=200)
-    return JsonResponse({"error": "Invalid token."}, status=401)
+    # return JsonResponse({"error": "Invalid token."}, status=401)
 
 
 
@@ -968,8 +968,8 @@ def api_dealerportal_equalize_quote_view(request, quote_id):
 @permission_classes([IsAuthenticated])
 @role_required(["AppAdmin", "AppManager", "DealerAdmin"])
 def api_dealerportal_send_invitation(request):
-    valid_token = validateJWTTokenRequest(request)
-    if valid_token:
+    # valid_token = validateJWTTokenRequest(request)
+    # if valid_token:
         data = json.loads(request.body)
         email = data.get("email")
         dealership_id = data.get("dealership_id")
@@ -1027,15 +1027,15 @@ def api_dealerportal_send_invitation(request):
 
         message = "Invitation sent successfully."
         return JsonResponse({"message": message}, status=200)
-    return JsonResponse({"error": "Invalid token."}, status=401)
+    # return JsonResponse({"error": "Invalid token."}, status=401)
 
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 @role_required(["AppAdmin", "AppManager", "DealerAdmin"])
 def api_dealerportal_delete_invitation(request):
-    valid_token = validateJWTTokenRequest(request)
-    if valid_token:
+    # valid_token = validateJWTTokenRequest(request)
+    # if valid_token:
         data = json.loads(request.body)
         invitation_id = data.get("invitation_id")
 
@@ -1053,7 +1053,7 @@ def api_dealerportal_delete_invitation(request):
 
         message = "Invitation deleted successfully."
         return JsonResponse({"message": message}, status=200)
-    return JsonResponse({"error": "Invalid token."}, status=401)
+    # return JsonResponse({"error": "Invalid token."}, status=401)
 
 
 
@@ -1061,8 +1061,8 @@ def api_dealerportal_delete_invitation(request):
 @permission_classes([IsAuthenticated])
 @role_required(["AppAdmin", "AppManager", "DealerAdmin"])
 def api_dealerportal_resend_invitation(request, invitation_id):
-    valid_token = validateJWTTokenRequest(request)  
-    if valid_token:
+    # valid_token = validateJWTTokenRequest(request)  
+    # if valid_token:
         try:
             invitation = Invitation.objects.get(id=invitation_id)
             if invitation.is_accepted:
@@ -1088,7 +1088,7 @@ def api_dealerportal_resend_invitation(request, invitation_id):
         except Invitation.DoesNotExist:
             message = "The invitation does not exist."
             return JsonResponse({"error": "Error", "message": message}, status=200)
-    return JsonResponse({"error": "Invalid token."}, status=401)
+    # return JsonResponse({"error": "Invalid token."}, status=401)
 
 
 

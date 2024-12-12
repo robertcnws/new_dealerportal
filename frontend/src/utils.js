@@ -21,55 +21,55 @@ export const clearLocalStorage = () => {
 export const getCookie = (name) => {
   let cookieValue = null;
   if (document.cookie && document.cookie !== '') {
-      const cookies = document.cookie.split(';');
-      for (let i = 0; i < cookies.length; i++) {
-          let cookie = cookies[i].trim();
-          if (cookie.indexOf(name + '=') === 0) {
-              cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-              break;
-          }
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      let cookie = cookies[i].trim();
+      if (cookie.indexOf(name + '=') === 0) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
       }
+    }
   }
   return cookieValue;
 }
 
 export const stableSort = (array, comparator) => {
-    const stabilizedThis = array.map((el, index) => [el, index]);
-    stabilizedThis.sort((a, b) => {
-        const order = comparator(a[0], b[0]);
-        if (order !== 0) return order;
-        return a[1] - b[1];
-    });
-    return stabilizedThis.map((el) => el[0]);
+  const stabilizedThis = array.map((el, index) => [el, index]);
+  stabilizedThis.sort((a, b) => {
+    const order = comparator(a[0], b[0]);
+    if (order !== 0) return order;
+    return a[1] - b[1];
+  });
+  return stabilizedThis.map((el) => el[0]);
 }
 
 export const getComparator = (order, orderBy) => {
-    return order === 'desc'
-        ? (a, b) => descendingComparator(a, b, orderBy)
-        : (a, b) => -descendingComparator(a, b, orderBy);
+  return order === 'desc'
+    ? (a, b) => descendingComparator(a, b, orderBy)
+    : (a, b) => -descendingComparator(a, b, orderBy);
 }
 
 export function getComparatorUndefined(order, orderBy) {
-    return order === 'desc'
-      ? (a, b) => descendingComparatorUndefined(a, b, orderBy)
-      : (a, b) => -descendingComparatorUndefined(a, b, orderBy);
-  }
+  return order === 'desc'
+    ? (a, b) => descendingComparatorUndefined(a, b, orderBy)
+    : (a, b) => -descendingComparatorUndefined(a, b, orderBy);
+}
 
 export const descendingComparator = (a, b, orderBy) => {
-    if (b.fields[orderBy] < a.fields[orderBy]) {
-        return -1;
-    }
-    if (b.fields[orderBy] > a.fields[orderBy]) {
-        return 1;
-    }
-    return 0;
+  if (b.fields[orderBy] < a.fields[orderBy]) {
+    return -1;
+  }
+  if (b.fields[orderBy] > a.fields[orderBy]) {
+    return 1;
+  }
+  return 0;
 }
 
 function descendingComparatorUndefined(a, b, orderBy) {
   if (!a || !b || !a[orderBy] || !b[orderBy]) {
     return 0;
   }
-  
+
   if (b[orderBy] < a[orderBy]) {
     return -1;
   }
@@ -95,16 +95,16 @@ const setTokens = (accessToken, refreshToken) => {
 };
 
 const axiosInstance = axios.create({
-  baseURL: apiUrl, 
-  withCredentials: true, 
+  baseURL: apiUrl,
+  // withCredentials: true,
 });
 
 const refreshAxios = axios.create({
-  baseURL: apiUrl, 
-  withCredentials: true,
+  baseURL: apiUrl,
+  // withCredentials: true,
 });
 
-const refreshToken = async (apiUrl) => {
+const refreshToken = async () => {
   const currentRefreshToken = getRefreshToken();
   if (!currentRefreshToken) {
     console.error('No refresh token available.');
@@ -124,51 +124,56 @@ const refreshToken = async (apiUrl) => {
   }
 };
 
-// Función para realizar solicitudes con token
 export const fetchWithToken = async (url, method = 'GET', data = null, headers = {}, apiUrl) => {
-  let accessToken = getAccessToken();
+  // let accessToken = getAccessToken();
+
   const makeRequest = async (token) => {
-    const isFormData = data instanceof FormData;
-    const config = {
-      method: method,
-      url: url, // Asegúrate de que la URL esté correctamente construida
-      withCredentials: true,
-      headers: {
-        ...headers,
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/json',
-        ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
-      },
-      ...(method === 'GET' ? { params: data } : { data: data }),
-    };
-    return axiosInstance(config);
+    try {
+      const isFormData = data instanceof FormData;
+      const config = {
+        method: method,
+        url: url, 
+        withCredentials: true,
+        headers: {
+          ...headers,
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+          ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
+        },
+        ...(method === 'GET' ? { params: data } : { data: data }),
+      };
+      return axiosInstance(config);
+    } catch (error) {
+      console.error('Request error:', error);
+      throw error;
+    }
   };
 
   try {
-    // Intentar la solicitud inicial
-    const response = await makeRequest(accessToken);
+    const newAccessToken = await refreshToken();
+    const response = await makeRequest(newAccessToken);
     return response;
   } catch (error) {
-    if (error.response && error.response.status === 401) {
-      const newAccessToken = await refreshToken(apiUrl);
-      if (newAccessToken) {
-        try {
-          const retryResponse = await makeRequest(newAccessToken);
-          return retryResponse;
-        } catch (retryError) {
-          if (retryError.response && retryError.response.status === 401) {
-            console.error('Unauthorized: Token refresh succeeded but request failed.');
-          } else {
-            console.error('Request error after token refresh');
-          }
-          throw retryError;
-        }
-      } else {
-        console.error('Unauthorized: Token refresh failed.');
-      }
-    } else {
-      console.error('Request error');
-    }
+    // if (error.response && error.response.status === 401) {
+    //   const newAccessToken = await refreshToken();
+    //   if (newAccessToken) {
+    //     try {
+    //       const retryResponse = await makeRequest(newAccessToken);
+    //       return retryResponse;
+    //     } catch (retryError) {
+    //       if (retryError.response && retryError.response.status === 401) {
+    //         console.error('Unauthorized: Token refresh succeeded but request failed.');
+    //       } else {
+    //         console.error('Request error after token refresh');
+    //       }
+    //       throw retryError;
+    //     }
+    //   } else {
+    //     console.error('Unauthorized: Token refresh failed.');
+    //   }
+    // } else {
+    //   console.error('Request error');
+    // }
     throw error;
   }
 };
