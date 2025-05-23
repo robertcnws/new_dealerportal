@@ -1893,6 +1893,21 @@ def api_dealerportal_manage_user(request, pk):
             return JsonResponse({'message': message}, status=200)
         return JsonResponse({'error': 'Error', 'message': 'Error updating user profile'}, status=200)
     # return JsonResponse({'error': 'Invalid token', 'description': 'Invalid Token for this request'}, status=401)
+    
+    
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def api_dealerportal_change_password(request, pk):
+    try:
+        user = User.objects.get(id=pk)
+    except User.DoesNotExist:
+        return HttpResponse("User does not exist.")
+    data = json.loads(request.body)
+    password = data.get('new_password')
+    user.set_password(password)
+    user.save()
+    message = "Password updated successfully."
+    return JsonResponse({'message': message}, status=200)
 
 
 @api_view(['POST'])

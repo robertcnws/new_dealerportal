@@ -10,6 +10,7 @@ import DateDifferenceComponent from '../../../../../Utils/components/DateDiffere
 import NavigationButtonComponent from '../../../../../Utils/components/NavigationButtonComponent/NavigationButtonComponent';
 import ModalManageUserComponent from '../ModalManageUserComponent/ModalManageUserComponent';
 import CustomTablePaginationComponent from '../../../../../Utils/components/CustomTablePaginationComponent/CustomTablePaginationComponent';
+import ModalChangePasswordUserComponent from '../ModalChangePasswordUserComponent/ModalChangePasswordUserComponent';
 
 const TablesDealershipAccountComponent = ({ dealership }) => {
 
@@ -20,6 +21,7 @@ const TablesDealershipAccountComponent = ({ dealership }) => {
   const [listPendingInvitations, setListPendingInvitations] = useState([]);
   const user = JSON.parse(localStorage.getItem('userLogged') || '{}');
   const [openModal, setOpenModal] = useState(false);
+  const [openModalPassword, setOpenModalPassword] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
   const [pageDealerAdmin, setPageDealerAdmin] = useState(0);
   const [pageEstimator, setPageEstimator] = useState(0);
@@ -36,6 +38,16 @@ const TablesDealershipAccountComponent = ({ dealership }) => {
   const handleCloseModal = () => {
     setSelectedRow(null);
     setOpenModal(false);
+  };
+
+  const handleOpenModalChangePassword = (row) => {
+    setSelectedRow(row);
+    setOpenModalPassword(true);
+  };
+
+  const handleCloseModalChangePassword = () => {
+    setSelectedRow(null);
+    setOpenModalPassword(false);
   };
 
   const handleChangePageDealerAdmin = (event, newPage) => {
@@ -442,6 +454,13 @@ const TablesDealershipAccountComponent = ({ dealership }) => {
                         visibility: true,
                         noBorder: true,
                       },
+                      {
+                        label: 'Change password',
+                        icon: <i className="bi bi-person-fill-lock" style={{ marginRight: 10 }}></i>,
+                        onClick: () => handleOpenModalChangePassword(row),
+                        visibility: true,
+                        noBorder: true,
+                      },
                       ...(user.data.role.includes('AppAdmin') ? [
                         {
                           label: row.is_active ? 'Deactivate' : 'Activate',
@@ -548,6 +567,13 @@ const TablesDealershipAccountComponent = ({ dealership }) => {
                         label: 'Manage',
                         icon: <i className="bi bi-pencil-square" style={{ marginRight: 10 }}></i>,
                         onClick: () => handleOpenModal(row),
+                        visibility: true,
+                        noBorder: true,
+                      },
+                      {
+                        label: 'Change password',
+                        icon: <i className="bi bi-person-fill-lock" style={{ marginRight: 10 }}></i>,
+                        onClick: () => handleOpenModalChangePassword(row),
                         visibility: true,
                         noBorder: true,
                       },
@@ -685,6 +711,7 @@ const TablesDealershipAccountComponent = ({ dealership }) => {
 
       </Box>
       <ModalManageUserComponent user={selectedRow} open={openModal} handleClose={handleCloseModal} />
+      <ModalChangePasswordUserComponent user={selectedRow} open={openModalPassword} handleClose={handleCloseModalChangePassword} />
     </>
   );
 }
