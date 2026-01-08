@@ -1,52 +1,61 @@
-import React, { useEffect, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { Grid, IconButton, Menu, MenuItem, useTheme, useMediaQuery } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { Link } from 'react-router-dom';
 
-const NavigationButtonComponent = ({ children, bgcolor, row }) => {
-
+const NavigationButtonComponent = ({ children = [], bgcolor, row }) => {
   const [anchorEl, setAnchorEl] = useState(null);
-  const [border, setBorder] = useState('1px solid #ddd');
-  const [borderRadius, setBorderRadius] = useState('');
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  // const isMobile = useMediaQuery('(max-width:999px)');
 
-  useEffect(() => {
-    if (children[0].noBorder) {
-      setBorder('none');
-      // setBorderRight('1px solid #ddd');
-      setBorderRadius('0px 0px 0px 0px');
-    }
-    else {
-      setBorder('1px solid #ddd');
-      // setBorderRight('1px solid #ddd');
-      setBorderRadius('5px 5px 5px 5px');
-    }
-  }, [border, setBorder, setBorderRadius]);
+  const { border, borderRadius } = useMemo(() => {
+    const noBorder = Boolean(children?.[0]?.noBorder);
+    return {
+      border: noBorder ? 'none' : '1px solid #ddd',
+      borderRadius: noBorder ? '0px 0px 0px 0px' : '5px 5px 5px 5px',
+    };
+  }, [children]);
 
-  const handleClick = (event) => {
+  const handleClick = useCallback((event) => {
     setAnchorEl(event.currentTarget);
-  };
+  }, []);
 
-  const handleClose = (onClick) => {
-    if (onClick) {
+  const handleClose = useCallback(
+    (onClick) => {
       if (typeof onClick === 'function') {
-        if (row) {
-          onClick(row);
-        }
-        else {
-          onClick();
-        }
+        row ? onClick(row) : onClick();
       }
-    }
-    setAnchorEl(null);
-  };
+      setAnchorEl(null);
+    },
+    [row]
+  );
+
+  const menuItemSx = useMemo(
+    () => ({
+      color: 'black',
+      '&:hover': {
+        backgroundColor: '#f1f1f1',
+        borderRadius: '5px 5px 5px 5px',
+        marginLeft: '2px',
+        maxWidth: isMobile ? '100%' : '95%',
+        minWidth: isMobile ? '100%' : '95%',
+      },
+      '&.Mui-selected': {
+        backgroundColor: '#f1f1f1',
+        borderRadius: '5px 5px 5px 5px',
+        marginLeft: '2px',
+        maxWidth: isMobile ? '100%' : '95%',
+        minWidth: isMobile ? '100%' : '95%',
+      },
+    }),
+    [isMobile]
+  );
 
   return (
     <Grid item>
-      <IconButton onClick={handleClick}
-        style={{ backgroundColor: bgcolor, borderRadius: borderRadius, border: border }}
+      <IconButton
+        onClick={handleClick}
+        style={{ backgroundColor: bgcolor, borderRadius, border }}
         sx={{
           maxHeight: isMobile ? '100%' : '40px',
           maxWidth: isMobile ? '100%' : '40px',
@@ -57,52 +66,28 @@ const NavigationButtonComponent = ({ children, bgcolor, row }) => {
       >
         <MoreVertIcon />
       </IconButton>
+
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
-        onClose={handleClose}
-        sx={{
-          '& .MuiMenuItem-root': {
-            color: 'black', // Color de texto por defecto
-            '&:hover': {
-              backgroundColor: '#f1f1f1', // Color azul en hover
-              borderRadius: '5px 5px 5px 5px',
-              marginLeft: '2px',
-              maxWidth: isMobile ? '100%' : '95%',
-              minWidth: isMobile ? '100%' : '95%',
-            },
-            '&.Mui-selected': {
-              backgroundColor: '#f1f1f1', // Color azul cuando seleccionado
-              borderRadius: '5px 5px 5px 5px',
-              marginLeft: '2px',
-              maxWidth: isMobile ? '100%' : '95%',
-              minWidth: isMobile ? '100%' : '95%',
-            },
-          },
-        }}
+        onClose={() => handleClose()}
+        sx={{ '& .MuiMenuItem-root': menuItemSx }}
       >
-
-        {
-          children.map((child, index) => {
-            return child.visibility &&
-              (
-                <MenuItem
-                  key={index}
-                  onClick={() => handleClose(child.onClick)}
-                  component={child.route ? Link : null}
-                  to={child.route ? child.route : null}
-
-                >
-                  {child.icon} {child.label}
-                </MenuItem>
-              );
-          })
-        }
+        {(children || []).map((child, index) =>
+          child?.visibility ? (
+            <MenuItem
+              key={`${child.label || 'item'}-${index}`}
+              onClick={() => handleClose(child.onClick)}
+              component={child.route ? Link : undefined}
+              to={child.route || undefined}
+            >
+              {child.icon} {child.label}
+            </MenuItem>
+          ) : null
+        )}
       </Menu>
     </Grid>
-  )
-
+  );
 };
-
 
 export default NavigationButtonComponent;

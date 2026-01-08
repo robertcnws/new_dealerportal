@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState, useContext, useCallback } from 'react';
 import { SearchContext } from '../../../SearchContextComponent/SearchContextComponent';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -31,12 +31,10 @@ import NavigationButtonComponent from '../../../Utils/components/NavigationButto
 import ModalCreateNewUserComponent from '../ModalCreateNewUserComponent/ModalCreateNewUserComponent';
 import CustomAlertComponent from '../../../Utils/components/CustomAlertComponent/CustomAlertComponent';
 
-
-
 const useStyles = makeStyles({
   row: {
     '&:hover': {
-      backgroundColor: '#f9f9f5', // Cambia esto por el color que desees
+      backgroundColor: '#f9f9f5',
     },
   },
 });
@@ -61,7 +59,6 @@ const ListManageDealershipComponent = () => {
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  // const isMobile = useMediaQuery('(max-width:999px)');
 
   const columns = [
     { field: 'status', headerName: 'Status', width: isMobile ? 80 : 100 },
@@ -75,43 +72,13 @@ const ListManageDealershipComponent = () => {
     ] : []),
   ];
 
-  useEffect(() => {
-    document.title = 'Dealer Portal | Dealerships';
-    const user = JSON.parse(localStorage.getItem('userLogged') || '{}');
-    if (user.data?.id) {
-      const payload = { user_id: user.data.id };
-      fetchDealerships(payload);
-    }
-  }, [fetchDealerships, localStorage, apiUrl, setDealerships, setLoading, setError, setFilteredDealerships]);
-
-  useEffect(() => {
-    const filteredList = filterDealerships(filter, searchTermGlobal);
-    setFilteredDealerships(filteredList);
-  }, [filter, searchTermGlobal, dealerships, setFilteredDealerships, filterDealerships, setPage, setRowsPerPage]);
-
-  useEffect(() => {
-    const rows = filteredDealerships.map(dealership => ({
-      id: dealership.id,
-      status: dealership.is_active ? 'active' : 'inactive',
-      logo: dealership.logo,
-      account_name: dealership.name,
-      phone: dealership.company_phone,
-      tier: dealership.pricing_tier,
-      dealer_admin: `${dealership.dealer_admin?.first_name ? dealership.dealer_admin.first_name : ''} ${dealership.dealer_admin?.last_name ? dealership.dealer_admin.last_name : ''}`,
-      address: dealership.company_address,
-      email: dealership.zoho_email,
-      zoho_id: dealership.zoho_id,
-    }));
-    setTableData(rows);
-  }, [filteredDealerships, setTableData]);
-
-  const fetchDealerships = async (payload) => {
+  const fetchDealerships = useCallback(async (payload) => {
     try {
       const response = await fetchWithToken(`${apiUrl}/dealerportal/dealerships/`, 'GET', payload, {}, apiUrl);
       if (response.status === 200) {
         setDealerships(response.data.data);
         setFilteredDealerships(response.data.data);
-        // console.log('response.data.data', response.data.data);
+        setError(null);
       } else {
         throw new Error(`Failed to fetch data`);
       }
@@ -120,9 +87,9 @@ const ListManageDealershipComponent = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const filterDealerships = (filter, searchTerm) => {
+  const filterDealerships = useCallback((filterValue, searchTerm) => {
     const normalizedSearchTerm = searchTerm ? searchTerm.toLowerCase() : '';
     return dealerships.filter(dealership => {
       const matchesSearchTerm = [
@@ -138,9 +105,42 @@ const ListManageDealershipComponent = () => {
         dealership.zoho_id
       ].some(field => field?.toLowerCase().includes(normalizedSearchTerm));
 
-      return filter === 'all' ? matchesSearchTerm : matchesSearchTerm;
+      return filterValue === 'all' ? matchesSearchTerm : matchesSearchTerm;
     });
-  };
+  }, [dealerships]);
+
+  useEffect(() => {
+    document.title = 'Dealer Portal | Dealerships';
+    const user = JSON.parse(localStorage.getItem('userLogged') || '{}');
+    if (user?.data?.id) {
+      const payload = { user_id: user.data.id };
+      fetchDealerships(payload);
+    } else {
+      setLoading(false);
+    }
+  }, [fetchDealerships]);
+
+  useEffect(() => {
+    const filteredList = filterDealerships(filter, searchTermGlobal);
+    setFilteredDealerships(filteredList);
+    setPage(0);
+  }, [filter, searchTermGlobal, dealerships, filterDealerships]);
+
+  useEffect(() => {
+    const rows = filteredDealerships.map(dealership => ({
+      id: dealership.id,
+      status: dealership.is_active ? 'active' : 'inactive',
+      logo: dealership.logo,
+      account_name: dealership.name,
+      phone: dealership.company_phone,
+      tier: dealership.pricing_tier,
+      dealer_admin: `${dealership.dealer_admin?.first_name ? dealership.dealer_admin.first_name : ''} ${dealership.dealer_admin?.last_name ? dealership.dealer_admin.last_name : ''}`,
+      address: dealership.company_address,
+      email: dealership.zoho_email,
+      zoho_id: dealership.zoho_id,
+    }));
+    setTableData(rows);
+  }, [filteredDealerships]);
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -165,17 +165,15 @@ const ListManageDealershipComponent = () => {
     navigate(`${apiFrontendRoot}/dealership-details`, { state: { dealership: dealership } });
   };
 
-
-  const handleDeactivateDealership = async (dealership) => {
+  const handleDeactivateDealership = useCallback(async (dealership) => {
     const customClassSwal = {
       popup: 'small-popup',
       title: 'small-title',
       icon: 'custom-icon',
       content: 'small-content',
       confirmButton: 'small-confirm-button'
-    }
+    };
     try {
-      console.log('dealership', dealership);
       const isActive = dealership.status === 'active';
       const action = isActive ? 'deactivate' : 'activate';
       const actionIng = isActive ? 'deactivating' : 'activating';
@@ -204,7 +202,7 @@ const ListManageDealershipComponent = () => {
                 confirmButtonText: 'OK',
                 customClass: customClassSwal,
                 willClose: () => {
-                  fetchDealerships();
+                  fetchDealerships(payload);
                 }
               });
             } else {
@@ -236,8 +234,7 @@ const ListManageDealershipComponent = () => {
         customClass: customClassSwal
       });
     }
-  };
-
+  }, [fetchDealerships]);
 
   const configCustomFilter = {
     filter: filter,
@@ -246,9 +243,6 @@ const ListManageDealershipComponent = () => {
     hasSearch: false,
     marginBottomInDetails: '10px'
   };
-
-
-
 
   const childrenNavigationUpButton = [
     { label: 'New Dealership', icon: <AddIcon sx={{ marginRight: 1 }} />, onClick: handleOpenModalAdd, visibility: true, noBorder: false },
@@ -288,7 +282,7 @@ const ListManageDealershipComponent = () => {
                           {dealerships.length > 0 && (
                             <CustomFilterComponent configCustomFilter={configCustomFilter} sx={{ ml: 4 }} />
                           )}
-                          < CustomAlertComponent
+                          <CustomAlertComponent
                             severity='warning'
                             title='No dealerships found'
                             message={dealerships.length === 0 ? 'Proceed to create Dealerships in the next button' : ''}
@@ -313,7 +307,7 @@ const ListManageDealershipComponent = () => {
                           {dealerships.length > 0 && (
                             <CustomFilterComponent configCustomFilter={configCustomFilter} />
                           )}
-                          < CustomAlertComponent
+                          <CustomAlertComponent
                             severity='warning'
                             title='No dealerships found'
                             message={dealerships.length === 0 ? 'Proceed to create Dealerships in the next button' : ''}
@@ -337,7 +331,6 @@ const ListManageDealershipComponent = () => {
                 bgcolor: 'white',
                 borderRadius: '10px',
                 mb: 0,
-                // mr: isMobile ? -4 : -3,
                 ml: isMobile ? -1 : 4,
                 maxHeight: 'calc(100vh - 180px)',
                 overflowY: 'auto'
@@ -375,7 +368,6 @@ const ListManageDealershipComponent = () => {
                       ];
 
                       return (
-
                         <TableRow key={row.id} className={classes.row}
                           sx={{ cursor: 'pointer', p: 1 }}
                         >
@@ -403,9 +395,8 @@ const ListManageDealershipComponent = () => {
                             <NavigationButtonComponent children={childrenNavigationRightButton} bgcolor='white' row={row} />
                           </TableCell>
                         </TableRow>
-                      )
-                    }
-                    )}
+                      );
+                    })}
                     <CustomTablePaginationComponent
                       columnsLength={columns.length + 1}
                       data={filteredDealerships}
@@ -424,6 +415,6 @@ const ListManageDealershipComponent = () => {
       <ModalCreateNewUserComponent open={openModalAdd} handleClose={handleCloseModalAdd} onSyncComplete={fetchDealerships} />
     </>
   );
-}
+};
 
 export default ListManageDealershipComponent;

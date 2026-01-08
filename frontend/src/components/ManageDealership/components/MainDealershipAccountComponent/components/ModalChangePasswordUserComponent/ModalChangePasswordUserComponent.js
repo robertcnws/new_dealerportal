@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import {
   Typography,
@@ -28,11 +28,13 @@ const ModalChangePasswordUserComponent = ({ user, open, handleClose, onSyncCompl
   const userLogged = JSON.parse(localStorage.getItem('userLogged') || '{}');
 
   useEffect(() => {
-    reset({
-      new_password: '',
-      confirm_password: '',
-    });
-  }, [reset]);
+    if (open) {
+      reset({
+        new_password: '',
+        confirm_password: '',
+      });
+    }
+  }, [open, reset]);
 
   const style = {
     position: 'absolute',
@@ -47,7 +49,12 @@ const ModalChangePasswordUserComponent = ({ user, open, handleClose, onSyncCompl
     borderRadius: '10px',
   };
 
-  const onSubmit = async (data) => {
+  const handleCloseModal = useCallback(() => {
+    reset();
+    handleClose();
+  }, [reset, handleClose]);
+
+  const onSubmit = useCallback(async (data) => {
     const customClassSwal = {
       popup: 'small-popup',
       title: 'small-title',
@@ -59,46 +66,37 @@ const ModalChangePasswordUserComponent = ({ user, open, handleClose, onSyncCompl
       const url = `${apiUrl}/dealerportal/change-password/${user.id}/`;
       const response = await fetchWithToken(url, 'POST', data, {}, apiUrl);
       if (response.status === 200) {
-        if (response.status === 200) {
-          handleCloseModal();
-          if (!response.data.error) {
-            Swal.fire({
-              title: 'Success',
-              text: `${response.data.message}`,
-              icon: 'success',
-              confirmButtonText: 'OK',
-              customClass: customClassSwal,
-              willClose: () => {
-                if (onSyncComplete) {
-                  const payload = {
-                    user_id: userLogged.data.id,
-                  };
-                  onSyncComplete(payload);
-                }
-              },
-
-            });
-          } else {
-            Swal.fire({
-              title: 'Error',
-              text: `${response.data.message}`,
-              icon: 'error',
-              confirmButtonText: 'Accept',
-              customClass: customClassSwal,
-            });
-          }
+        handleCloseModal();
+        if (!response.data.error) {
+          Swal.fire({
+            title: 'Success',
+            text: `${response.data.message}`,
+            icon: 'success',
+            confirmButtonText: 'OK',
+            customClass: customClassSwal,
+            willClose: () => {
+              if (onSyncComplete) {
+                const payload = {
+                  user_id: userLogged.data.id,
+                };
+                onSyncComplete(payload);
+              }
+            },
+          });
+        } else {
+          Swal.fire({
+            title: 'Error',
+            text: `${response.data.message}`,
+            icon: 'error',
+            confirmButtonText: 'Accept',
+            customClass: customClassSwal,
+          });
         }
       }
-    }
-    catch (error) {
+    } catch (error) {
       console.log(error);
     }
-  };
-
-  const handleCloseModal = () => {
-    reset();
-    handleClose();
-  };
+  }, [user, handleCloseModal, onSyncComplete, userLogged]);
 
   return (
     <Modal
@@ -124,9 +122,7 @@ const ModalChangePasswordUserComponent = ({ user, open, handleClose, onSyncCompl
         </div>
         <div className="modal-body">
           <form onSubmit={handleSubmit(onSubmit)}>
-
             <Box className="inputDiv" sx={{ mb: 3 }}>
-              {/* <label htmlFor="name">Name:</label> */}
               <TextField
                 label="New Password"
                 id="new_password"
@@ -149,7 +145,6 @@ const ModalChangePasswordUserComponent = ({ user, open, handleClose, onSyncCompl
             </Box>
 
             <Box className="inputDiv" sx={{ mb: 3 }}>
-              {/* <label htmlFor="name">Name:</label> */}
               <TextField
                 label="Confirm Password"
                 id="confirm_password"

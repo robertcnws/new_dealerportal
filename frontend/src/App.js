@@ -43,7 +43,7 @@ const useIdleTimer = (navigate, timeout = 60000) => {
     clearTimeout(timer.current);
     timer.current = setTimeout(() => {
       logout();
-      navigate('/'); // Redirecciona al cerrar sesión
+      navigate('/');
     }, timeout);
   }, [logout, navigate, timeout]);
 
@@ -65,7 +65,6 @@ const useIdleTimer = (navigate, timeout = 60000) => {
   return null;
 };
 
-
 const App = () => {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -73,24 +72,38 @@ const App = () => {
   const [theme, setTheme] = useState('light');
   const [isLoadingOperation, setIsLoadingOperation] = useState(false);
 
-  const handleThemeChange = () => {
+  const handleThemeChange = useCallback(() => {
     setTheme((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
-  };
+  }, []);
 
   return (
-    <>
       <SearchProvider>
         <ThemeProvider theme={theme === 'light' ? lightTheme : darkTheme}>
-          <CssBaseline /> 
+          <CssBaseline />
           {isAuthenticated && <ToastContainer />}
           <Routes>
             <Route path="/" element={<HomeRedirect />} />
             <Route path="/password-reset" element={<PasswordResetRequestComponent />} />
-            <Route path={`${apiFrontendRoot}/*`} element={<ProtectedRoutesComponent><MainContentComponent onThemeChange={handleThemeChange} /></ProtectedRoutesComponent>} >
+            <Route
+              path={`${apiFrontendRoot}/*`}
+              element={
+                <ProtectedRoutesComponent>
+                  <MainContentComponent onThemeChange={handleThemeChange} />
+                </ProtectedRoutesComponent>
+              }
+            >
               <Route path="" element={<HomeComponent />} />
               <Route path="check-stock" element={<ListStocksComponent />} />
               <Route path="quotes" element={<ListQuotesComponent />} />
-              <Route path="quote-details" element={<ListStocksQuoteDetailsComponent setIsLoadingOperation={setIsLoadingOperation} isLoadingOperation={isLoadingOperation} />} />
+              <Route
+                path="quote-details"
+                element={
+                  <ListStocksQuoteDetailsComponent
+                    setIsLoadingOperation={setIsLoadingOperation}
+                    isLoadingOperation={isLoadingOperation}
+                  />
+                }
+              />
               <Route path="orders" element={<ListOrdersComponent />} />
               <Route path="order-details" element={<OrderDetailsComponent />} />
               <Route path="dealerships" element={<ListManageDealershipComponent />} />
@@ -102,7 +115,6 @@ const App = () => {
           </Routes>
         </ThemeProvider>
       </SearchProvider>
-    </>
   );
 };
 

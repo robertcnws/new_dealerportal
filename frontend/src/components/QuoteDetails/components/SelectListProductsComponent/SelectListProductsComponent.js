@@ -1,11 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import { CircularProgress, FormControl, IconButton, InputAdornment, TextField, Tooltip, MenuItem, Box } from '@mui/material';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  CircularProgress,
+  FormControl,
+  IconButton,
+  InputAdornment,
+  TextField,
+  Tooltip,
+  MenuItem,
+  Box
+} from '@mui/material';
 import ClearIcon from '@mui/icons-material/Clear';
 import { List, AutoSizer } from 'react-virtualized';
 import { styled } from '@mui/material/styles';
 import { fetchWithToken } from '../../../../utils';
 import { apiUrl } from '../../../../config';
-
 
 const StyledMenuItem = styled(MenuItem)({
   backgroundColor: '#f0f0f0',
@@ -17,50 +25,57 @@ const StyledMenuItem = styled(MenuItem)({
 });
 
 const SelectListProductsComponent = ({ quote, handleSelectProduct }) => {
-
   const [searchTerm, setSearchTerm] = useState('');
   const [products, setProducts] = useState([]);
-  const [filteredProducts, setFilteredProducts] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchProducts();
-  }, [apiUrl, quote.status, setProducts, setLoading, setError, setFilteredProducts, fetchWithToken]);
-
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     try {
-      const payload = {
-        status: quote.status,
-      };
+      setLoading(true);
+      setError('');
+      const payload = { status: quote?.status };
       const url = `${apiUrl}/dealerportal-get-products/`;
       const response = await fetchWithToken(url, 'GET', payload, {}, apiUrl);
-      setProducts(response.data.data);
-      setFilteredProducts(response.data.data);
-    } catch (error) {
-      console.error('Error fetching qb customers:', error);
-      setError(`Failed to fetch qn customers: ${error}`);
+      const list = response?.data?.data || [];
+      setProducts(list);
+    } catch (err) {
+      console.error('Error fetching products:', err);
+      setError(`Failed to fetch products: ${err?.message || String(err)}`);
     } finally {
       setLoading(false);
     }
-  };
+  }, [quote?.status]);
 
-  const handleSearchTerm = (e) => {
-    setSearchTerm(e.target.value);
-  }
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
 
-  const handleClearSearch = () => {
-    setSearchTerm('');
-  }
+  const filteredProducts = useMemo(() => {
+    const term = (searchTerm || '').trim().toLowerCase();
+    if (!term) return products;
+    return products.filter((p) => {
+      const name = (p?.name || '').toLowerCase();
+      const sku = (p?.sku || '').toLowerCase();
+      return name.includes(term) || sku.includes(term);
+    });
+  }, [products, searchTerm]);
 
-  const rowRenderer = ({ key, index, style }) => {
-    const elem = filteredProducts[index];
-    return (
-      <StyledMenuItem key={key} style={style} value={elem.id} onClick={() => handleSelectProduct(elem)}>
-        {elem.name}
-      </StyledMenuItem>
-    );
-  };
+  const handleSearchTerm = (e) => setSearchTerm(e.target.value);
+  const handleClearSearch = () => setSearchTerm('');
+
+  const rowRenderer = useCallback(
+    ({ key, index, style }) => {
+      const elem = filteredProducts[index];
+      if (!elem) return null;
+      return (
+        <StyledMenuItem key={key} style={style} value={elem.id} onClick={() => handleSelectProduct(elem)}>
+          {elem.name}
+        </StyledMenuItem>
+      );
+    },
+    [filteredProducts, handleSelectProduct]
+  );
 
   if (loading) return <Box sx={{ mt: 3, minWidth: '100%', bgcolor: '#f1f1f1' }}>Loading...</Box>;
   if (error) return <Box sx={{ mt: 3, minWidth: '100%', bgcolor: '#f1f1f1' }}>Error: {error}</Box>;
@@ -68,7 +83,7 @@ const SelectListProductsComponent = ({ quote, handleSelectProduct }) => {
   return (
     <FormControl variant="outlined" size="small" style={{ width: '100%' }}>
       <TextField
-        label={"Search Products (" + filteredProducts.length + ")"}
+        label={`Search Products (${filteredProducts.length})`}
         variant="outlined"
         fullWidth
         value={searchTerm}
@@ -85,23 +100,20 @@ const SelectListProductsComponent = ({ quote, handleSelectProduct }) => {
                     '& .MuiTooltip-tooltip': {
                       backgroundColor: '#000000',
                       color: 'white',
-                      fontSize: '0.875rem'
-                    }
+                      fontSize: '0.875rem',
+                    },
                   }}
                 >
-                  <IconButton
-                    onClick={handleClearSearch}
-                    edge="end"
-                  >
+                  <IconButton onClick={handleClearSearch} edge="end">
                     <ClearIcon />
                   </IconButton>
                 </Tooltip>
               </InputAdornment>
             </>
           ),
-          placeholder: undefined
+          placeholder: undefined,
         }}
-        placeholder=''
+        placeholder=""
       />
       <div style={{ height: 200, width: '100%' }}>
         <AutoSizer>
@@ -112,12 +124,13 @@ const SelectListProductsComponent = ({ quote, handleSelectProduct }) => {
               rowCount={filteredProducts.length}
               rowHeight={50}
               rowRenderer={rowRenderer}
+              overscanRowCount={8}
             />
           )}
         </AutoSizer>
       </div>
     </FormControl>
-  )
-}
+  );
+};
 
 export default SelectListProductsComponent;

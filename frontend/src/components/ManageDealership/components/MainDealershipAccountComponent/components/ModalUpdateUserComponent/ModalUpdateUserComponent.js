@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import {
   Typography,
@@ -28,34 +28,28 @@ const ModalUpdateUserComponent = ({ dealership, open, handleClose, setDealership
   const [previewLogo, setPreviewLogo] = useState('');
 
   useEffect(() => {
-    reset({
-      name: dealership?.account_name || '',
-      company_address: dealership?.address || '',
-      company_phone: dealership?.phone || '',
-      zoho_email: dealership?.email || '',
-    });
+    if (open) {
+      reset({
+        name: dealership?.account_name || '',
+        company_address: dealership?.address || '',
+        company_phone: dealership?.phone || '',
+        zoho_email: dealership?.email || '',
+      });
 
-    setPreviewLogo(
-      dealership?.logo
-        ? `${staticUrl}${dealership.logo.includes('dealership.png') ? '/images/' : '/'}${dealership?.logo}`
-        : ''
-    );
-  }, [dealership, reset, open, staticUrl, apiUrl, setPreviewLogo]);
+      setPreviewLogo(
+        dealership?.logo
+          ? `${staticUrl}${dealership.logo.includes('dealership.png') ? '/images/' : '/'}${dealership?.logo}`
+          : ''
+      );
+    }
+  }, [open, dealership, reset]);
 
-  const style = {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    width: isMobile ? '100%' : '700px',
-    bgcolor: 'background.paper',
-    border: '1px solid #ddd',
-    boxShadow: 24,
-    p: 4,
-    borderRadius: '10px',
-  };
+  const handleCloseModal = useCallback(() => {
+    reset();
+    handleClose();
+  }, [reset, handleClose]);
 
-  const onSubmit = async (data) => {
+  const onSubmit = useCallback(async (data) => {
     const user = JSON.parse(localStorage.getItem('userLogged'));
     const formData = new FormData();
     formData.append('name', data.name);
@@ -104,17 +98,11 @@ const ModalUpdateUserComponent = ({ dealership, open, handleClose, setDealership
             customClass: customClassSwal,
           });
         }
-
       }
     } catch (error) {
       console.log(error);
     }
-  };
-
-  const handleCloseModal = () => {
-    reset();
-    handleClose();
-  };
+  }, [dealership, setDealership, handleCloseModal]);
 
   return (
     <Modal
@@ -140,9 +128,7 @@ const ModalUpdateUserComponent = ({ dealership, open, handleClose, setDealership
         </div>
         <div className="modal-body">
           <form onSubmit={handleSubmit(onSubmit)}>
-
             <Box className="inputDiv" sx={{ mb: 2 }}>
-              {/* <label htmlFor="name">Name:</label> */}
               <TextField
                 label="Name"
                 id="name"
@@ -208,8 +194,7 @@ const ModalUpdateUserComponent = ({ dealership, open, handleClose, setDealership
                             } else {
                               setPreviewLogo(
                                 dealership.logo
-                                  ? `${staticUrl}${dealership.logo.includes('dealership.png') ? '/images/' : '/'
-                                  }${dealership.logo}`
+                                  ? `${staticUrl}${dealership.logo.includes('dealership.png') ? '/images/' : '/'}${dealership.logo}`
                                   : ''
                               );
                             }
@@ -224,9 +209,7 @@ const ModalUpdateUserComponent = ({ dealership, open, handleClose, setDealership
               </Grid>
             </Box>
 
-
             <Box className="inputDiv" sx={{ mb: 3 }}>
-              {/* <label htmlFor="name">Company Address:</label> */}
               <TextField
                 label="Company Address"
                 id="company_address"
@@ -248,7 +231,6 @@ const ModalUpdateUserComponent = ({ dealership, open, handleClose, setDealership
             </Box>
 
             <Box className="inputDiv" sx={{ mb: 3 }}>
-              {/* <label htmlFor="name">Company Phone:</label> */}
               <TextField
                 label="Company Phone"
                 id="company_phone"
@@ -270,7 +252,6 @@ const ModalUpdateUserComponent = ({ dealership, open, handleClose, setDealership
             </Box>
 
             <Box className="inputDiv" sx={{ mb: 3 }}>
-              {/* <label htmlFor="name">Dealership ID Email:</label> */}
               <TextField
                 label="Dealership ID Email"
                 id="zoho_email"

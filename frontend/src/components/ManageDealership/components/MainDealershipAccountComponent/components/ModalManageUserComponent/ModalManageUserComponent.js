@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import {
   Typography,
@@ -27,15 +27,16 @@ const ModalManageUserComponent = ({ user, open, handleClose, onSyncComplete }) =
   const userLogged = JSON.parse(localStorage.getItem('userLogged') || '{}');
 
   useEffect(() => {
-    reset({
-      username: user?.username || '',
-      first_name: user?.first_name || '',
-      last_name: user?.last_name || '',
-      email: user?.email || '',
-      address: user?.address || '',
-    });
-
-  }, [user, reset]);
+    if (open) {
+      reset({
+        username: user?.username || '',
+        first_name: user?.first_name || '',
+        last_name: user?.last_name || '',
+        email: user?.email || '',
+        address: user?.address || '',
+      });
+    }
+  }, [open, user, reset]);
 
   const style = {
     position: 'absolute',
@@ -50,7 +51,12 @@ const ModalManageUserComponent = ({ user, open, handleClose, onSyncComplete }) =
     borderRadius: '10px',
   };
 
-  const onSubmit = async (data) => {
+  const handleCloseModal = useCallback(() => {
+    reset();
+    handleClose();
+  }, [reset, handleClose]);
+
+  const onSubmit = useCallback(async (data) => {
     const customClassSwal = {
       popup: 'small-popup',
       title: 'small-title',
@@ -62,46 +68,37 @@ const ModalManageUserComponent = ({ user, open, handleClose, onSyncComplete }) =
       const url = `${apiUrl}/dealerportal/manage-account/${user.id}/`;
       const response = await fetchWithToken(url, 'POST', data, {}, apiUrl);
       if (response.status === 200) {
-        if (response.status === 200) {
-          handleCloseModal();
-          if (!response.data.error) {
-            Swal.fire({
-              title: 'Success',
-              text: `${response.data.message}`,
-              icon: 'success',
-              confirmButtonText: 'OK',
-              customClass: customClassSwal,
-              willClose: () => {
-                if (onSyncComplete){
-                  const payload = {
-                    user_id: userLogged.data.id,
-                  };
-                  onSyncComplete(payload);
-                }
-              },
-
-            });
-          } else {
-            Swal.fire({
-              title: 'Error',
-              text: `${response.data.message}`,
-              icon: 'error',
-              confirmButtonText: 'Accept',
-              customClass: customClassSwal,
-            });
-          }
+        handleCloseModal();
+        if (!response.data.error) {
+          Swal.fire({
+            title: 'Success',
+            text: `${response.data.message}`,
+            icon: 'success',
+            confirmButtonText: 'OK',
+            customClass: customClassSwal,
+            willClose: () => {
+              if (onSyncComplete) {
+                const payload = {
+                  user_id: userLogged.data.id,
+                };
+                onSyncComplete(payload);
+              }
+            },
+          });
+        } else {
+          Swal.fire({
+            title: 'Error',
+            text: `${response.data.message}`,
+            icon: 'error',
+            confirmButtonText: 'Accept',
+            customClass: customClassSwal,
+          });
         }
       }
-    }
-    catch (error) {
+    } catch (error) {
       console.log(error);
     }
-  };
-
-  const handleCloseModal = () => {
-    reset();
-    handleClose();
-  };
+  }, [user, handleCloseModal, onSyncComplete, userLogged]);
 
   return (
     <Modal
@@ -127,9 +124,7 @@ const ModalManageUserComponent = ({ user, open, handleClose, onSyncComplete }) =
         </div>
         <div className="modal-body">
           <form onSubmit={handleSubmit(onSubmit)}>
-
             <Box className="inputDiv" sx={{ mb: 3 }}>
-              {/* <label htmlFor="name">Name:</label> */}
               <TextField
                 label="Username"
                 id="username"
@@ -151,7 +146,6 @@ const ModalManageUserComponent = ({ user, open, handleClose, onSyncComplete }) =
             </Box>
 
             <Box className="inputDiv" sx={{ mb: 3 }}>
-              {/* <label htmlFor="name">Company Address:</label> */}
               <TextField
                 label="First Name"
                 id="first_name"
@@ -173,7 +167,6 @@ const ModalManageUserComponent = ({ user, open, handleClose, onSyncComplete }) =
             </Box>
 
             <Box className="inputDiv" sx={{ mb: 3 }}>
-              {/* <label htmlFor="name">Company Phone:</label> */}
               <TextField
                 label="Last Name"
                 id="last_name"
@@ -195,7 +188,6 @@ const ModalManageUserComponent = ({ user, open, handleClose, onSyncComplete }) =
             </Box>
 
             <Box className="inputDiv" sx={{ mb: 3 }}>
-              {/* <label htmlFor="name">Dealership ID Email:</label> */}
               <TextField
                 type="email"
                 label="Email"
@@ -218,7 +210,6 @@ const ModalManageUserComponent = ({ user, open, handleClose, onSyncComplete }) =
             </Box>
 
             <Box className="inputDiv" sx={{ mb: 3 }}>
-              {/* <label htmlFor="name">Dealership ID Email:</label> */}
               <TextField
                 label="Address"
                 id="address"

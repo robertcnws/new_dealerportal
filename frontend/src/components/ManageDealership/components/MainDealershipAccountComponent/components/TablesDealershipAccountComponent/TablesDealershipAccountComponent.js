@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, useTheme, useMediaQuery } from '@mui/material';
 import { DisabledByDefaultTwoTone, EditAttributesOutlined, FlashOnOutlined, Logout, PowerSettingsNewOutlined } from '@mui/icons-material';
 import CustomAlertComponent from '../../../../../Utils/components/CustomAlertComponent/CustomAlertComponent';
@@ -13,7 +13,6 @@ import CustomTablePaginationComponent from '../../../../../Utils/components/Cust
 import ModalChangePasswordUserComponent from '../ModalChangePasswordUserComponent/ModalChangePasswordUserComponent';
 
 const TablesDealershipAccountComponent = ({ dealership }) => {
-
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [listDealershipAdmin, setListDealershipAdmin] = useState([]);
@@ -30,55 +29,57 @@ const TablesDealershipAccountComponent = ({ dealership }) => {
   const [rowsPerPageEstimator, setRowsPerPageEstimator] = useState(numberRows);
   const [rowsPerPagePendingInvitation, setRowsPerPagePendingInvitation] = useState(numberRows);
 
-  const handleOpenModal = (row) => {
+  const intervalRef = useRef(null);
+
+  const handleOpenModal = useCallback((row) => {
     setSelectedRow(row);
     setOpenModal(true);
-  };
+  }, []);
 
-  const handleCloseModal = () => {
+  const handleCloseModal = useCallback(() => {
     setSelectedRow(null);
     setOpenModal(false);
-  };
+  }, []);
 
-  const handleOpenModalChangePassword = (row) => {
+  const handleOpenModalChangePassword = useCallback((row) => {
     setSelectedRow(row);
     setOpenModalPassword(true);
-  };
+  }, []);
 
-  const handleCloseModalChangePassword = () => {
+  const handleCloseModalChangePassword = useCallback(() => {
     setSelectedRow(null);
     setOpenModalPassword(false);
-  };
+  }, []);
 
-  const handleChangePageDealerAdmin = (event, newPage) => {
+  const handleChangePageDealerAdmin = useCallback((event, newPage) => {
     setPageDealerAdmin(newPage);
-  };
+  }, []);
 
-  const handleChangeRowsPerPageDealerAdmin = (event) => {
+  const handleChangeRowsPerPageDealerAdmin = useCallback((event) => {
     const rows = parseInt(event.target.value, 10);
     setRowsPerPageDealerAdmin(rows);
     setPageDealerAdmin(0);
-  };
+  }, []);
 
-  const handleChangePageEstimator = (event, newPage) => {
+  const handleChangePageEstimator = useCallback((event, newPage) => {
     setPageEstimator(newPage);
-  };
+  }, []);
 
-  const handleChangeRowsPerPageEstimator = (event) => {
+  const handleChangeRowsPerPageEstimator = useCallback((event) => {
     const rows = parseInt(event.target.value, 10);
     setRowsPerPageEstimator(rows);
     setPageEstimator(0);
-  };
+  }, []);
 
-  const handleChangePendingInvitation = (event, newPage) => {
+  const handleChangePendingInvitation = useCallback((event, newPage) => {
     setPagePendingInvitation(newPage);
-  };
+  }, []);
 
-  const handleChangeRowsPerPagePendingInvitation = (event) => {
+  const handleChangeRowsPerPagePendingInvitation = useCallback((event) => {
     const rows = parseInt(event.target.value, 10);
     setRowsPerPagePendingInvitation(rows);
     setPagePendingInvitation(0);
-  };
+  }, []);
 
   const columnsDealerAdmin = [
     { field: 'status', headerName: 'Status', width: 100 },
@@ -107,7 +108,26 @@ const TablesDealershipAccountComponent = ({ dealership }) => {
     { field: 'created', headerName: 'Created', width: 150 },
   ];
 
-  const handleDeactivateDealerAdmin = async (row) => {
+  const fetchInfo = useCallback(async (payload) => {
+    try {
+      const response = await fetchWithToken(`${apiUrl}/dealerportal/dealerships/manage-dealership/${dealership?.id}/`, 'GET', payload, {}, apiUrl);
+      if (response.status === 200) {
+        let listAdmins = [];
+        if (response.data.data.dealership_admin) {
+          listAdmins.push(response.data.data.dealership_admin || {});
+        }
+        setListDealershipAdmin(listAdmins);
+        setListEstimatorsAccounts(response.data.data.estimators);
+        setListPendingInvitations(response.data.data.pending_invitations);
+      } else {
+        throw new Error(`Failed to fetch data`);
+      }
+    } catch (err) {
+      console.error(err.message);
+    }
+  }, [dealership?.id]);
+
+  const handleDeactivateDealerAdmin = useCallback(async (row) => {
     const customClassSwal = {
       popup: 'small-popup',
       title: 'small-title',
@@ -134,31 +154,29 @@ const TablesDealershipAccountComponent = ({ dealership }) => {
           };
           const response = await fetchWithToken(url, 'POST', data, {}, apiUrl);
           if (response.status === 200) {
-            if (response.status === 200) {
-              handleCloseModal();
-              if (!response.data.error) {
-                Swal.fire({
-                  title: 'Success',
-                  text: `${response.data.message}`,
-                  icon: 'success',
-                  confirmButtonText: 'OK',
-                  customClass: customClassSwal,
-                  willClose: () => {
-                    const payload = {
-                      user_id: user.data.id,
-                    };
-                    fetchInfo(payload);
-                  }
-                });
-              } else {
-                Swal.fire({
-                  title: 'Error',
-                  text: `${response.data.message}`,
-                  icon: 'error',
-                  confirmButtonText: 'Accept',
-                  customClass: customClassSwal,
-                });
-              }
+            handleCloseModal();
+            if (!response.data.error) {
+              Swal.fire({
+                title: 'Success',
+                text: `${response.data.message}`,
+                icon: 'success',
+                confirmButtonText: 'OK',
+                customClass: customClassSwal,
+                willClose: () => {
+                  const payload = {
+                    user_id: user.data.id,
+                  };
+                  fetchInfo(payload);
+                }
+              });
+            } else {
+              Swal.fire({
+                title: 'Error',
+                text: `${response.data.message}`,
+                icon: 'error',
+                confirmButtonText: 'Accept',
+                customClass: customClassSwal,
+              });
             }
           }
         }
@@ -167,9 +185,9 @@ const TablesDealershipAccountComponent = ({ dealership }) => {
         }
       }
     });
-  };
+  }, [handleCloseModal, fetchInfo]);
 
-  const handleDemoteToEstimator = async (row) => {
+  const handleDemoteToEstimator = useCallback(async (row) => {
     const customClassSwal = {
       popup: 'small-popup',
       title: 'small-title',
@@ -196,31 +214,29 @@ const TablesDealershipAccountComponent = ({ dealership }) => {
           };
           const response = await fetchWithToken(url, 'POST', data, {}, apiUrl);
           if (response.status === 200) {
-            if (response.status === 200) {
-              handleCloseModal();
-              if (!response.data.error) {
-                Swal.fire({
-                  title: 'Success',
-                  text: `${response.data.message}`,
-                  icon: 'success',
-                  confirmButtonText: 'OK',
-                  customClass: customClassSwal,
-                  willClose: () => {
-                    const payload = {
-                      user_id: user.data.id,
-                    };
-                    fetchInfo(payload);
-                  }
-                });
-              } else {
-                Swal.fire({
-                  title: 'Error',
-                  text: `${response.data.message}`,
-                  icon: 'error',
-                  confirmButtonText: 'Accept',
-                  customClass: customClassSwal,
-                });
-              }
+            handleCloseModal();
+            if (!response.data.error) {
+              Swal.fire({
+                title: 'Success',
+                text: `${response.data.message}`,
+                icon: 'success',
+                confirmButtonText: 'OK',
+                customClass: customClassSwal,
+                willClose: () => {
+                  const payload = {
+                    user_id: user.data.id,
+                  };
+                  fetchInfo(payload);
+                }
+              });
+            } else {
+              Swal.fire({
+                title: 'Error',
+                text: `${response.data.message}`,
+                icon: 'error',
+                confirmButtonText: 'Accept',
+                customClass: customClassSwal,
+              });
             }
           }
         }
@@ -229,9 +245,9 @@ const TablesDealershipAccountComponent = ({ dealership }) => {
         }
       }
     });
-  };
+  }, [handleCloseModal, fetchInfo]);
 
-  const handleResendInvitation = async (row) => {
+  const handleResendInvitation = useCallback(async (row) => {
     const customClassSwal = {
       popup: 'small-popup',
       title: 'small-title',
@@ -258,31 +274,29 @@ const TablesDealershipAccountComponent = ({ dealership }) => {
           };
           const response = await fetchWithToken(url, 'POST', data, {}, apiUrl);
           if (response.status === 200) {
-            if (response.status === 200) {
-              handleCloseModal();
-              if (!response.data.error) {
-                Swal.fire({
-                  title: 'Success',
-                  text: `${response.data.message}`,
-                  icon: 'success',
-                  confirmButtonText: 'OK',
-                  customClass: customClassSwal,
-                  willClose: () => {
-                    const payload = {
-                      user_id: user.data.id,
-                    };
-                    fetchInfo(payload);
-                  }
-                });
-              } else {
-                Swal.fire({
-                  title: 'Error',
-                  text: `${response.data.message}`,
-                  icon: 'error',
-                  confirmButtonText: 'Accept',
-                  customClass: customClassSwal,
-                });
-              }
+            handleCloseModal();
+            if (!response.data.error) {
+              Swal.fire({
+                title: 'Success',
+                text: `${response.data.message}`,
+                icon: 'success',
+                confirmButtonText: 'OK',
+                customClass: customClassSwal,
+                willClose: () => {
+                  const payload = {
+                    user_id: user.data.id,
+                  };
+                  fetchInfo(payload);
+                }
+              });
+            } else {
+              Swal.fire({
+                title: 'Error',
+                text: `${response.data.message}`,
+                icon: 'error',
+                confirmButtonText: 'Accept',
+                customClass: customClassSwal,
+              });
             }
           }
         }
@@ -291,9 +305,9 @@ const TablesDealershipAccountComponent = ({ dealership }) => {
         }
       }
     });
-  };
+  }, [handleCloseModal, fetchInfo]);
 
-  const handleDeleteInvitation = async (row) => {
+  const handleDeleteInvitation = useCallback(async (row) => {
     const customClassSwal = {
       popup: 'small-popup',
       title: 'small-title',
@@ -321,31 +335,29 @@ const TablesDealershipAccountComponent = ({ dealership }) => {
           };
           const response = await fetchWithToken(url, 'POST', data, {}, apiUrl);
           if (response.status === 200) {
-            if (response.status === 200) {
-              handleCloseModal();
-              if (!response.data.error) {
-                Swal.fire({
-                  title: 'Success',
-                  text: `${response.data.message}`,
-                  icon: 'success',
-                  confirmButtonText: 'OK',
-                  customClass: customClassSwal,
-                  willClose: () => {
-                    const payload = {
-                      user_id: user.data.id,
-                    };
-                    fetchInfo(payload);
-                  }
-                });
-              } else {
-                Swal.fire({
-                  title: 'Error',
-                  text: `${response.data.message}`,
-                  icon: 'error',
-                  confirmButtonText: 'Accept',
-                  customClass: customClassSwal,
-                });
-              }
+            handleCloseModal();
+            if (!response.data.error) {
+              Swal.fire({
+                title: 'Success',
+                text: `${response.data.message}`,
+                icon: 'success',
+                confirmButtonText: 'OK',
+                customClass: customClassSwal,
+                willClose: () => {
+                  const payload = {
+                    user_id: user.data.id,
+                  };
+                  fetchInfo(payload);
+                }
+              });
+            } else {
+              Swal.fire({
+                title: 'Error',
+                text: `${response.data.message}`,
+                icon: 'error',
+                confirmButtonText: 'Accept',
+                customClass: customClassSwal,
+              });
             }
           }
         }
@@ -354,8 +366,7 @@ const TablesDealershipAccountComponent = ({ dealership }) => {
         }
       }
     });
-  };
-
+  }, [handleCloseModal, fetchInfo]);
 
   const childrenNavigationPendingInvitations = [
     {
@@ -374,36 +385,24 @@ const TablesDealershipAccountComponent = ({ dealership }) => {
     },
   ];
 
-  const fetchInfo = async (payload) => {
-    try {
-      const response = await fetchWithToken(`${apiUrl}/dealerportal/dealerships/manage-dealership/${dealership?.id}/`, 'GET', payload, {}, apiUrl);
-      if (response.status === 200) {
-        let listAdmins = [];
-        if (response.data.data.dealership_admin) {
-          listAdmins.push(response.data.data.dealership_admin || {});
-        }
-        setListDealershipAdmin(listAdmins);
-        setListEstimatorsAccounts(response.data.data.estimators);
-        setListPendingInvitations(response.data.data.pending_invitations);
-      } else {
-        throw new Error(`Failed to fetch data`);
-      }
-    } catch (err) {
-      console.error(err.message);
-    }
-  };
-
   useEffect(() => {
+    if (!dealership?.id || !user?.data?.id) return;
+
     const payload = {
       user_id: user.data.id,
     };
+
     fetchInfo(payload);
-    const intervalId = setInterval(() => {
+
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    intervalRef.current = setInterval(() => {
       fetchInfo(payload);
     }, 5000);
-    return () => clearInterval(intervalId);
-  }, [user.data.id, dealership.id, setListDealershipAdmin, setListEstimatorsAccounts, setListPendingInvitations]);
 
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [dealership?.id, user?.data?.id, fetchInfo]);
 
   return (
     <>

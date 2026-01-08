@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Grid, Typography, Box, useTheme, useMediaQuery } from '@mui/material';
 import SpeedIcon from '@mui/icons-material/Speed';
 import { Badge } from 'react-bootstrap';
@@ -9,13 +9,10 @@ import FAQSectionComponent from '../Dashboard/components/FAQSectionComponent/FAQ
 import UserSalesStatsComponent from '../Dashboard/components/UserSalesStatsComponent/UserSalesStatsComponent';
 import CustomStatCardComponent from '../Utils/components/CustomStatCardComponent/CustomStatCardComponent';
 
-
 import { fetchWithToken } from '../../utils';
 import { apiUrl } from '../../config';
 
-
 const HomeComponent = () => {
-
   const [contextDashboard, setContextDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -26,26 +23,26 @@ const HomeComponent = () => {
   const [quoteChangePercent, setQuoteChangePercent] = useState(0);
   const [orderChangePercent, setOrderChangePercent] = useState(0);
   const theme = useTheme();
-  // const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isMobile = useMediaQuery('(max-width:999px)');
 
-  const fetchStats = async (payload) => {
+  const fetchStats = useCallback(async (payload) => {
     try {
       const response = await fetchWithToken(`${apiUrl}/dealerportal-home/`, 'GET', payload, {}, apiUrl);
       if (response.status !== 200) {
         throw new Error(`Failed to fetch data`);
       }
       setContextDashboard(response.data.data);
+      setError(null);
     } catch (err) {
-      if (error.response && error.response.status !== 401) {
+      if (err?.response && err.response.status !== 401) {
         setError(err.message);
       }
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const calculatePercetage = () => {
+  const calculatePercetage = useCallback(() => {
     if (contextDashboard) {
       const totalQuotes = contextDashboard.total_quotes;
       const totalOrders = contextDashboard.total_orders;
@@ -63,33 +60,24 @@ const HomeComponent = () => {
       setQuoteChangePercent(((totalQuotes - totalQuotesLastMonth) / totalQuotesLastMonth) * 100 || 0);
       setOrderChangePercent(((totalOrders - totalOrdersLastMonth) / totalOrdersLastMonth) * 100 || 0);
     }
-  }
+  }, [contextDashboard]);
 
   useEffect(() => {
     document.title = 'NWS Dealer Portal';
     const user = localStorage.getItem('userLogged') ? JSON.parse(localStorage.getItem('userLogged')) : {};
-    if (user.data.id) {
+    if (user?.data?.id) {
       const payload = {
         user_id: user.data.id,
-      }
+      };
       fetchStats(payload);
-      calculatePercetage();
+    } else {
+      setLoading(false);
     }
-  }, [
-    fetchStats, 
-    calculatePercetage, 
-    contextDashboard, 
-    error, 
-    loading, 
-    quoteProgress, 
-    salesProgress, 
-    estimateProgress, 
-    orderProgress,
-    quoteChangePercent,
-    orderChangePercent,
-  ]);
+  }, [fetchStats]);
 
-
+  useEffect(() => {
+    calculatePercetage();
+  }, [calculatePercetage]);
 
   return (
     <Box sx={{
@@ -119,7 +107,6 @@ const HomeComponent = () => {
             Your Stats for {contextDashboard?.month_name}
           </Badge>
 
-          {/* Stats Cards */}
           <Box sx={{ ml: -1, mb: 2, width: '100%', display: 'flex', bgcolor: '#f1f1f1' }}>
             <Grid container spacing={2} sx={{ width: '100%', m: 0, display: 'flex' }}>
               <Grid item xs={12} md={3}>
@@ -137,7 +124,6 @@ const HomeComponent = () => {
             </Grid>
           </Box>
 
-          {/* Extensions/Insights */}
           <Box sx={{ ml: 1, width: '99%', display: 'flex', bgcolor: '#f1f1f1' }}>
             <Grid container spacing={2}>
               <Grid item xs={12} sm={12} md={6}>
@@ -158,14 +144,8 @@ const HomeComponent = () => {
                 <FAQSectionComponent />
               </Grid>
             </Grid>
-            {/* <Grid container spacing={2}>
-              <Grid item xs={6} sm={6} md={6}>
-                <UserSalesStatsComponent userStats={contextDashboard?.user_stats} monthName={contextDashboard?.month_name} />
-              </Grid>
-            </Grid> */}
           </Box>
 
-          {/* Recent Quotes Table */}
           <Box sx={{ my: 1 }} />
           <Typography variant="h6" gutterBottom>
             10 Most Recent Quotes

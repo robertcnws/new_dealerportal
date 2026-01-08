@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import {
   AppBar,
   Toolbar,
@@ -14,7 +14,6 @@ import {
   Grid,
   Drawer,
   List,
-  ListItem,
   ListItemText,
   ListItemButton,
   ListItemIcon,
@@ -59,7 +58,7 @@ const NavbarComponent = ({ activePage, user, onThemeChange }) => {
     default: '#555555',
   };
 
-  const fetchNotifications = async (payload) => {
+  const fetchNotifications = useCallback(async (payload) => {
     try {
       const response = await fetchWithToken(`${apiUrl}/notifications/dealerportal/get-all-notifications/`, 'GET', payload, {}, apiUrl);
       if (response.status === 200) {
@@ -71,18 +70,20 @@ const NavbarComponent = ({ activePage, user, onThemeChange }) => {
     } catch (err) {
       console.error(err.message);
     }
-  }
+  }, []);
 
   useEffect(() => {
+    if (!user?.id) return;
     const payload = {
       user_id: user.id,
     };
     fetchNotifications(payload);
-  }, [fetchNotifications, user.id, setNotifications, setNotificationIconClasses, apiUrl]);
+  }, [fetchNotifications, user?.id]);
 
   useEffect(() => {
-    setSearchTermGlobal(''); // Resetear el valor cuando la ruta cambie
+    setSearchTermGlobal('');
     const currentPath = location.pathname;
+
     if (currentPath.includes('stock')) {
       setLabelSearch('Search Items in Stock (/)');
       setVisibleSearch(true);
@@ -102,7 +103,7 @@ const NavbarComponent = ({ activePage, user, onThemeChange }) => {
       setLabelSearch('Search...');
       setVisibleSearch(false);
     }
-  }, [location, setSearchTermGlobal, setLabelSearch, setVisibleSearch]);
+  }, [location.pathname, setSearchTermGlobal]);
 
   const handleMenuOpen = (event) => {
     setAnchorEl(event.currentTarget);
@@ -112,15 +113,14 @@ const NavbarComponent = ({ activePage, user, onThemeChange }) => {
     setAnchorEl(null);
   };
 
-  // Nueva función para manejar el clic en "Notifications"
   const handleNotificationClick = () => {
     setIsNotificationPanelOpen(true);
     if (isMobile) {
-      handleMenuClose(); // Cierra el menú en modo móvil
+      handleMenuClose();
     }
   };
 
-  const handleReadNotification = (notification) => {
+  const handleReadNotification = useCallback((notification) => {
     const customClassSwal = {
       popup: 'small-popup',
       title: 'small-title',
@@ -132,6 +132,7 @@ const NavbarComponent = ({ activePage, user, onThemeChange }) => {
     try {
       setIsNotificationPanelOpen(false);
       const dateDifference = calculateDateDifference(notification.date);
+
       Swal.fire({
         title: 'NOTIFICATION READ',
         html: `
@@ -142,7 +143,13 @@ const NavbarComponent = ({ activePage, user, onThemeChange }) => {
         confirmButtonText: 'OK',
         customClass: customClassSwal,
         willClose: async () => {
-          const response = await fetchWithToken(`${apiUrl}/notifications/dealerportal/read-notification/`, 'POST', { notification_id: notification.id }, {}, apiUrl);
+          const response = await fetchWithToken(
+            `${apiUrl}/notifications/dealerportal/read-notification/`,
+            'POST',
+            { notification_id: notification.id },
+            {},
+            apiUrl
+          );
           if (response.status === 200) {
             const payload = {
               user_id: user.id,
@@ -153,12 +160,10 @@ const NavbarComponent = ({ activePage, user, onThemeChange }) => {
           }
         }
       });
-
     } catch (err) {
       console.error(err.message);
     }
-  };
-
+  }, [fetchNotifications, user?.id]);
 
   const handleLogout = () => {
     handleMenuClose();
@@ -283,13 +288,11 @@ const NavbarComponent = ({ activePage, user, onThemeChange }) => {
                               width: '14px',
                               height: '14px',
                             }}
-                            onClick={handleNotificationClick} // Añadimos el evento onClick aquí
+                            onClick={handleNotificationClick}
                           >
-
                             <Badge badgeContent={notifications.length} color="error">
                               <Bell />
                             </Badge>
-
                           </IconButton>
                         </Box>
                       )}
@@ -351,15 +354,12 @@ const NavbarComponent = ({ activePage, user, onThemeChange }) => {
                       <LogoutIcon sx={{ mr: 1 }} /> Logout
                     </MenuItem>
                   </Menu>
-
                 </Box>
               </Box>
             </Grid>
           </Grid>
         </Toolbar>
       </AppBar>
-
-      {/* Añadimos el componente Drawer para el panel de notificaciones */}
 
       {notifications && notificationIconClasses && (
         <Drawer
@@ -370,7 +370,6 @@ const NavbarComponent = ({ activePage, user, onThemeChange }) => {
           <Box
             sx={{
               width: { xs: '75vw', sm: 500 },
-              // height: { xs: '80vh', sm: 'auto' },
               overflow: 'auto',
             }}
             role="presentation"
@@ -387,10 +386,8 @@ const NavbarComponent = ({ activePage, user, onThemeChange }) => {
             >
               Notifications
             </Typography>
-            {/* Aquí puedes añadir el contenido de las notificaciones */}
             <List>
               {notifications.map((notification, index) => {
-                // Obtener el componente de ícono correspondiente
                 const iconClass = notificationIconClasses[notification.notification_type];
 
                 return (
@@ -400,7 +397,13 @@ const NavbarComponent = ({ activePage, user, onThemeChange }) => {
                     onClick={() => handleReadNotification(notification)}
                   >
                     <ListItemIcon sx={{ minWidth: '40px' }}>
-                      <i className={iconClass} style={{ fontSize: '20px', color: '#555', color: NOTIFICATION_COLORS[notification.notification_type] }}></i>
+                      <i
+                        className={iconClass}
+                        style={{
+                          fontSize: '20px',
+                          color: NOTIFICATION_COLORS[notification.notification_type],
+                        }}
+                      ></i>
                     </ListItemIcon>
                     <ListItemText
                       primary={notification.message}

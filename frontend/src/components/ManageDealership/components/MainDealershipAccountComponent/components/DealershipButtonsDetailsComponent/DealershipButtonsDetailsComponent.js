@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Box, Typography, Grid, IconButton, useTheme, useMediaQuery } from '@mui/material';
 import { Badge } from 'react-bootstrap';
 import { AddCircleOutline, EditNoteOutlined, PowerSettingsNew, Web } from '@mui/icons-material';
@@ -28,7 +28,7 @@ const DealershipButtonsDetailsComponent = ({ dealership, setDealership }) => {
     }
   }, [dealership]);
 
-  const handleDeactivateDealership = async () => {
+  const handleDeactivateDealership = useCallback(async () => {
     const customClassSwal = {
       popup: 'small-popup',
       title: 'small-title',
@@ -51,7 +51,6 @@ const DealershipButtonsDetailsComponent = ({ dealership, setDealership }) => {
         customClass: customClassSwal,
       }).then(async (result) => {
         if (result.isConfirmed) {
-
           const payload = {
             user_id: user.data.id,
           };
@@ -106,7 +105,7 @@ const DealershipButtonsDetailsComponent = ({ dealership, setDealership }) => {
         customClass: customClassSwal,
       });
     }
-  };
+  }, [localDealership, user]);
 
   return (
     <>

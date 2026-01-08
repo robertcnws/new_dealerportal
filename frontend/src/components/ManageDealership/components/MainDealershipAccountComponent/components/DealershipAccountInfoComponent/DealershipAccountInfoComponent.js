@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Typography, Grid, IconButton, useTheme, useMediaQuery } from '@mui/material';
 import { apiUrl } from '../../../../../../config';
 import { fetchWithToken } from '../../../../../../utils'
@@ -6,13 +6,12 @@ import { Modal } from 'react-bootstrap';
 import ModalSendNewUserComponent from '../ModalSendNewUserComponent/ModalSendNewUserComponent';
 
 const DealershipAccountInfoComponent = ({ dealership }) => {
-
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [data, setData] = useState(null);
   const user = JSON.parse(localStorage.getItem('userLogged') || '{}');
 
-  const fetchInfo = async (payload) => {
+  const fetchInfo = useCallback(async (payload) => {
     try {
       const response = await fetchWithToken(`${apiUrl}/dealerportal/dealerships/dealership-stats/${dealership.id}/`, 'GET', payload, {}, apiUrl);
       if (response.status === 200) {
@@ -23,18 +22,19 @@ const DealershipAccountInfoComponent = ({ dealership }) => {
     } catch (err) {
       console.error(err.message);
     }
-  };
+  }, [dealership?.id]);
 
   useEffect(() => {
-    const payload = {
-      user_id: user.data.id
+    if (user?.data?.id && dealership?.id) {
+      const payload = {
+        user_id: user.data.id
+      };
+      fetchInfo(payload);
     }
-    fetchInfo(payload);
-  }, [fetchInfo, dealership, user, setData, apiUrl]);
+  }, [fetchInfo, dealership?.id, user?.data?.id]);
 
   return data && (
     <Grid container spacing={0}>
-
       <Grid item xs={12}>
         <Box sx={{
           display: 'flex',
@@ -216,7 +216,6 @@ const DealershipAccountInfoComponent = ({ dealership }) => {
           </Grid>
         </Box>
       </Grid>
-
     </Grid>
   );
 }

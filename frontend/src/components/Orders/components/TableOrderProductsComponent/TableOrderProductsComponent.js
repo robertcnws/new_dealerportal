@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Box,
   Table,
@@ -12,160 +12,160 @@ import {
   useMediaQuery
 } from '@mui/material';
 
-const TableOrderProductsComponent = ({ order }) => {
+const money = (value) => {
+  const n = Number.parseFloat(value);
+  if (Number.isNaN(n)) return '$ 0.00';
+  return `$ ${n.toFixed(2)}`;
+};
 
-  const [products, setProducts] = useState([]);
+const TableOrderProductsComponent = ({ order }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  // const isMobile = useMediaQuery('(max-width:999px)');
 
-  const columns = [
-    { field: 'id', headerName: 'ID', width: 0 },
-    { field: 'product', headerName: 'Product' },
-    { field: 'price', headerName: 'Price', width: 150 },
-    { field: 'quantity', headerName: 'Quantity', width: 120 },
-    { field: 'total_price', headerName: 'Total Price', width: 170 },
-  ];
+  const products = useMemo(() => {
+    const quoteProducts = order?.products || [];
+    return quoteProducts.map((p) => {
+      const qty = Number.parseInt(p?.quantity ?? 0, 10) || 0;
 
+      // IMPORTANT:
+      // Your API field name `total_price` appears to be the *unit price* (based on your old code:
+      // unit = total_price, total = unit * quantity)
+      const unit = Number.parseFloat(p?.total_price ?? 0) || 0;
+      const total = unit * qty;
 
-  useEffect(() => {
-    if (order?.products?.length > 0) {
-      const quoteProducts = order?.products || [];
-      const updatedProducts = quoteProducts?.map((product) => {
-        return {
-          id: product.id,
-          id_quote_product: product.id,
-          product: {
-            name: product.product.name,
-            sku: product.product.sku,
-          },
-          price: `$ ${product.total_price}`,
-          quantity: Number.parseInt(product.quantity),
-          total_price: `$ ${((Number.parseFloat(product.total_price) * Number.parseFloat(product.quantity)).toFixed(2)).toString()}`,
-        };
-      });
-      setProducts(updatedProducts);
-    }
-    else {
-      setProducts([]);
-    }
-  }, [order]);
+      return {
+        id: p?.id,
+        productName: p?.product?.name || '',
+        sku: p?.product?.sku || '',
+        unitPriceLabel: money(unit),
+        qty,
+        totalLabel: money(total),
+      };
+    });
+  }, [order?.products]);
 
+  const desktopColumns = useMemo(
+    () => [
+      { field: 'product', headerName: 'Product' },
+      { field: 'unitPriceLabel', headerName: 'Price', width: 150 },
+      { field: 'qty', headerName: 'Quantity', width: 120 },
+      { field: 'totalLabel', headerName: 'Total Price', width: 170 },
+    ],
+    []
+  );
 
   if (!isMobile) {
     return (
       <Box sx={{ width: '100%', mt: 1 }}>
-        <TableContainer style={{ height: '500px' }}>
+        <TableContainer sx={{ height: 500 }}>
           <Table stickyHeader>
             <TableHead>
               <TableRow>
-                {columns.map((column) => (
-                  column.field !== 'id' && (
-                    <TableCell key={column.field} sx={{ width: column.width, bgcolor: '#f1f1f1', p: 1 }}>
-                      <b>{column.headerName} </b>{column.field === 'product' && `(${order?.products?.length})`}
-                    </TableCell>
-                  )
+                {desktopColumns.map((col) => (
+                  <TableCell
+                    key={col.field}
+                    sx={{ width: col.width, bgcolor: '#f1f1f1', p: 1 }}
+                  >
+                    <b>
+                      {col.headerName}
+                      {col.field === 'product' ? ` (${products.length})` : ''}
+                    </b>
+                  </TableCell>
                 ))}
               </TableRow>
             </TableHead>
+
             <TableBody>
-              {products?.map((row) => (
-                <TableRow key={`${row.id}`}>
-                  {columns.map((column) => (
-                    column.field !== 'id' && (
-                      <TableCell key={column.field}>
-                        {column.field !== 'product' ? (
-                          row[column.field]
-                        ) : (
-                          <Box>
-                            <Typography sx={{ fontSize: '12px' }}>
-                              <b>{row.product.name}</b>
-                            </Typography>
-                            <Typography sx={{ fontStyle: 'italic', fontSize: '12px' }}>
-                              {row.product.sku}
-                            </Typography>
-                            {/* <Typography sx={{ fontSize: '12px' }}>
-                            <code style={{ fontStyle: 'italic' }}>{row.product.is_in_stock}</code>
-                            <span style={{
-                              fontStyle: 'italic',
-                              fontSize: '10px',
-                              color: 'gray',
-                              cursor: 'pointer'
-                            }}
-                              onClick={() => alert('View product details')}
-                            >  CLICK FOR MORE DETAILS</span>
-                          </Typography> */}
-                          </Box>
-                        )}
-                      </TableCell>
-                    )
+              {products.map((row) => (
+                <TableRow key={row.id ?? `${row.productName}-${row.sku}`}>
+                  {desktopColumns.map((col) => (
+                    <TableCell key={col.field} sx={{ p: 1 }}>
+                      {col.field !== 'product' ? (
+                        row[col.field]
+                      ) : (
+                        <Box>
+                          <Typography sx={{ fontSize: 12 }}>
+                            <b>{row.productName}</b>
+                          </Typography>
+                          <Typography sx={{ fontStyle: 'italic', fontSize: 12 }}>
+                            {row.sku}
+                          </Typography>
+                        </Box>
+                      )}
+                    </TableCell>
                   ))}
                 </TableRow>
               ))}
+              {products.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={desktopColumns.length} sx={{ p: 2 }}>
+                    <Typography sx={{ color: 'gray' }}>No products</Typography>
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </TableContainer>
       </Box>
     );
   }
+
   return (
     <Box sx={{ width: '100%', mt: 1, mb: 4 }}>
-      <TableContainer style={{ height: '100%' }}>
+      <TableContainer>
         <Table stickyHeader>
           <TableHead>
             <TableRow>
-              <TableCell sx={{ width: 0, bgcolor: '#f1f1f1', p: 1 }}>
-                <b>Product</b>
+              <TableCell sx={{ bgcolor: '#f1f1f1', p: 1 }}>
+                <b>Product ({products.length})</b>
               </TableCell>
-              <TableCell sx={{ width: 150, bgcolor: '#f1f1f1', p: 1 }}>
+              <TableCell sx={{ width: 170, bgcolor: '#f1f1f1', p: 1 }}>
                 <b>Order Info</b>
               </TableCell>
             </TableRow>
           </TableHead>
+
           <TableBody>
-            {products?.map((row) => (
-              <TableRow key={`${row.id}`}>
-                <TableCell key="product">
+            {products.map((row) => (
+              <TableRow key={row.id ?? `${row.productName}-${row.sku}`}>
+                <TableCell sx={{ p: 1 }}>
                   <Box>
-                    <Typography sx={{ fontSize: '12px' }}>
-                      <b>{row.product.name}</b>
+                    <Typography sx={{ fontSize: 12 }}>
+                      <b>{row.productName}</b>
                     </Typography>
-                    <Typography sx={{ fontStyle: 'italic', fontSize: '12px' }}>
-                      {row.product.sku}
+                    <Typography sx={{ fontStyle: 'italic', fontSize: 12 }}>
+                      {row.sku}
                     </Typography>
-                    {/* <Typography sx={{ fontSize: '12px' }}>
-                          <code style={{ fontStyle: 'italic' }}>{row.product.is_in_stock}</code>
-                          <span style={{
-                            fontStyle: 'italic',
-                            fontSize: '10px',
-                            color: 'gray',
-                            cursor: 'pointer'
-                          }}
-                            onClick={() => alert('View product details')}
-                          >  CLICK FOR MORE DETAILS</span>
-                        </Typography> */}
                   </Box>
                 </TableCell>
-                <TableCell key="order_info">
+                <TableCell sx={{ p: 1 }}>
                   <Box>
-                    <Typography sx={{ fontSize: '12px' }}>
-                      <b>Price</b>: {row.price}
+                    <Typography sx={{ fontSize: 12 }}>
+                      <b>Price</b>: {row.unitPriceLabel}
                     </Typography>
-                    <Typography sx={{ fontSize: '12px' }}>
-                      <b>Quantity</b>: {row.quantity}
+                    <Typography sx={{ fontSize: 12 }}>
+                      <b>Quantity</b>: {row.qty}
                     </Typography>
-                    <Typography sx={{ fontSize: '12px' }}>
-                      <b>Total Price</b>: {row.total_price}
+                    <Typography sx={{ fontSize: 12 }}>
+                      <b>Total Price</b>: {row.totalLabel}
                     </Typography>
                   </Box>
                 </TableCell>
               </TableRow>
             ))}
+
+            {products.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={2} sx={{ p: 2 }}>
+                  <Typography sx={{ color: 'gray' }}>No products</Typography>
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </TableContainer>
     </Box>
   );
-}
+};
 
 export default TableOrderProductsComponent;

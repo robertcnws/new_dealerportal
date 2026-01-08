@@ -1,5 +1,16 @@
-import { Divider, Grid, Box, Typography, useTheme, useMediaQuery, TextField, FormHelperText, Button, IconButton } from '@mui/material';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  Divider,
+  Grid,
+  Box,
+  Typography,
+  useTheme,
+  useMediaQuery,
+  TextField,
+  FormHelperText,
+  Button,
+  IconButton
+} from '@mui/material';
 import { useForm } from 'react-hook-form';
 import { fetchWithToken } from '../../../../utils';
 import { apiFrontendRoot, apiUrl } from '../../../../config';
@@ -11,9 +22,10 @@ import ModalProductsSyncComponent from './components/ModalProductsSyncComponent/
 import ModalCustomersSyncComponent from './components/ModalCustomersSyncComponent/ModalCustomersSyncComponent';
 
 const IntegrationComponent = () => {
-
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const navigate = useNavigate();
+
   const { register, handleSubmit, formState: { errors, isDirty }, reset } = useForm({
     defaultValues: {
       zoho_client_id: '',
@@ -22,129 +34,125 @@ const IntegrationComponent = () => {
       zoho_org_id: '',
     },
   });
-  const [zohoConfig, setZohoConfig] = useState(null);
-  const [openModalConnectZoho, setOpenModalConnectZoho] = useState(false);
-  const handleOpenModalConnectZoho = () => setOpenModalConnectZoho(true);
-  const handleCloseModalConnectZoho = () => setOpenModalConnectZoho(false);
-  const [openModalProductsSync, setOpenModalProductsSync] = useState(false);
-  const handleOpenModalProductsSync = () => setOpenModalProductsSync(true);
-  const handleCloseModalProductsSync = () => setOpenModalProductsSync(false);
-  const [openModalCustomersSync, setOpenModalCustomersSync] = useState(false);
-  const handleOpenModalCustomersSync = () => setOpenModalCustomersSync(true);
-  const handleCloseModalCustomersSync = () => setOpenModalCustomersSync(false);
-  const navigate = useNavigate();
 
-  const fetchZohoConfig = async () => {
+  const [zohoConfig, setZohoConfig] = useState(null);
+
+  const [openModalConnectZoho, setOpenModalConnectZoho] = useState(false);
+  const [openModalProductsSync, setOpenModalProductsSync] = useState(false);
+  const [openModalCustomersSync, setOpenModalCustomersSync] = useState(false);
+
+  const swalClasses = useMemo(() => ({
+    popup: 'small-popup',
+    title: 'small-title',
+    icon: 'custom-icon',
+    content: 'small-content',
+    confirmButton: 'small-confirm-button'
+  }), []);
+
+  const fetchZohoConfig = useCallback(async () => {
     try {
       const response = await fetchWithToken(`${apiUrl}/z_api/dealerportal-zoho/settings/`, 'GET', null, {}, apiUrl);
       if (response.status === 200) {
         setZohoConfig(response.data);
       } else {
-        throw new Error(`Failed to fetch Zoho Config`);
+        throw new Error('Failed to fetch Zoho Config');
       }
     } catch (err) {
-      console.error(err.message);
+      console.error(err?.message || err);
     }
-  }
+  }, []);
 
-  const onSubmit = async (data) => {
-    const customClassSwal = {
-      popup: 'small-popup',
-      title: 'small-title',
-      icon: 'custom-icon',
-      content: 'small-content',
-      confirmButton: 'small-confirm-button'
-    }
+  useEffect(() => {
+    fetchZohoConfig();
+  }, [fetchZohoConfig]);
+
+  useEffect(() => {
+    const appConfig = zohoConfig?.app_config;
+    if (!appConfig) return;
+
+    reset(
+      {
+        zoho_client_id: appConfig.zoho_client_id || '',
+        zoho_client_secret: appConfig.zoho_client_secret || '',
+        zoho_redirect_uri: appConfig.zoho_redirect_uri || '',
+        zoho_org_id: appConfig.zoho_org_id || '',
+      },
+      { keepDirty: false }
+    );
+  }, [zohoConfig, reset]);
+
+  const handleReturnToSettings = useCallback(() => {
+    navigate(`${apiFrontendRoot}/settings`);
+  }, [navigate]);
+
+  const onSubmit = useCallback(async (data) => {
     try {
       Swal.fire({
         title: 'Are you sure?',
-        text: `You want to save this ZOHO Configuration!`,
+        text: 'You want to save this ZOHO Configuration!',
         icon: 'warning',
         showCancelButton: true,
         confirmButtonText: 'Yes, save it!',
         cancelButtonText: 'No, keep it',
-        customClass: customClassSwal
+        customClass: swalClasses,
       }).then(async (result) => {
-        if (result.isConfirmed) {
-          const user = JSON.parse(localStorage.getItem('userLogged'));
-          const payload = {
-            ...data,
-            user_id: user.data.id,
-          };
-          const response = await fetchWithToken(`${apiUrl}/z_api/dealerportal-zoho/settings/`, 'POST', payload, {}, apiUrl);
-          if (response.status === 200) {
-            if (response.data.error) {
-              Swal.fire({
-                title: 'Error',
-                text: `${response.data.message}`,
-                icon: 'error',
-                confirmButtonText: 'OK',
-                customClass: customClassSwal
-              });
-              return;
-            }
+        if (!result.isConfirmed) return;
+
+        const user = JSON.parse(localStorage.getItem('userLogged') || '{}');
+        const payload = { ...data, user_id: user?.data?.id };
+
+        const response = await fetchWithToken(`${apiUrl}/z_api/dealerportal-zoho/settings/`, 'POST', payload, {}, apiUrl);
+
+        if (response.status === 200) {
+          if (response.data?.error) {
             Swal.fire({
-              title: 'Success',
-              text: `${response.data.message}`,
-              icon: 'success',
+              title: 'Error',
+              text: `${response.data?.message || ''}`,
+              icon: 'error',
               confirmButtonText: 'OK',
-              customClass: customClassSwal,
-              willClose: () => {
-                navigate('/dealerportal/settings');
-              }
+              customClass: swalClasses
             });
-          } else {
-            throw new Error('Failed to change status order');
+            return;
           }
+
+          Swal.fire({
+            title: 'Success',
+            text: `${response.data?.message || ''}`,
+            icon: 'success',
+            confirmButtonText: 'OK',
+            customClass: swalClasses,
+            willClose: () => {
+              navigate('/dealerportal/settings');
+            }
+          });
+          return;
         }
+
+        throw new Error('Failed to save Zoho settings');
       });
     } catch (err) {
       Swal.fire({
         title: 'Error',
-        text: 'Failed to delete quote',
+        text: 'Failed to save Zoho configuration',
         icon: 'error',
         confirmButtonText: 'Accept',
-        customClass: customClassSwal
+        customClass: swalClasses
       });
     }
-  }
-
-  useEffect(() => {
-    fetchZohoConfig();
-  }, [apiUrl, setZohoConfig, fetchWithToken]);
-
-  useEffect(() => {
-    if (zohoConfig) {
-      reset(
-        {
-          zoho_client_id: zohoConfig.app_config.zoho_client_id,
-          zoho_client_secret: zohoConfig.app_config.zoho_client_secret,
-          zoho_redirect_uri: zohoConfig.app_config.zoho_redirect_uri,
-          zoho_org_id: zohoConfig.app_config.zoho_org_id,
-        },
-        {
-          keepDirty: false,
-        }
-      );
-    }
-  }, [zohoConfig, reset]);
-
-
-  const handleReturnToSettings = () => {
-    navigate(`${apiFrontendRoot}/settings`);
-  }
-
+  }, [navigate, swalClasses]);
 
   return (
     <>
-      <Box sx={{
-        mb: 2,
-        ml: isMobile ? 0 : 2,
-        mt: isMobile ? 1 : -3,
-        display: 'flex',
-        flexGrow: 1,
-        flexDirection: 'column',
-      }}>
+      <Box
+        sx={{
+          mb: 2,
+          ml: isMobile ? 0 : 2,
+          mt: isMobile ? 1 : -3,
+          display: 'flex',
+          flexGrow: 1,
+          flexDirection: 'column',
+        }}
+      >
         <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', ml: isMobile ? 0 : 2, mb: 1 }}>
           <Grid container spacing={1}>
             <Grid item xs>
@@ -165,7 +173,9 @@ const IntegrationComponent = () => {
             )}
           </Grid>
         </Box>
+
         <Divider />
+
         <Box
           sx={{
             display: 'flex',
@@ -177,13 +187,14 @@ const IntegrationComponent = () => {
             width: '100%',
           }}
         >
-
-          <Box sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            width: isMobile ? '100%' : '50%',
-            mb: 2
-          }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              width: isMobile ? '100%' : '50%',
+              mb: 2
+            }}
+          >
             <Grid container spacing={1}>
               <Grid item xs sx={{ mb: 2 }}>
                 <Typography variant="h6">
@@ -192,95 +203,68 @@ const IntegrationComponent = () => {
                 </Typography>
               </Grid>
             </Grid>
+
             <Grid container spacing={1} sx={{ bgcolor: 'white', p: 1, borderRadius: '10px' }}>
               <Grid item xs>
                 <form onSubmit={handleSubmit(onSubmit)}>
                   <Box sx={{ mb: 1, width: '100%' }}>
                     <TextField
-                      type="zoho_client_id"
                       label="Client ID"
                       id="zoho_client_id"
                       name="zoho_client_id"
                       placeholder="Enter Client ID"
                       fullWidth
                       margin="normal"
-                      InputLabelProps={{
-                        shrink: true,
-                      }}
-                      {...register('zoho_client_id', {
-                        required: 'Client ID is required',
-                      })}
+                      InputLabelProps={{ shrink: true }}
+                      {...register('zoho_client_id', { required: 'Client ID is required' })}
                       error={!!errors.zoho_client_id}
                     />
-                    {errors.zoho_client_id && (
-                      <FormHelperText error>{errors.zoho_client_id.message}</FormHelperText>
-                    )}
+                    {errors.zoho_client_id && <FormHelperText error>{errors.zoho_client_id.message}</FormHelperText>}
                   </Box>
 
                   <Box sx={{ mb: 1, width: '100%' }}>
                     <TextField
-                      type="zoho_client_secret"
                       label="Client Secret"
                       id="zoho_client_secret"
                       name="zoho_client_secret"
                       placeholder="Enter Client Secret"
                       fullWidth
                       margin="normal"
-                      InputLabelProps={{
-                        shrink: true,
-                      }}
-                      {...register('zoho_client_secret', {
-                        required: 'Client Secret is required',
-                      })}
+                      InputLabelProps={{ shrink: true }}
+                      {...register('zoho_client_secret', { required: 'Client Secret is required' })}
                       error={!!errors.zoho_client_secret}
                     />
-                    {errors.zoho_client_secret && (
-                      <FormHelperText error>{errors.zoho_client_secret.message}</FormHelperText>
-                    )}
+                    {errors.zoho_client_secret && <FormHelperText error>{errors.zoho_client_secret.message}</FormHelperText>}
                   </Box>
 
                   <Box sx={{ mb: 1, width: '100%' }}>
                     <TextField
-                      type="zoho_redirect_uri"
                       label="Redirect URI"
                       id="zoho_redirect_uri"
                       name="zoho_redirect_uri"
                       placeholder="Enter Redirect URI"
-                      fullWidth // Asegura que ocupe todo el ancho
+                      fullWidth
                       margin="normal"
-                      InputLabelProps={{
-                        shrink: true,
-                      }}
-                      {...register('zoho_redirect_uri', {
-                        required: 'Redirect URI is required',
-                      })}
+                      InputLabelProps={{ shrink: true }}
+                      {...register('zoho_redirect_uri', { required: 'Redirect URI is required' })}
                       error={!!errors.zoho_redirect_uri}
                     />
-                    {errors.zoho_redirect_uri && (
-                      <FormHelperText error>{errors.zoho_redirect_uri.message}</FormHelperText>
-                    )}
+                    {errors.zoho_redirect_uri && <FormHelperText error>{errors.zoho_redirect_uri.message}</FormHelperText>}
                   </Box>
 
                   <Box sx={{ mb: 1, width: '100%' }}>
                     <TextField
-                      type="zoho_org_id"
                       label="Organization ID"
                       id="zoho_org_id"
                       name="zoho_org_id"
                       placeholder="Enter Organization ID"
-                      fullWidth // Asegura que ocupe todo el ancho
+                      fullWidth
                       margin="normal"
-                      InputLabelProps={{
-                        shrink: true,
-                      }}
-                      {...register('zoho_org_id', {
-                        required: 'Organization ID is required',
-                      })}
+                      InputLabelProps={{ shrink: true }}
+                      {...register('zoho_org_id', { required: 'Organization ID is required' })}
                       error={!!errors.zoho_org_id}
                     />
-                    {errors.zoho_org_id && (
-                      <FormHelperText error>{errors.zoho_org_id.message}</FormHelperText>
-                    )}
+                    {errors.zoho_org_id && <FormHelperText error>{errors.zoho_org_id.message}</FormHelperText>}
                   </Box>
 
                   <Box sx={{ textAlign: 'right', mb: 1, width: '100%' }}>
@@ -292,12 +276,15 @@ const IntegrationComponent = () => {
               </Grid>
             </Grid>
           </Box>
-          <Box sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            width: isMobile ? '100%' : '50%',
-            ml: 1
-          }}>
+
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              width: isMobile ? '100%' : '50%',
+              ml: 1
+            }}
+          >
             <Grid container spacing={1}>
               <Grid item xs>
                 <Typography variant="h6" sx={{ mb: 1 }}>
@@ -305,9 +292,11 @@ const IntegrationComponent = () => {
                 </Typography>
               </Grid>
             </Grid>
+
             <Grid container spacing={1}>
               <Grid item xs>
-                <Box onClick={handleOpenModalConnectZoho}
+                <Box
+                  onClick={() => setOpenModalConnectZoho(true)}
                   sx={{
                     display: 'flex',
                     flexGrow: 1,
@@ -340,8 +329,10 @@ const IntegrationComponent = () => {
                   </IconButton>
                 </Box>
               </Grid>
+
               <Grid item xs>
-                <Box onClick={handleOpenModalProductsSync}
+                <Box
+                  onClick={() => setOpenModalProductsSync(true)}
                   sx={{
                     display: 'flex',
                     flexGrow: 1,
@@ -374,8 +365,10 @@ const IntegrationComponent = () => {
                   </IconButton>
                 </Box>
               </Grid>
+
               <Grid item xs>
-                <Box onClick={handleOpenModalCustomersSync}
+                <Box
+                  onClick={() => setOpenModalCustomersSync(true)}
                   sx={{
                     display: 'flex',
                     flexGrow: 1,
@@ -408,6 +401,7 @@ const IntegrationComponent = () => {
                   </IconButton>
                 </Box>
               </Grid>
+
               <Grid item xs>
                 <Box
                   sx={{
@@ -442,8 +436,10 @@ const IntegrationComponent = () => {
                   </IconButton>
                 </Box>
               </Grid>
+
               <Grid item xs>
-                <Box onClick={handleReturnToSettings}
+                <Box
+                  onClick={handleReturnToSettings}
                   sx={{
                     display: 'flex',
                     flexGrow: 1,
@@ -478,18 +474,30 @@ const IntegrationComponent = () => {
               </Grid>
             </Grid>
           </Box>
-
         </Box>
       </Box>
+
       {zohoConfig && (
         <>
-          <ModalConnectZohoComponent open={openModalConnectZoho} handleClose={handleCloseModalConnectZoho} zohoConfig={zohoConfig} />
-          <ModalProductsSyncComponent open={openModalProductsSync} handleClose={handleCloseModalProductsSync} zohoConfig={zohoConfig} />
-          <ModalCustomersSyncComponent open={openModalCustomersSync} handleClose={handleCloseModalCustomersSync} zohoConfig={zohoConfig} />
+          <ModalConnectZohoComponent
+            open={openModalConnectZoho}
+            handleClose={() => setOpenModalConnectZoho(false)}
+            zohoConfig={zohoConfig}
+          />
+          <ModalProductsSyncComponent
+            open={openModalProductsSync}
+            handleClose={() => setOpenModalProductsSync(false)}
+            zohoConfig={zohoConfig}
+          />
+          <ModalCustomersSyncComponent
+            open={openModalCustomersSync}
+            handleClose={() => setOpenModalCustomersSync(false)}
+            zohoConfig={zohoConfig}
+          />
         </>
       )}
     </>
   );
-}
+};
 
 export default IntegrationComponent;

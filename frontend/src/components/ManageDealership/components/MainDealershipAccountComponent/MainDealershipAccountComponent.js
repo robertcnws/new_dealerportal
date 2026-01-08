@@ -6,7 +6,6 @@ import DealershipAccountInfoComponent from './components/DealershipAccountInfoCo
 import DealershipButtonsDetailsComponent from './components/DealershipButtonsDetailsComponent/DealershipButtonsDetailsComponent';
 
 const MainDealershipAccountComponent = () => {
-
   const [dealership, setDealership] = useState(null);
 
   const location = useLocation();
@@ -14,12 +13,13 @@ const MainDealershipAccountComponent = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   useEffect(() => {
-    const dealership = location.state.dealership;
-    setDealership(dealership);
-  }, [setDealership, location.state]);
+    const dealershipFromState = location?.state?.dealership;
+    if (dealershipFromState) {
+      setDealership(dealershipFromState);
+    }
+  }, [location?.state?.dealership]);
 
   if (!isMobile) {
-
     return (
       <>
         {dealership && (
@@ -27,7 +27,6 @@ const MainDealershipAccountComponent = () => {
             <Grid container spacing={1}>
               <Grid item xs={12}>
                 <Box sm={{ display: 'flex', minWidth: '100%', p: 0 }}>
-
                   <Grid container spacing={1}>
                     <Grid item xs={10}>
                       <Box sx={{
@@ -53,19 +52,18 @@ const MainDealershipAccountComponent = () => {
 
                   <Grid container spacing={1}>
                     <Grid item xs={10}>
-                      <DealershipButtonsDetailsComponent dealership={dealership} setDealership={setDealership}/>
+                      <DealershipButtonsDetailsComponent dealership={dealership} setDealership={setDealership} />
                       <Grid container spacing={1}>
                         <Grid item xs={12}>
-                          <TablesDealershipAccountComponent dealership={dealership} setDealership={setDealership}/>
+                          <TablesDealershipAccountComponent dealership={dealership} setDealership={setDealership} />
                         </Grid>
                       </Grid>
                     </Grid>
 
                     <Grid item xs={2}>
-                      <DealershipAccountInfoComponent dealership={dealership} setDealership={setDealership}/>
+                      <DealershipAccountInfoComponent dealership={dealership} setDealership={setDealership} />
                     </Grid>
                   </Grid>
-
                 </Box>
               </Grid>
             </Grid>
@@ -74,6 +72,7 @@ const MainDealershipAccountComponent = () => {
       </>
     );
   }
+
   return (
     <>
       {dealership && (
@@ -81,7 +80,6 @@ const MainDealershipAccountComponent = () => {
           <Grid container spacing={1}>
             <Grid item xs={12}>
               <Box sm={{ display: 'flex', minWidth: '100%', p: 0 }}>
-
                 <Grid container spacing={1}>
                   <Grid item xs={12}>
                     <Box sx={{
@@ -95,17 +93,16 @@ const MainDealershipAccountComponent = () => {
                   </Grid>
 
                   <Grid item xs={12}>
-                    <DealershipButtonsDetailsComponent dealership={dealership} setDealership={setDealership}/>
+                    <DealershipButtonsDetailsComponent dealership={dealership} setDealership={setDealership} />
                   </Grid>
 
                   <Grid item xs={12}>
-                    <TablesDealershipAccountComponent dealership={dealership} setDealership={setDealership}/>
+                    <TablesDealershipAccountComponent dealership={dealership} setDealership={setDealership} />
                   </Grid>
 
                   <Grid item xs={12}>
-                    <DealershipAccountInfoComponent dealership={dealership} setDealership={setDealership}/>
+                    <DealershipAccountInfoComponent dealership={dealership} setDealership={setDealership} />
                   </Grid>
-
                 </Grid>
               </Box>
             </Grid>
@@ -114,6 +111,6 @@ const MainDealershipAccountComponent = () => {
       )}
     </>
   );
-}
+};
 
 export default MainDealershipAccountComponent;

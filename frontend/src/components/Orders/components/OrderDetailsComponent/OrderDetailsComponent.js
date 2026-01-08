@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -25,16 +25,17 @@ const OrderDetailsComponent = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   // const isMobile = useMediaQuery('(max-width:999px)');
 
-  useEffect(() => {
-    if (location.state?.order) {
-      // console.log(location.state.order);
-      setOrder(location.state.order);
-    }
-  }, [location.state.order]);
+  const orderFromState = useMemo(() => location.state?.order || null, [location.state]);
 
-  const handleClose = () => {
+  useEffect(() => {
+    if (orderFromState) {
+      setOrder(orderFromState);
+    }
+  }, [orderFromState]);
+
+  const handleClose = useCallback(() => {
     navigate(`${apiFrontendRoot}/orders`);
-  }
+  }, [navigate]);
 
   if (!isMobile) {
     return (
@@ -64,10 +65,10 @@ const OrderDetailsComponent = () => {
                             <b>Created By</b>: {order?.ordered_by}
                           </Typography>
                           <Typography variant="body1">
-                            <b>Created At</b>: <CustomDateComponent date={new Date(order?.created_at)}  /> 
+                            <b>Created At</b>: <CustomDateComponent date={new Date(order?.created_at)} />
                           </Typography>
                           <Typography variant="body1">
-                            <b>Last Modified</b>: <CustomDateComponent date={new Date(order?.updated_at)}  /> 
+                            <b>Last Modified</b>: <CustomDateComponent date={new Date(order?.updated_at)} />
                           </Typography>
                           <Typography variant="body1">
                             <b>Mark Up</b>: % {order?.mark_up}
@@ -75,11 +76,6 @@ const OrderDetailsComponent = () => {
                         </Box>
                       )}
                     </Grid>
-                    {/* <Grid item xs={2}>
-                <Box sx={{ mb: 2, p: 1 }}>
-                  <NavigationButtonComponent children={childrenNavigationButton} />
-                </Box>
-              </Grid> */}
                   </Grid>
                   <Grid item xs={8} sx={{ borderRadius: '10px', p: 1, justifyContent: 'space-between' }}>
                     <Box sx={{
@@ -160,10 +156,10 @@ const OrderDetailsComponent = () => {
                           <b>Created By</b>: {order?.ordered_by}
                         </Typography>
                         <Typography variant="body1">
-                          <b>Created At</b>: <CustomDateComponent date={new Date(order?.created_at)}  /> 
+                          <b>Created At</b>: <CustomDateComponent date={new Date(order?.created_at)} />
                         </Typography>
                         <Typography variant="body1">
-                          <b>Last Modified</b>: <CustomDateComponent date={new Date(order?.updated_at)}  />
+                          <b>Last Modified</b>: <CustomDateComponent date={new Date(order?.updated_at)} />
                         </Typography>
                         <Typography variant="body1">
                           <b>Mark Up</b>: % {order?.mark_up}
@@ -171,11 +167,6 @@ const OrderDetailsComponent = () => {
                       </Box>
                     )}
                   </Grid>
-                  {/* <Grid item xs={2}>
-              <Box sx={{ mb: 2, p: 1 }}>
-                <NavigationButtonComponent children={childrenNavigationButton} />
-              </Box>
-            </Grid> */}
                 </Grid>
               </Grid>
             </Box>
