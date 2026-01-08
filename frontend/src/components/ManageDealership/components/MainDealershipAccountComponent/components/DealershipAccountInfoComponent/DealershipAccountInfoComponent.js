@@ -30,197 +30,194 @@ const DealershipAccountInfoComponent = ({ dealership }) => {
       user_id: user.data.id
     }
     fetchInfo(payload);
-  }, []);
+  }, [fetchInfo, dealership, user, setData, apiUrl]);
 
   return data && (
-    <>
-      <Grid container spacing={0}>
+    <Grid container spacing={0}>
 
-        <Grid item xs={12}>
+      <Grid item xs={12}>
+        <Box sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          flexGrow: 1,
+          justifyContent: 'space-between',
+          ml: isMobile ? 0 : 3,
+          mt: isMobile ? 5 : 0,
+          mb: 3,
+          p: 1,
+          bgcolor: 'white',
+          borderRadius: '10px',
+        }}>
           <Box sx={{
             display: 'flex',
             flexDirection: 'column',
             flexGrow: 1,
             justifyContent: 'space-between',
-            ml: isMobile ? 0 : 3,
-            mt: isMobile ? 5 : 0,
-            mb: 3,
+            bgcolor: '#f1f1f1',
             p: 1,
-            bgcolor: 'white',
             borderRadius: '10px',
           }}>
-            <Box sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              flexGrow: 1,
-              justifyContent: 'space-between',
-              bgcolor: '#f1f1f1',
-              p: 1,
-              borderRadius: '10px',
-            }}>
-              <Typography variant="body1">
-                Here you can manage your Dealership, set your account details, preferences and add new users etc..
-              </Typography>
-            </Box>
+            <Typography variant="body1">
+              Here you can manage your Dealership, set your account details, preferences and add new users etc..
+            </Typography>
           </Box>
-        </Grid>
-
-        <Grid item xs={12}>
-          <Box sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            flexGrow: 1,
-            justifyContent: 'space-between',
-            ml: isMobile ? 0 : 3,
-            mb: 2,
-            p: 1,
-            bgcolor: 'white',
-            borderRadius: '10px',
-          }}>
-            <Grid container spacing={1}>
-              <Grid item xs={10}>
-                <Box sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  flexGrow: 1,
-                  justifyContent: 'space-between',
-                  mb: 0,
-                  p: 1,
-                  bgcolor: 'white',
-                  borderRadius: '10px',
-                }}>
-                  <Typography variant="body1" sx={{ mb: 1 }}>
-                    Total Quotes
-                  </Typography>
-                  <Typography variant="body1" sx={{ mb: 0 }}>
-                    <b style={{ fontSize: '22px' }}>{data.total_quotes}</b>
-                  </Typography>
-                </Box>
-              </Grid>
-              <Grid item xs={2}>
-                <Box sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  flexGrow: 1,
-                  justifyContent: 'space-between',
-                  p: 1,
-                  bgcolor: 'white',
-                  borderRadius: '10px',
-                }}>
-                  <IconButton color="gray" sx={{ p: 0, borderRadius: '5px', minWidth: '100%', mt: 2 }}>
-                    <i className="bi bi-journal-bookmark" style={{ fontSize: '25px', color: '#4CAF50' }}></i>
-                  </IconButton>
-                </Box>
-              </Grid>
-            </Grid>
-          </Box>
-        </Grid>
-
-        <Grid item xs={12}>
-          <Box sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            flexGrow: 1,
-            justifyContent: 'space-between',
-            ml: isMobile ? 0 : 3,
-            mb: 2,
-            p: 1,
-            bgcolor: 'white',
-            borderRadius: '10px',
-          }}>
-            <Grid container spacing={1}>
-              <Grid item xs={10}>
-                <Box sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  flexGrow: 1,
-                  justifyContent: 'space-between',
-                  mb: 0,
-                  p: 1,
-                  bgcolor: 'white',
-                  borderRadius: '10px',
-                }}>
-                  <Typography variant="body1" sx={{ mb: 1 }}>
-                    Confirmed Orders
-                  </Typography>
-                  <Typography variant="body1" sx={{ mb: 0 }}>
-                    <b style={{ fontSize: '22px' }}>{data.confirmed_orders_count}</b>
-                  </Typography>
-                </Box>
-              </Grid>
-              <Grid item xs={2}>
-                <Box sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  flexGrow: 1,
-                  justifyContent: 'space-between',
-                  p: 1,
-                  bgcolor: 'white',
-                  borderRadius: '10px',
-                }}>
-                  <IconButton color="gray" sx={{ p: 0, borderRadius: '5px', minWidth: '100%', mt: 2 }}>
-                    <i className="bi bi-cart" style={{ fontSize: '25px', color: '#4CAF50' }}></i>
-                  </IconButton>
-                </Box>
-              </Grid>
-            </Grid>
-          </Box>
-        </Grid>
-
-        <Grid item xs={12}>
-          <Box sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            flexGrow: 1,
-            justifyContent: 'space-between',
-            ml: isMobile ? 0 : 3,
-            mb: 2,
-            p: 1,
-            bgcolor: 'white',
-            borderRadius: '10px',
-          }}>
-            <Grid container spacing={1}>
-              <Grid item xs={10}>
-                <Box sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  flexGrow: 1,
-                  justifyContent: 'space-between',
-                  mb: 0,
-                  p: 1,
-                  bgcolor: 'white',
-                  borderRadius: '10px',
-                }}>
-                  <Typography variant="body1" sx={{ mb: 1 }}>
-                    Pending Orders
-                  </Typography>
-                  <Typography variant="body1" sx={{ mb: 0 }}>
-                    <b style={{ fontSize: '22px' }}>{data.pending_orders_count}</b>
-                  </Typography>
-                </Box>
-              </Grid>
-              <Grid item xs={2}>
-                <Box sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  flexGrow: 1,
-                  justifyContent: 'space-between',
-                  p: 1,
-                  bgcolor: 'white',
-                  borderRadius: '10px',
-                }}>
-                  <IconButton color="gray" sx={{ p: 0, borderRadius: '5px', minWidth: '100%', mt: 2 }}>
-                    <i className="bi bi-clock" style={{ fontSize: '25px', color: '#4CAF50' }}></i>
-                  </IconButton>
-                </Box>
-              </Grid>
-            </Grid>
-          </Box>
-        </Grid>
-
+        </Box>
       </Grid>
-      
-    </>
+
+      <Grid item xs={12}>
+        <Box sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          flexGrow: 1,
+          justifyContent: 'space-between',
+          ml: isMobile ? 0 : 3,
+          mb: 2,
+          p: 1,
+          bgcolor: 'white',
+          borderRadius: '10px',
+        }}>
+          <Grid container spacing={1}>
+            <Grid item xs={10}>
+              <Box sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                flexGrow: 1,
+                justifyContent: 'space-between',
+                mb: 0,
+                p: 1,
+                bgcolor: 'white',
+                borderRadius: '10px',
+              }}>
+                <Typography variant="body1" sx={{ mb: 1 }}>
+                  Total Quotes
+                </Typography>
+                <Typography variant="body1" sx={{ mb: 0 }}>
+                  <b style={{ fontSize: '22px' }}>{data.total_quotes}</b>
+                </Typography>
+              </Box>
+            </Grid>
+            <Grid item xs={2}>
+              <Box sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                flexGrow: 1,
+                justifyContent: 'space-between',
+                p: 1,
+                bgcolor: 'white',
+                borderRadius: '10px',
+              }}>
+                <IconButton color="gray" sx={{ p: 0, borderRadius: '5px', minWidth: '100%', mt: 2 }}>
+                  <i className="bi bi-journal-bookmark" style={{ fontSize: '25px', color: '#4CAF50' }}></i>
+                </IconButton>
+              </Box>
+            </Grid>
+          </Grid>
+        </Box>
+      </Grid>
+
+      <Grid item xs={12}>
+        <Box sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          flexGrow: 1,
+          justifyContent: 'space-between',
+          ml: isMobile ? 0 : 3,
+          mb: 2,
+          p: 1,
+          bgcolor: 'white',
+          borderRadius: '10px',
+        }}>
+          <Grid container spacing={1}>
+            <Grid item xs={10}>
+              <Box sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                flexGrow: 1,
+                justifyContent: 'space-between',
+                mb: 0,
+                p: 1,
+                bgcolor: 'white',
+                borderRadius: '10px',
+              }}>
+                <Typography variant="body1" sx={{ mb: 1 }}>
+                  Confirmed Orders
+                </Typography>
+                <Typography variant="body1" sx={{ mb: 0 }}>
+                  <b style={{ fontSize: '22px' }}>{data.confirmed_orders_count}</b>
+                </Typography>
+              </Box>
+            </Grid>
+            <Grid item xs={2}>
+              <Box sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                flexGrow: 1,
+                justifyContent: 'space-between',
+                p: 1,
+                bgcolor: 'white',
+                borderRadius: '10px',
+              }}>
+                <IconButton color="gray" sx={{ p: 0, borderRadius: '5px', minWidth: '100%', mt: 2 }}>
+                  <i className="bi bi-cart" style={{ fontSize: '25px', color: '#4CAF50' }}></i>
+                </IconButton>
+              </Box>
+            </Grid>
+          </Grid>
+        </Box>
+      </Grid>
+
+      <Grid item xs={12}>
+        <Box sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          flexGrow: 1,
+          justifyContent: 'space-between',
+          ml: isMobile ? 0 : 3,
+          mb: 2,
+          p: 1,
+          bgcolor: 'white',
+          borderRadius: '10px',
+        }}>
+          <Grid container spacing={1}>
+            <Grid item xs={10}>
+              <Box sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                flexGrow: 1,
+                justifyContent: 'space-between',
+                mb: 0,
+                p: 1,
+                bgcolor: 'white',
+                borderRadius: '10px',
+              }}>
+                <Typography variant="body1" sx={{ mb: 1 }}>
+                  Pending Orders
+                </Typography>
+                <Typography variant="body1" sx={{ mb: 0 }}>
+                  <b style={{ fontSize: '22px' }}>{data.pending_orders_count}</b>
+                </Typography>
+              </Box>
+            </Grid>
+            <Grid item xs={2}>
+              <Box sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                flexGrow: 1,
+                justifyContent: 'space-between',
+                p: 1,
+                bgcolor: 'white',
+                borderRadius: '10px',
+              }}>
+                <IconButton color="gray" sx={{ p: 0, borderRadius: '5px', minWidth: '100%', mt: 2 }}>
+                  <i className="bi bi-clock" style={{ fontSize: '25px', color: '#4CAF50' }}></i>
+                </IconButton>
+              </Box>
+            </Grid>
+          </Grid>
+        </Box>
+      </Grid>
+
+    </Grid>
   );
 }
 

@@ -17,17 +17,6 @@ const MainContentComponent = ({ onThemeChange }) => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
 
-  useEffect(() => {
-    document.title = 'Dealer Portal | Home';
-    const user = localStorage.getItem('userLogged') ? JSON.parse(localStorage.getItem('userLogged')) : {};
-    if (user.data.id) {
-      const payload = {
-        user_id: user.data.id,
-      }
-      fetchStats(payload);
-    }
-  }, []);
-
   const fetchStats = async (payload) => {
     try {
       const response = await fetchWithToken(`${apiUrl}/dealerportal-home/`, 'GET', payload, {}, apiUrl);
@@ -43,6 +32,17 @@ const MainContentComponent = ({ onThemeChange }) => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    document.title = 'Dealer Portal | Home';
+    const user = localStorage.getItem('userLogged') ? JSON.parse(localStorage.getItem('userLogged')) : {};
+    if (user.data.id) {
+      const payload = {
+        user_id: user.data.id,
+      }
+      fetchStats(payload);
+    }
+  }, [fetchStats, setContextDashboard, setUserLogged, setLoading, setError]);
 
   return (
     <Box sx={{ display: 'flex', bgcolor: '#f1f1f1', width: '100%', minHeight: '100%' }}>

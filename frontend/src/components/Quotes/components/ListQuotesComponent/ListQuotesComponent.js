@@ -95,7 +95,7 @@ const ListQuotesComponent = () => {
       }, 5000);
       return () => clearInterval(intervalId);
     }
-  }, [filter]);
+  }, [filter, searchTermGlobal, isQuoteSelected, quoteSelected]);
 
 
   useEffect(() => {
@@ -106,7 +106,7 @@ const ListQuotesComponent = () => {
 
 
   useEffect(() => {
-    const rows = filteredQuotes.map(quote => ({
+    const rows = filteredQuotes?.map(quote => ({
       id: quote.id,
       created_at: quote.created_at ? quote.created_at.split('T')[0] : '',
       status: quote.status,

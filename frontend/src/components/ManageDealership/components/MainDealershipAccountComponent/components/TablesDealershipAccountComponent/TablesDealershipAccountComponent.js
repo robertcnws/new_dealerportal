@@ -376,7 +376,7 @@ const TablesDealershipAccountComponent = ({ dealership }) => {
 
   const fetchInfo = async (payload) => {
     try {
-      const response = await fetchWithToken(`${apiUrl}/dealerportal/dealerships/manage-dealership/${dealership.id}/`, 'GET', payload, {}, apiUrl);
+      const response = await fetchWithToken(`${apiUrl}/dealerportal/dealerships/manage-dealership/${dealership?.id}/`, 'GET', payload, {}, apiUrl);
       if (response.status === 200) {
         let listAdmins = [];
         if (response.data.data.dealership_admin) {
@@ -402,7 +402,7 @@ const TablesDealershipAccountComponent = ({ dealership }) => {
       fetchInfo(payload);
     }, 5000);
     return () => clearInterval(intervalId);
-  }, [user.data.id]);
+  }, [user.data.id, dealership.id, setListDealershipAdmin, setListEstimatorsAccounts, setListPendingInvitations]);
 
 
   return (

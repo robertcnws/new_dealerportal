@@ -98,7 +98,7 @@ const SidebarComponent = ({ activePage, user }) => {
 
     useEffect(() => {
         getDealer();
-    }, []);
+    }, [apiUrl]);
 
     useEffect(() => {
         const data = {

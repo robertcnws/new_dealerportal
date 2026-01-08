@@ -42,7 +42,7 @@ const ListStocksQuoteDetailsComponent = ({ setIsLoadingOperation, isLoadingOpera
     fetchStocks();
     // const intervalId = setInterval(fetchStocks, 5000);
     // return () => clearInterval(intervalId);
-  }, [menuOpened]);
+  }, [menuOpened, fetchStocks]);
 
   useEffect(() => {
     const filteredList = filterStocks(filter, searchTermGlobal);
@@ -58,7 +58,7 @@ const ListStocksQuoteDetailsComponent = ({ setIsLoadingOperation, isLoadingOpera
     fetchQuoteProductsInterval();
     const intervalId = setInterval(fetchQuoteProductsInterval, 1000);
     return () => clearInterval(intervalId);
-  }, []);
+  }, [location.state.quote, fetchQuoteProducts]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -73,7 +73,7 @@ const ListStocksQuoteDetailsComponent = ({ setIsLoadingOperation, isLoadingOpera
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isItemGroupVisible]);
+  }, [isItemGroupVisible, sidebarRef]);
 
 
   const fetchStocks = async () => {

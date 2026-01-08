@@ -78,7 +78,7 @@ const NavbarComponent = ({ activePage, user, onThemeChange }) => {
       user_id: user.id,
     };
     fetchNotifications(payload);
-  }, []);
+  }, [fetchNotifications, user.id, setNotifications, setNotificationIconClasses, apiUrl]);
 
   useEffect(() => {
     setSearchTermGlobal(''); // Resetear el valor cuando la ruta cambie
@@ -102,7 +102,7 @@ const NavbarComponent = ({ activePage, user, onThemeChange }) => {
       setLabelSearch('Search...');
       setVisibleSearch(false);
     }
-  }, [location, setSearchTermGlobal]);
+  }, [location, setSearchTermGlobal, setLabelSearch, setVisibleSearch]);
 
   const handleMenuOpen = (event) => {
     setAnchorEl(event.currentTarget);

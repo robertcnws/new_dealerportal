@@ -13,13 +13,13 @@ const ModalAddQuoteComponent = ({ open, handleClose, onSyncComplete, dataEdit, o
     if (dataEdit) {
       fetchQuoteChanges();
     }
-  }, [dataEdit]);
+  }, [dataEdit, apiUrl, reset, dataEdit?.id]);
 
   const fetchQuoteChanges = async () => {
     setLoading(true);
     const user = JSON.parse(localStorage.getItem('userLogged'));
     const payload = { user_id: user.data.id };
-    const url = `${apiUrl}/dealerportal-get-quote/${dataEdit.id}/`;
+    const url = `${apiUrl}/dealerportal-get-quote/${dataEdit?.id}/`;
     const response = await fetchWithToken(url, 'POST', payload, {}, apiUrl);
     if (response.status === 200) {
       const quote = response.data.data.quote;

@@ -32,7 +32,7 @@ const MainSettingsComponent = () => {
       user_id: user.data.id,
     }
     fetchManagers(payload);
-  }, []);
+  }, [apiUrl, setManagers]);
 
 
   return (

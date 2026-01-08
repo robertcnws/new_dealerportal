@@ -41,7 +41,7 @@ const ItemStockDetailsComponent = ({ item, stock, onClose }) => {
       }
     };
     fetchImageUrl();
-  }, [item.id, aspectRatio]);
+  }, [item.id, item.image_name, staticUrl, setImageUrl, setAspectRatio]);
 
   const getImageStyle = () => {
     if (aspectRatio === 1) {

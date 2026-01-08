@@ -30,8 +30,8 @@ const TableOrderProductsComponent = ({ order }) => {
 
   useEffect(() => {
     if (order?.products?.length > 0) {
-      const quoteProducts = order.products;
-      const updatedProducts = quoteProducts.map((product) => {
+      const quoteProducts = order?.products || [];
+      const updatedProducts = quoteProducts?.map((product) => {
         return {
           id: product.id,
           id_quote_product: product.id,
@@ -40,8 +40,8 @@ const TableOrderProductsComponent = ({ order }) => {
             sku: product.product.sku,
           },
           price: `$ ${product.total_price}`,
-          quantity: parseInt(product.quantity),
-          total_price: `$ ${((parseFloat(product.total_price) * parseFloat(product.quantity)).toFixed(2)).toString()}`,
+          quantity: Number.parseInt(product.quantity),
+          total_price: `$ ${((Number.parseFloat(product.total_price) * Number.parseFloat(product.quantity)).toFixed(2)).toString()}`,
         };
       });
       setProducts(updatedProducts);

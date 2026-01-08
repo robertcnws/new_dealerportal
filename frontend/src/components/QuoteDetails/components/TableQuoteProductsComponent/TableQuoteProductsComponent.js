@@ -51,7 +51,7 @@ const TableQuoteProductsComponent = ({ quote, setIsLoadingOperation }) => {
     fetchQuoteProductsInterval();
     const intervalId = setInterval(fetchQuoteProductsInterval, 5000);
     return () => clearInterval(intervalId);
-  }, [quote]);
+  }, [quote, apiUrl, setQuoteProducts, setLoading, setError, fetchWithToken]);
 
   useEffect(() => {
     if (quoteProducts.length > 0) {
@@ -67,8 +67,9 @@ const TableQuoteProductsComponent = ({ quote, setIsLoadingOperation }) => {
             description: product.description,
           },
           price: `$ ${product.price}`,
-          quantity: modifiedQuantity !== undefined ? modifiedQuantity : parseInt(product.quantity),
-          total_price: `$ ${((parseFloat(product.price) * parseFloat(modifiedQuantity !== undefined && !isNaN(modifiedQuantity) ? modifiedQuantity : product.quantity)).toFixed(2)).toString()}`,
+          quantity: modifiedQuantity === undefined ? Number.parseInt(product.quantity) : modifiedQuantity,
+          total_price: `$ ${((Number.parseFloat(product.price) * Number.parseFloat(modifiedQuantity !== undefined && !Number.isNaN(modifiedQuantity) ?
+            modifiedQuantity : product.quantity)).toFixed(2)).toString()}`,
         };
       });
       setProducts(updatedProducts);
@@ -76,8 +77,8 @@ const TableQuoteProductsComponent = ({ quote, setIsLoadingOperation }) => {
     else {
       setProducts([]);
     }
-  }, [quoteProducts, modifiedQuantities]);
-  
+  }, [quoteProducts, modifiedQuantities, quote, setProducts]);
+
 
   const fetchQuoteProducts = async (quote) => {
     try {

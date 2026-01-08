@@ -32,7 +32,7 @@ const ListStocksComponent = ({ setIsLoadingOperation }) => {
   useEffect(() => {
     document.title = 'Dealer Portal | Stocks';
     fetchStocks();
-  }, []);
+  }, [apiUrl, setStocks, setLoading, setError, setFilteredStocks]);
 
   useEffect(() => {
     const filteredList = filterStocks(filter, searchTermGlobal);

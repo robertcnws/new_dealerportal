@@ -16,7 +16,7 @@ const MainDealershipAccountComponent = () => {
   useEffect(() => {
     const dealership = location.state.dealership;
     setDealership(dealership);
-  }, []);
+  }, [setDealership, location.state]);
 
   if (!isMobile) {
 

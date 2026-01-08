@@ -29,18 +29,18 @@ const ModalUpdateUserComponent = ({ dealership, open, handleClose, setDealership
 
   useEffect(() => {
     reset({
-      name: dealership.account_name,
-      company_address: dealership.address,
-      company_phone: dealership.phone,
-      zoho_email: dealership.email,
+      name: dealership?.account_name || '',
+      company_address: dealership?.address || '',
+      company_phone: dealership?.phone || '',
+      zoho_email: dealership?.email || '',
     });
 
     setPreviewLogo(
-      dealership.logo
-        ? `${staticUrl}${dealership.logo.includes('dealership.png') ? '/images/' : '/'}${dealership.logo}`
+      dealership?.logo
+        ? `${staticUrl}${dealership.logo.includes('dealership.png') ? '/images/' : '/'}${dealership?.logo}`
         : ''
     );
-  }, [dealership, reset]);
+  }, [dealership, reset, open, staticUrl, apiUrl, setPreviewLogo]);
 
   const style = {
     position: 'absolute',

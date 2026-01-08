@@ -253,145 +253,143 @@ const ManageAppAccessComponent = () => {
       user_id: user.data.id,
     };
     fetchInfo(payload);
-  }, []);
+  }, [apiUrl, setListPendingInvitations]);
 
   return (
-    <>
-      <Box sx={{ mt: isMobile ? 1 : -3, minWidth: '100%', bgcolor: '#f1f1f1' }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="h6" sx={{ ml: isMobile ? 0 : 5, mt: isMobile ? -1 : 3, mb: 2 }}>
-            Manage Aplication Access
-          </Typography>
-          <Box onClick={handleReturnToSettings}
+    <Box sx={{ mt: isMobile ? 1 : -3, minWidth: '100%', bgcolor: '#f1f1f1' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant="h6" sx={{ ml: isMobile ? 0 : 5, mt: isMobile ? -1 : 3, mb: 2 }}>
+          Manage Aplication Access
+        </Typography>
+        <Box onClick={handleReturnToSettings}
+          sx={{
+            mt: isMobile ? -2 : 2,
+            mb: 1,
+            p: 1,
+            borderRadius: '10px',
+            cursor: 'pointer',
+          }}
+        >
+          <IconButton
+            color="gray"
             sx={{
-              mt: isMobile ? -2 : 2,
-              mb: 1,
-              p: 1,
-              borderRadius: '10px',
-              cursor: 'pointer',
+              p: 0,
+              borderRadius: '5px',
+              minWidth: '100%',
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
-            <IconButton
-              color="gray"
-              sx={{
-                p: 0,
-                borderRadius: '5px',
-                minWidth: '100%',
-                display: 'flex',
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <i className="fa-solid fa-close"></i>
-              <Typography sx={{ fontSize: '13px', ml: 1 }}> Return to settings</Typography>
-            </IconButton>
-          </Box>
+            <i className="fa-solid fa-close"></i>
+            <Typography sx={{ fontSize: '13px', ml: 1 }}> Return to settings</Typography>
+          </IconButton>
         </Box>
-        <Grid container spacing={1} sx={{ ml: isMobile ? 0 : 2 }}>
-          <Grid item xs={isMobile ? 12 : 4}>
-            <Box sx={{ mb: 4, ml: isMobile ? 0 : 2, mr: isMobile ? 0 : 2 }}>
-              <Box sx={{ p: 1, bgcolor: 'white', borderRadius: '8px' }}>
-                <Typography variant="h6" sx={{ mb: 1 }}>
-                  <i className="bi bi-plus-circle me-2"></i>
-                  Add a new User as an App Manager
-                </Typography>
-
-                <form onSubmit={handleSubmit(onSubmit)}>
-                  <Box sx={{ mb: 1 }}>
-                    <TextField
-                      type="email"
-                      label="Email"
-                      id="email"
-                      name="email"
-                      placeholder="Enter email"
-                      fullWidth
-                      margin="normal"
-                      InputLabelProps={{
-                        shrink: true,
-                      }}
-                      {...register('email', {
-                        required: 'Email is required',
-                        pattern: {
-                          value: /^\S+@\S+$/i,
-                          message: 'Enter a valid email address',
-                        },
-                      })}
-                      error={!!errors.email}
-                    />
-                    {errors.email && (
-                      <FormHelperText error>{errors.email.message}</FormHelperText>
-                    )}
-                  </Box>
-
-                  <Box sx={{ textAlign: 'right', mb: 1 }}>
-                    <Button type="submit" variant="contained" color="success">
-                      Send Invitation
-                    </Button>
-                  </Box>
-                </form>
-              </Box>
-            </Box>
-          </Grid>
-          <Grid item xs={isMobile ? 12 : 8} sx={{ bgcolor: 'white', p: 1, borderRadius: '5px' }}>
-            <Typography variant="body1">
-              <b>Pending Invitations</b>
-            </Typography>
-            <Box>
-              <TableContainer>
-                <Table aria-label="simple table">
-                  <TableHead sx={{ maxHeight: '20px', p: 0, border: '1px solid #ddd' }}>
-                    <TableRow>
-                      {columnsPendingInvitations.map((column) => (
-                        <TableCell key={`${column.field}-PendingInvitations`} align="center" sx={{ bgcolor: '#f1f1f9', p: 1 }}>
-                          {column.headerName}
-                        </TableCell>
-                      ))}
-                      <TableCell align="center" sx={{ bgcolor: '#f1f1f9', p: 1 }}>Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {listPendingInvitations.length > 0 ? (rowsPerPage > 0
-                      ? listPendingInvitations.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                      : listPendingInvitations
-                    ).map((row) => (
-                      <TableRow key={row?.id}>
-                        <TableCell key={`${row?.id}-${row?.is_accepted}${row?.index}`} align="center" sx={{ p: 0, cursor: 'pointer' }} onClick={() => handleResendInvitation(row)}>
-                          <Badge bg={row?.is_accepted ? 'success' : 'warning'}>{row?.is_accepted ? 'accepted' : 'pending'}</Badge>
-                        </TableCell>
-                        <TableCell key={`${row?.id}-${row?.email}${row?.index}`} align="center" sx={{ p: 0, cursor: 'pointer' }} onClick={() => handleResendInvitation(row)}>
-                          {row?.email}
-                        </TableCell>
-                        <TableCell key={`${row?.id}-${row?.created_at}${row?.index}`} align="center" sx={{ p: 0, cursor: 'pointer' }} onClick={() => handleResendInvitation(row)}>
-                          <DateDifferenceComponent dateString={row?.created_at} />
-                        </TableCell>
-                        <TableCell key={`${row?.id}-buttonsPendingInvitations`} align="center" sx={{ p: 0 }}>
-                          <NavigationButtonComponent children={childrenNavigationPendingInvitations} bgcolor='white' row={row} />
-                        </TableCell>
-                      </TableRow>
-                    )) : (
-                      <TableRow>
-                        <TableCell align="center" colSpan={columnsPendingInvitations.length + 1} sx={{ p: 0 }}>
-                          <CustomAlertComponent severity="info" message="No pending invitations" sx={{ p: 0 }} />
-                        </TableCell>
-                      </TableRow>
-                    )}
-                    <CustomTablePaginationComponent
-                      columnsLength={columnsPendingInvitations.length + 1}
-                      data={listPendingInvitations}
-                      page={page}
-                      rowsPerPage={rowsPerPage}
-                      handleChangePage={handleChangePage}
-                      handleChangeRowsPerPage={handleChangeRowsPerPage}
-                    />
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Box>
-          </Grid>
-        </Grid>
       </Box>
-    </>
+      <Grid container spacing={1} sx={{ ml: isMobile ? 0 : 2 }}>
+        <Grid item xs={isMobile ? 12 : 4}>
+          <Box sx={{ mb: 4, ml: isMobile ? 0 : 2, mr: isMobile ? 0 : 2 }}>
+            <Box sx={{ p: 1, bgcolor: 'white', borderRadius: '8px' }}>
+              <Typography variant="h6" sx={{ mb: 1 }}>
+                <i className="bi bi-plus-circle me-2"></i>
+                Add a new User as an App Manager
+              </Typography>
+
+              <form onSubmit={handleSubmit(onSubmit)}>
+                <Box sx={{ mb: 1 }}>
+                  <TextField
+                    type="email"
+                    label="Email"
+                    id="email"
+                    name="email"
+                    placeholder="Enter email"
+                    fullWidth
+                    margin="normal"
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    {...register('email', {
+                      required: 'Email is required',
+                      pattern: {
+                        value: /^\S+@\S+$/i,
+                        message: 'Enter a valid email address',
+                      },
+                    })}
+                    error={!!errors.email}
+                  />
+                  {errors.email && (
+                    <FormHelperText error>{errors.email.message}</FormHelperText>
+                  )}
+                </Box>
+
+                <Box sx={{ textAlign: 'right', mb: 1 }}>
+                  <Button type="submit" variant="contained" color="success">
+                    Send Invitation
+                  </Button>
+                </Box>
+              </form>
+            </Box>
+          </Box>
+        </Grid>
+        <Grid item xs={isMobile ? 12 : 8} sx={{ bgcolor: 'white', p: 1, borderRadius: '5px' }}>
+          <Typography variant="body1">
+            <b>Pending Invitations</b>
+          </Typography>
+          <Box>
+            <TableContainer>
+              <Table aria-label="simple table">
+                <TableHead sx={{ maxHeight: '20px', p: 0, border: '1px solid #ddd' }}>
+                  <TableRow>
+                    {columnsPendingInvitations.map((column) => (
+                      <TableCell key={`${column.field}-PendingInvitations`} align="center" sx={{ bgcolor: '#f1f1f9', p: 1 }}>
+                        {column.headerName}
+                      </TableCell>
+                    ))}
+                    <TableCell align="center" sx={{ bgcolor: '#f1f1f9', p: 1 }}>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {listPendingInvitations.length > 0 ? (rowsPerPage > 0
+                    ? listPendingInvitations.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                    : listPendingInvitations
+                  ).map((row) => (
+                    <TableRow key={row?.id}>
+                      <TableCell key={`${row?.id}-${row?.is_accepted}${row?.index}`} align="center" sx={{ p: 0, cursor: 'pointer' }} onClick={() => handleResendInvitation(row)}>
+                        <Badge bg={row?.is_accepted ? 'success' : 'warning'}>{row?.is_accepted ? 'accepted' : 'pending'}</Badge>
+                      </TableCell>
+                      <TableCell key={`${row?.id}-${row?.email}${row?.index}`} align="center" sx={{ p: 0, cursor: 'pointer' }} onClick={() => handleResendInvitation(row)}>
+                        {row?.email}
+                      </TableCell>
+                      <TableCell key={`${row?.id}-${row?.created_at}${row?.index}`} align="center" sx={{ p: 0, cursor: 'pointer' }} onClick={() => handleResendInvitation(row)}>
+                        <DateDifferenceComponent dateString={row?.created_at} />
+                      </TableCell>
+                      <TableCell key={`${row?.id}-buttonsPendingInvitations`} align="center" sx={{ p: 0 }}>
+                        <NavigationButtonComponent children={childrenNavigationPendingInvitations} bgcolor='white' row={row} />
+                      </TableCell>
+                    </TableRow>
+                  )) : (
+                    <TableRow>
+                      <TableCell align="center" colSpan={columnsPendingInvitations.length + 1} sx={{ p: 0 }}>
+                        <CustomAlertComponent severity="info" message="No pending invitations" sx={{ p: 0 }} />
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  <CustomTablePaginationComponent
+                    columnsLength={columnsPendingInvitations.length + 1}
+                    data={listPendingInvitations}
+                    page={page}
+                    rowsPerPage={rowsPerPage}
+                    handleChangePage={handleChangePage}
+                    handleChangeRowsPerPage={handleChangeRowsPerPage}
+                  />
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Box>
+        </Grid>
+      </Grid>
+    </Box>
   );
 }
 

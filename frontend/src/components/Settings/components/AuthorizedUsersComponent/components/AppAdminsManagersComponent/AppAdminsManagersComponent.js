@@ -209,7 +209,7 @@ const AppAdminsManagersComponent = ({ authorizedUsers }) => {
       user_id: user.data.id,
     };
     fetchInfo(payload);
-  }, []);
+  }, [apiUrl, setListAdmins, setListAppManagers]);
 
   return (
     <>

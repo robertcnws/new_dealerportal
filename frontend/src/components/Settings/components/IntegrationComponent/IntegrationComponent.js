@@ -111,7 +111,7 @@ const IntegrationComponent = () => {
 
   useEffect(() => {
     fetchZohoConfig();
-  }, []);
+  }, [apiUrl, setZohoConfig, fetchWithToken]);
 
   useEffect(() => {
     if (zohoConfig) {

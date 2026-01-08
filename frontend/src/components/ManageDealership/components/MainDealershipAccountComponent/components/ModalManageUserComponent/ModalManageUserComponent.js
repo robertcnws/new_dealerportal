@@ -28,11 +28,11 @@ const ModalManageUserComponent = ({ user, open, handleClose, onSyncComplete }) =
 
   useEffect(() => {
     reset({
-      username: user?.username,
-      first_name: user?.first_name,
-      last_name: user?.last_name,
-      email: user?.email,
-      address: user?.address,
+      username: user?.username || '',
+      first_name: user?.first_name || '',
+      last_name: user?.last_name || '',
+      email: user?.email || '',
+      address: user?.address || '',
     });
 
   }, [user, reset]);

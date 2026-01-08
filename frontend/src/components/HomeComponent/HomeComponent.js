@@ -29,19 +29,6 @@ const HomeComponent = () => {
   // const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isMobile = useMediaQuery('(max-width:999px)');
 
-  useEffect(() => {
-    document.title = 'NWS Dealer Portal';
-    const user = localStorage.getItem('userLogged') ? JSON.parse(localStorage.getItem('userLogged')) : {};
-    if (user.data.id) {
-      const payload = {
-        user_id: user.data.id,
-      }
-      fetchStats(payload);
-      calculatePercetage();
-    }
-  }
-    , []);
-
   const fetchStats = async (payload) => {
     try {
       const response = await fetchWithToken(`${apiUrl}/dealerportal-home/`, 'GET', payload, {}, apiUrl);
@@ -50,9 +37,9 @@ const HomeComponent = () => {
       }
       setContextDashboard(response.data.data);
     } catch (err) {
-        if (error.response && error.response.status !== 401) {
-          setError(err.message);
-        } 
+      if (error.response && error.response.status !== 401) {
+        setError(err.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -77,6 +64,32 @@ const HomeComponent = () => {
       setOrderChangePercent(((totalOrders - totalOrdersLastMonth) / totalOrdersLastMonth) * 100 || 0);
     }
   }
+
+  useEffect(() => {
+    document.title = 'NWS Dealer Portal';
+    const user = localStorage.getItem('userLogged') ? JSON.parse(localStorage.getItem('userLogged')) : {};
+    if (user.data.id) {
+      const payload = {
+        user_id: user.data.id,
+      }
+      fetchStats(payload);
+      calculatePercetage();
+    }
+  }, [
+    fetchStats, 
+    calculatePercetage, 
+    contextDashboard, 
+    error, 
+    loading, 
+    quoteProgress, 
+    salesProgress, 
+    estimateProgress, 
+    orderProgress,
+    quoteChangePercent,
+    orderChangePercent,
+  ]);
+
+
 
   return (
     <Box sx={{

@@ -19,13 +19,14 @@ export const AuthProvider = ({ children }) => {
           logout();
         }
       } catch (error) {
+        console.error('Failed to decode token:', error);
         logout();
       }
     } else {
       setIsAuthenticated(false);
     }
     setIsLoading(false); 
-  }, []);
+  }, [setIsAuthenticated, setIsLoading, logout]);
 
   const login = (token) => {
     localStorage.setItem('accessToken', token);

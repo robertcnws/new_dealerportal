@@ -76,12 +76,12 @@ const ListOrdersComponent = () => {
       const intervalId = setInterval(fetchOrdersWithPayload, 5000);
       return () => clearInterval(intervalId);
     }
-  }, []);
+  }, [fetchOrders, setOrders, setLoading, setError, setFilteredOrders, apiUrl]);
 
   useEffect(() => {
     const filteredList = filterOrders(filter, searchTermGlobal);
     setFilteredOrders(filteredList);
-  }, [filter, searchTermGlobal, orders]);
+  }, [filter, searchTermGlobal, orders, setFilteredOrders, filterOrders]);
 
 
 
@@ -104,7 +104,7 @@ const ListOrdersComponent = () => {
 
     // console.log(rows);
     setTableData(rows);
-  }, [filteredOrders]);
+  }, [filteredOrders, setTableData]);
 
   const fetchOrders = async (payload) => {
     try {

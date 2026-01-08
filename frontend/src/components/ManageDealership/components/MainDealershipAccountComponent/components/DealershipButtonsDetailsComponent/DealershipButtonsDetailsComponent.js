@@ -23,7 +23,9 @@ const DealershipButtonsDetailsComponent = ({ dealership, setDealership }) => {
   const user = JSON.parse(localStorage.getItem('userLogged'));
 
   useEffect(() => {
-    setLocalDealership(dealership);
+    if (dealership) {
+      setLocalDealership(dealership);
+    }
   }, [dealership]);
 
   const handleDeactivateDealership = async () => {
@@ -49,7 +51,7 @@ const DealershipButtonsDetailsComponent = ({ dealership, setDealership }) => {
         customClass: customClassSwal,
       }).then(async (result) => {
         if (result.isConfirmed) {
-          
+
           const payload = {
             user_id: user.data.id,
           };

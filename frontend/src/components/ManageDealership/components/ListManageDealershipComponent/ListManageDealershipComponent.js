@@ -82,12 +82,12 @@ const ListManageDealershipComponent = () => {
       const payload = { user_id: user.data.id };
       fetchDealerships(payload);
     }
-  }, []);
+  }, [fetchDealerships, localStorage, apiUrl, setDealerships, setLoading, setError, setFilteredDealerships]);
 
   useEffect(() => {
     const filteredList = filterDealerships(filter, searchTermGlobal);
     setFilteredDealerships(filteredList);
-  }, [filter, searchTermGlobal, dealerships]);
+  }, [filter, searchTermGlobal, dealerships, setFilteredDealerships, filterDealerships, setPage, setRowsPerPage]);
 
   useEffect(() => {
     const rows = filteredDealerships.map(dealership => ({
@@ -103,7 +103,7 @@ const ListManageDealershipComponent = () => {
       zoho_id: dealership.zoho_id,
     }));
     setTableData(rows);
-  }, [filteredDealerships]);
+  }, [filteredDealerships, setTableData]);
 
   const fetchDealerships = async (payload) => {
     try {

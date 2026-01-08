@@ -23,7 +23,7 @@ const NavigationButtonComponent = ({ children, bgcolor, row }) => {
       // setBorderRight('1px solid #ddd');
       setBorderRadius('5px 5px 5px 5px');
     }
-  }, [border]);
+  }, [border, setBorder, setBorderRadius]);
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);

@@ -26,7 +26,7 @@ const SelectListProductsComponent = ({ quote, handleSelectProduct }) => {
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [apiUrl, quote.status, setProducts, setLoading, setError, setFilteredProducts, fetchWithToken]);
 
   const fetchProducts = async () => {
     try {

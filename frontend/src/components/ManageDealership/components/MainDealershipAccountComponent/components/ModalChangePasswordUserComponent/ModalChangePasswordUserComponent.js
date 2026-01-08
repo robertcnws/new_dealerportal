@@ -32,7 +32,6 @@ const ModalChangePasswordUserComponent = ({ user, open, handleClose, onSyncCompl
       new_password: '',
       confirm_password: '',
     });
-
   }, [reset]);
 
   const style = {
