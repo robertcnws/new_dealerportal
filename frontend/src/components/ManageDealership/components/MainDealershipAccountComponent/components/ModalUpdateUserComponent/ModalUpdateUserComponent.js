@@ -27,6 +27,19 @@ const ModalUpdateUserComponent = ({ dealership, open, handleClose, setDealership
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [previewLogo, setPreviewLogo] = useState('');
 
+  const style = {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: isMobile ? '100%' : '700px',
+    bgcolor: 'background.paper',
+    border: '1px solid #ddd',
+    boxShadow: 24,
+    p: 4,
+    borderRadius: '10px',
+  };
+
   useEffect(() => {
     if (open) {
       reset({
