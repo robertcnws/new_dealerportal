@@ -17,8 +17,8 @@ pipeline {
     AWS_DEFAULT_REGION       = "us-east-2"
     AWS_FRONTEND_ENV_CRED_ID = "AWS_FRONTEND_DEALERPORTAL_ENV_CRED_ID"
     AWS_CLUSTER              = "api-dealerportal-cluster"
-    AWS_FRONTEND_SERVICE     = "dealerportal-backend-service"
-    AWS_BACKEND_SERVICE      = "dealerportal-frontend-service"
+    AWS_FRONTEND_SERVICE     = "dealerportal-frontend-service"
+    AWS_BACKEND_SERVICE      = "dealerportal-backend-service"
     JENKINS_HOOK             = "dealerportal-repository-hook"
   }
 
