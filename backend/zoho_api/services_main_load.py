@@ -38,7 +38,11 @@ def sync_zoho_items():
     logger.info(f"Organization ID: {organization_id}")
     logger.info("Fetching items to sync from Main Load Zoho Inventory")
 
-    items_data = get_items_to_sync(organization_id, last_sync_time)
+    items_data, str_err = get_items_to_sync(organization_id, last_sync_time)
+    
+    if str_err:
+        logger.error(f"Error fetching items to sync: {str_err}")
+        return 0
     
     logger.info(f"Total items to sync: {len(items_data)}")
 
@@ -83,7 +87,7 @@ def sync_zoho_items():
     return len(items_data)
 
 
-def get_items_to_sync(organization_id, last_sync_time):
+def get_items_to_sync(organization_id, last_sync_time) -> tuple[list[dict], str | None]:
     url = f"{settings.API_MAIN_DATA_URL}/zoho/items/"
     access_token = settings.API_MAIN_DATA_TOKEN
     headers = {"Authorization": f"Token {access_token}"}
@@ -138,7 +142,7 @@ def get_items_to_sync(organization_id, last_sync_time):
                 
         logger.info(f"Total items fetched from Main Load Zoho Inventory API: {len(items_data)}")
         logger.info(f"Total items to sync after filtering: {len(filtered_items)}")
-        return filtered_items
+        return filtered_items, None
     except requests.RequestException as e:
         logger.error(f"Error fetching items from Main Load Zoho Inventory API: {str(e)}")
-        return []
+        return [], str(e)
