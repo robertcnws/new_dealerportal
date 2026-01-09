@@ -21,9 +21,8 @@ app.conf.beat_schedule = {
     "sync-zoho-products-every-15-min-between-7AM-and-5PM": {
         "task": "zoho_api.tasks.sync_zoho_items_task",
         "schedule": crontab(
-            # minute="*/2", hour="7-17"
             minute="*/15", hour="7-17"
-        ),  # Every 35 minutes from 7AM to 5PM
+        ),  # Every 15 minutes from 7AM to 5PM
     },
     "sync-zoho-products-every-1-hour-between-5PM-and-10PM": {
         "task": "zoho_api.tasks.sync_zoho_items_task",
