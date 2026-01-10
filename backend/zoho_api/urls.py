@@ -13,7 +13,7 @@ urlpatterns = [
     ),
     path(
         "dealerportal-zoho/sync_zoho_items/", 
-        views.api_dealerportal_sync_zoho_items_view, 
+        views_main_load.api_dealerportal_sync_zoho_items_view, 
         name="api_dealerportal_sync_zoho_items_view"
     ),
     path(

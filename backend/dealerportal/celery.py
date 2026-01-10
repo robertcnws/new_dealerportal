@@ -30,9 +30,9 @@ app.conf.beat_schedule = {
         "task": "zoho_api.tasks.sync_zoho_pricebook_task",
         "schedule": crontab(minute=0, hour=0),  # Every day at midnight
     },
-    "delete-old-notifications-each-2-months": {
+    "delete-old-notifications-each-day": {
         "task": "zoho_api.tasks.delete_old_notifications",
-        "schedule": crontab(minute=0, hour=0, day_of_month=1, month_of_year="2,4,6,8,10,12"),
+        "schedule": crontab(minute=0, hour=9),
     },
 }
 

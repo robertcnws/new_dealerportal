@@ -584,12 +584,7 @@ def api_dealerportal_sync_zoho_items_view(request):
             message = "Zoho API connection is not configured."
             return JsonResponse({"error": message, "message": message}, status=200)
         try:
-            access_token = get_access_token(
-                app_config.zoho_client_id,
-                app_config.zoho_client_secret,
-                app_config.zoho_refresh_token,
-            )
-            synced_items_count = sync_zoho_items(access_token)
+            synced_items_count = main_load_services.sync_zoho_items()
             message = f"Successfully synced {synced_items_count} items from Zoho Inventory"
             return JsonResponse({"message": message}, status=200)
         except Exception as e:

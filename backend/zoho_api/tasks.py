@@ -79,15 +79,18 @@ def sync_zoho_pricebook_task(self):
         )
 
         num_pricebook_items_synced = sync_zoho_pricebook(access_token)
-
         success_message = (
             f"Successfully synced {num_pricebook_items_synced} pricebook items."
         )
-        notification = Notification.objects.create(
-            notification_type="system_Alert", message=success_message
-        )
-        notification.users.add(*app_admins_and_managers)
-        print(success_message)
+        
+        if num_pricebook_items_synced > 0:
+            
+            notification = Notification.objects.create(
+                notification_type="system_Alert", message=success_message
+            )
+            notification.users.add(*app_admins_and_managers)
+            
+        logger.info(success_message)
 
     except Exception as e:
         failure_message = f"Error syncing pricebook items: {str(e)}"
@@ -95,16 +98,24 @@ def sync_zoho_pricebook_task(self):
             notification_type="system_Alert", message=failure_message
         )
         notification.users.add(*app_admins_and_managers)
-        print(failure_message)
+        logger.error(failure_message)
         
 
 @shared_task(bind=True)
 def delete_old_notifications():
     try:
-        cutoff = timezone.now() - timedelta(days=30)
+        cutoff = timezone.now() - timedelta(days=7)
         qs = Notification.objects.filter(date__lt=cutoff)
         deleted_count, detail = qs.delete()
         logger.info("Old notifications deleted: %s (%s)", deleted_count, detail)
+        message = f"Deleted {deleted_count} old notifications."
+        notification = Notification.objects.create(
+            notification_type="system_Alert", message=message
+        )
+        app_admins_and_managers = User.objects.filter(
+            Q(role="AppAdmin") | Q(role="AppManager")
+        )
+        notification.users.add(*app_admins_and_managers)
     except Exception as e:
         print(f"Error deleting old notifications: {str(e)}")
         logger.error(f"Error deleting old notifications: {str(e)}")
@@ -132,14 +143,15 @@ def sync_zoho_items_task(self):
 
         logger.info("Syncing items")
         synced_items_count = main_load_sync_zoho_items()
-        success_message = (
-            f"Successfully synced {synced_items_count} items from Zoho Inventory"
-        )
-        notification = Notification.objects.create(
-            notification_type="system_Alert", message=success_message
-        )
-        notification.users.add(superadmin)
-        print(f"Successfully synced {synced_items_count} items from Zoho Inventory")
+        if synced_items_count > 0:
+            success_message = (
+                f"Successfully synced {synced_items_count} items from Zoho Inventory"
+            )
+            notification = Notification.objects.create(
+                notification_type="system_Alert", message=success_message
+            )
+            notification.users.add(superadmin)
+        logger.info(f"Successfully synced {synced_items_count} items from Zoho Inventory")
 
     except Exception as e:
         failure_message = f"Error syncing items: {str(e)}"
@@ -147,4 +159,4 @@ def sync_zoho_items_task(self):
             notification_type="system_Alert", message=failure_message
         )
         notification.users.add(superadmin)
-        print(f"Error syncing items: {str(e)}")
+        logger.error(f"Error syncing items: {str(e)}")
